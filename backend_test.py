@@ -46,7 +46,7 @@ class FitTraxxAPITester:
             elif method.upper() == "POST":
                 response = self.session.post(url, json=data, timeout=30)
             elif method.upper() == "PUT":
-                response = self.session.put(url, json=data, timeout=30)
+                response = self.session.put(url, json=data, params=params, timeout=30)
             elif method.upper() == "DELETE":
                 response = self.session.delete(url, timeout=30)
             else:
