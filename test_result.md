@@ -358,8 +358,8 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 0
-  run_ui: false
+  test_sequence: 1
+  run_ui: true
 
 test_plan:
   current_focus:
@@ -377,3 +377,5 @@ agent_communication:
     message: "Phase 1 MVP complete - Backend with 40+ endpoints built and tested. Mobile app foundation created with navigation, Profile, Dashboard, Plans browser, and AI Food Scanning screens. Ready for comprehensive backend testing."
   - agent: "testing"
     message: "Backend testing completed successfully! All 40+ endpoints tested and working correctly. Key findings: AI food analysis with GPT-4o working (analyzed tomato image), all CRUD operations functional, heart rate zones calculated properly, workout plans system operational, scheduled workouts with reminders working. Fixed PUT endpoint parameter handling during testing. Backend API is production-ready."
+  - agent: "main"
+    message: "User approved frontend testing. Starting comprehensive mobile app UI testing with expo_frontend_testing_agent."
