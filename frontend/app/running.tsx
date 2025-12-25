@@ -285,7 +285,7 @@ export default function RunningScreen() {
         <Text style={styles.title}>Running Tracker</Text>
 
         {/* Live Map During Tracking */}
-        {isTracking && routeCoords.length > 0 && (
+        {isTracking && routeCoords.length > 0 && Platform.OS !== 'web' && MapView && (
           <View style={styles.mapContainer}>
             <MapView
               ref={mapRef}
@@ -315,6 +315,19 @@ export default function RunningScreen() {
                 </>
               )}
             </MapView>
+          </View>
+        )}
+
+        {/* Web fallback message */}
+        {isTracking && routeCoords.length > 0 && Platform.OS === 'web' && (
+          <View style={[styles.mapContainer, styles.webMapPlaceholder]}>
+            <Ionicons name="map" size={48} color={Colors.text.muted} />
+            <Text style={styles.webMapText}>
+              Map tracking is available on mobile devices
+            </Text>
+            <Text style={styles.webMapSubtext}>
+              {routeCoords.length} GPS points recorded
+            </Text>
           </View>
         )}
 
@@ -475,7 +488,7 @@ export default function RunningScreen() {
           {selectedRun && (
             <ScrollView style={styles.modalContent}>
               {/* Map of the run route */}
-              {selectedRun.route_data && selectedRun.route_data.length > 1 && (
+              {selectedRun.route_data && selectedRun.route_data.length > 1 && Platform.OS !== 'web' && MapView && (
                 <View style={styles.detailMapContainer}>
                   <MapView
                     style={styles.detailMap}
@@ -502,6 +515,17 @@ export default function RunningScreen() {
                       pinColor="red"
                     />
                   </MapView>
+                </View>
+              )}
+
+              {/* Web fallback */}
+              {selectedRun.route_data && selectedRun.route_data.length > 1 && Platform.OS === 'web' && (
+                <View style={[styles.detailMapContainer, styles.webMapPlaceholder]}>
+                  <Ionicons name="map-outline" size={64} color={Colors.text.muted} />
+                  <Text style={styles.webMapText}>Route Map</Text>
+                  <Text style={styles.webMapSubtext}>
+                    Available on mobile • {selectedRun.route_data.length} GPS points
+                  </Text>
                 </View>
               )}
 
@@ -901,6 +925,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.text.primary,
+  },
+  webMapPlaceholder: {
+    backgroundColor: Colors.background.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  webMapText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  webMapSubtext: {
+    fontSize: 14,
+    color: Colors.text.secondary,
   },
 });
 
