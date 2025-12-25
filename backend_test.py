@@ -579,12 +579,12 @@ class FitTraxxAPITester:
             # Test updating scheduled workout
             if scheduled_workouts:
                 scheduled_id = scheduled_workouts[0]["scheduled_id"]
-                update_data = {
+                update_params = {
                     "completed": True,
                     "notes": "Workout completed successfully"
                 }
                 
-                success, response, error = self.make_request("PUT", f"/scheduled-workouts/{scheduled_id}", update_data)
+                success, response, error = self.make_request("PUT", f"/scheduled-workouts/{scheduled_id}", params=update_params)
                 
                 if success and response.status_code == 200:
                     self.log_test("Scheduled Workout Update", True, "Scheduled workout updated")
