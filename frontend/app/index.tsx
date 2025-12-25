@@ -22,6 +22,20 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
 
+  const loadDashboard = async () => {
+    try {
+      if (!userId) return;
+      const data = await dashboardAPI.getDashboard(userId);
+      setDashboardData(data);
+    } catch (error: any) {
+      console.error('Error loading dashboard:', error);
+      Alert.alert('Error', 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     if (userId) {
       loadDashboard();
@@ -45,7 +59,12 @@ export default function DashboardScreen() {
     );
   }
 
-  const loadDashboard = async () => {
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadDashboard();
+  };
+
+  const addWater = async (amount: number) => {
     try {
       if (!userId) return;
       const data = await dashboardAPI.getDashboard(userId);
