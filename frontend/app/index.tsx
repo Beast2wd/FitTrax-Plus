@@ -41,6 +41,24 @@ export default function DashboardScreen() {
     }
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const getMotivationalMessage = () => {
+    const messages = [
+      "You're crushing it today! 💪",
+      "Every step counts! 🚀",
+      "Stay strong and focused! ⚡",
+      "Your progress is inspiring! 🌟",
+      "Keep pushing forward! 🏆",
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
   useEffect(() => {
     if (userId) {
       setLoading(true);
