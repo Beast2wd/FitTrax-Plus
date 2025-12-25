@@ -15,6 +15,7 @@ import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
 import { dashboardAPI, waterAPI, workoutAPI } from '../services/api';
 import { router } from 'expo-router';
+import FitTraxxLogo from '../components/FitTraxxLogo';
 
 export default function DashboardScreen() {
   const { userId, profile } = useUserStore();
@@ -119,6 +120,11 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
+        {/* Logo Header */}
+        <View style={styles.logoHeader}>
+          <FitTraxxLogo size="medium" showText={true} />
+        </View>
+
         {/* Welcome Section */}
         <View style={styles.header}>
           <Text style={styles.greeting}>Hello, {profile?.name || 'User'}! 👋</Text>
@@ -333,6 +339,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+  },
+  logoHeader: {
+    marginBottom: 24,
+    paddingTop: 8,
   },
   header: {
     marginBottom: 24,
