@@ -514,13 +514,13 @@ class FitTraxxAPITester:
             # Test updating user plan progress
             if user_plans:
                 user_plan_id = user_plans[0]["user_plan_id"]
-                update_data = {
+                update_params = {
                     "current_day": 2,
                     "completed_days": "[1]",
                     "status": "active"
                 }
                 
-                success, response, error = self.make_request("PUT", f"/user-plans/{user_plan_id}", update_data)
+                success, response, error = self.make_request("PUT", f"/user-plans/{user_plan_id}", params=update_params)
                 
                 if success and response.status_code == 200:
                     self.log_test("User Plan Update", True, "User plan progress updated")
