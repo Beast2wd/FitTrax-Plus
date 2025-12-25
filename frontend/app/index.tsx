@@ -393,6 +393,20 @@ export default function DashboardScreen() {
             </View>
             <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#EC4899', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/running')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#FCE7F3' }]}>
+              <Ionicons name="footsteps" size={24} color="#EC4899" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Running Tracker</Text>
+              <Text style={styles.actionSubtitle}>Track distance with GPS</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
         </View>
 
         {/* Bottom Spacer */}
