@@ -408,7 +408,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.light,
+    backgroundColor: '#f8fafc',
   },
   centered: {
     flex: 1,
@@ -417,130 +417,271 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+    paddingBottom: 100,
   },
-  logoHeader: {
-    marginBottom: 24,
-    paddingTop: 8,
+  
+  // Enhanced Header Styles
+  headerCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
   },
-  header: {
-    marginBottom: 24,
+  logoContainer: {
+    marginRight: 16,
+  },
+  greetingContainer: {
+    flex: 1,
   },
   greeting: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    color: Colors.text.primary,
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  motivationText: {
+    fontSize: 14,
+    color: '#6366f1',
+    fontWeight: '600',
     marginBottom: 4,
   },
   date: {
-    fontSize: 16,
-    color: Colors.text.secondary,
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
   },
-  calorieCard: {
-    backgroundColor: Colors.background.card,
-    borderRadius: 16,
-    padding: 20,
+
+  // Enhanced Calorie Card Styles
+  calorieCardWrapper: {
     marginBottom: 24,
+    borderRadius: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 16,
+  calorieGradient: {
+    padding: 24,
   },
-  calorieRow: {
+  calorieHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  calorieTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginLeft: 12,
+  },
+  calorieStatsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  calorieValue: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: Colors.brand.primary,
+  calorieStatItem: {
+    alignItems: 'center',
+  },
+  calorieStatValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
     textAlign: 'center',
   },
-  calorieOver: {
-    color: Colors.status.error,
-  },
-  calorieLabel: {
+  calorieStatLabel: {
     fontSize: 12,
-    color: Colors.text.secondary,
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
     marginTop: 4,
+    fontWeight: '500',
   },
   calorieDivider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.border.light,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  calorieOver: {
+    color: '#fef2f2',
+  },
+  progressBarContainer: {
+    alignItems: 'center',
   },
   progressBar: {
+    width: '100%',
     height: 8,
-    backgroundColor: Colors.background.light,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 4,
     overflow: 'hidden',
+    marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.brand.primary,
+    backgroundColor: '#fff',
     borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+  },
+
+  // Enhanced Stats Section
+  statsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 16,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 24,
   },
   statCard: {
     flex: 1,
     minWidth: '47%',
-    backgroundColor: Colors.background.card,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  statIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   statValue: {
     fontSize: 28,
-    fontWeight: '700',
-    color: Colors.text.primary,
-    marginTop: 8,
+    fontWeight: '800',
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.text.secondary,
-    marginTop: 4,
+    color: '#6b7280',
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  section: {
+
+  // Water Section
+  waterSection: {
     marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: 20,
+  waterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  waterTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginLeft: 8,
+  },
+  waterButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  waterButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  waterButtonText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 12,
+    color: '#374151',
+    marginTop: 4,
+  },
+
+  // Macros Section
+  macrosSection: {
+    marginBottom: 24,
+  },
+  macrosCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    justifyContent: 'space-around',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  macroItem: {
+    alignItems: 'center',
+  },
+  macroCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  macroValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  macroLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+
+  // Actions Section
+  actionsSection: {
+    marginBottom: 24,
   },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background.card,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   actionIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.background.light,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -550,58 +691,17 @@ const styles = StyleSheet.create({
   },
   actionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text.primary,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 2,
   },
   actionSubtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
-    marginTop: 2,
+    color: '#6b7280',
+    fontWeight: '500',
   },
-  waterButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  waterButton: {
-    flex: 1,
-    minWidth: '22%',
-    backgroundColor: Colors.background.card,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  waterButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginTop: 4,
-  },
-  macrosCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.background.card,
-    borderRadius: 12,
-    padding: 20,
-    justifyContent: 'space-around',
-  },
-  macroItem: {
-    alignItems: 'center',
-  },
-  macroValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.text.primary,
-  },
-  macroLabel: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    marginTop: 4,
-  },
+
+  // Legacy styles for compatibility
   button: {
     backgroundColor: Colors.brand.primary,
     borderRadius: 8,
