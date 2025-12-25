@@ -38,7 +38,10 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     if (userId) {
+      setLoading(true);
       loadDashboard();
+    } else {
+      setLoading(false);
     }
   }, [userId]);
 
