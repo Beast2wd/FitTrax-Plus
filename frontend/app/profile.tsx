@@ -232,7 +232,7 @@ export default function ProfileScreen() {
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={formData.activity_level}
-                onChangeText={(value) => updateField('activity_level', value)}
+                onValueChange={(value) => updateField('activity_level', value)}
                 style={styles.picker}
               >
                 <Picker.Item label="Sedentary" value="sedentary" />
