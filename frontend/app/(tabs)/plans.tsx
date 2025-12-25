@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '../constants/Colors';
-import { useUserStore } from '../stores/userStore';
-import { plansAPI } from '../services/api';
+import { Colors } from '../../constants/Colors';
+import { useUserStore } from '../../stores/userStore';
+import { plansAPI } from '../../services/api';
 
 export default function PlansScreen() {
   const { userId } = useUserStore();

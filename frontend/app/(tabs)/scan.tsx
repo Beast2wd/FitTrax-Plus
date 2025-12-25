@@ -12,9 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '../constants/Colors';
-import { useUserStore } from '../stores/userStore';
-import { foodAPI } from '../services/api';
+import { Colors } from '../../constants/Colors';
+import { useUserStore } from '../../stores/userStore';
+import { foodAPI } from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
 
 export default function ScanScreen() {

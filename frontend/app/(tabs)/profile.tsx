@@ -13,10 +13,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
-import { Colors } from '../constants/Colors';
-import { useUserStore } from '../stores/userStore';
-import { userAPI } from '../services/api';
-import { storage } from '../services/storage';
+import { Colors } from '../../constants/Colors';
+import { useUserStore } from '../../stores/userStore';
+import { userAPI } from '../../services/api';
+import { storage } from '../../services/storage';
 
 export default function ProfileScreen() {
   const { userId, profile, setUserId, setProfile } = useUserStore();
