@@ -81,20 +81,6 @@ export default function DashboardScreen() {
     }
   };
 
-  const addWater = async (amount: number) => {
-    try {
-      await waterAPI.addWater({
-        water_id: `water_${Date.now()}`,
-        user_id: userId!,
-        amount,
-        timestamp: new Date().toISOString(),
-      });
-      loadDashboard();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to add water');
-    }
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
