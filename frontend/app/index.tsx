@@ -235,6 +235,62 @@ export default function DashboardScreen() {
             </View>
             <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/heart-rate')}
+          >
+            <View style={styles.actionIcon}>
+              <MaterialIcons name="favorite" size={24} color={Colors.status.error} />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Heart Rate Tracking</Text>
+              <Text style={styles.actionSubtitle}>Monitor your heart health</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/meals-history')}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="fast-food" size={24} color={'#8B5CF6'} />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Meal History</Text>
+              <Text style={styles.actionSubtitle}>View all your logged meals</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/schedule')}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="calendar" size={24} color={'#F59E0B'} />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Workout Schedule</Text>
+              <Text style={styles.actionSubtitle}>Plan and track your workouts</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/analytics')}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="stats-chart" size={24} color={'#10B981'} />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Analytics & Insights</Text>
+              <Text style={styles.actionSubtitle}>Track your progress</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
         </View>
 
         {/* Water Tracking */}
