@@ -66,21 +66,16 @@ export default function DashboardScreen() {
 
   const addWater = async (amount: number) => {
     try {
-      if (!userId) return;
-      const data = await dashboardAPI.getDashboard(userId);
-      setDashboardData(data);
-    } catch (error: any) {
-      console.error('Error loading dashboard:', error);
-      Alert.alert('Error', 'Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      await waterAPI.addWater({
+        water_id: `water_${Date.now()}`,
+        user_id: userId!,
+        amount,
+        timestamp: new Date().toISOString(),
+      });
+      loadDashboard();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add water');
     }
-  };
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    loadDashboard();
   };
 
   const addWater = async (amount: number) => {
