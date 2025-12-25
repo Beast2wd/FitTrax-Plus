@@ -25,14 +25,28 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (userId) {
       loadDashboard();
-    } else if (!profile) {
-      // Redirect to profile if no user - delay to ensure navigation is ready
-      const timer = setTimeout(() => {
-        router.push('/profile');
-      }, 100);
-      return () => clearTimeout(timer);
     }
   }, [userId]);
+
+  // If no profile exists, show onboarding message instead of navigating
+  if (!userId || !profile) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <Text style={styles.title}>Welcome to FitTraxx! 🏃‍♀️</Text>
+          <Text style={styles.subtitle}>
+            Let's set up your profile to get started with your fitness journey.
+          </Text>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => router.push('/profile')}
+          >
+            <Text style={styles.buttonText}>Create Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const loadDashboard = async () => {
     try {
