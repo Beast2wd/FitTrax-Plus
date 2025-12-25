@@ -59,21 +59,26 @@ class FitTraxxAPITester:
     
     def create_sample_food_image(self) -> str:
         """Create a sample food image in base64 format for testing"""
-        # Create a simple test image (1x1 pixel PNG) - this is just for API testing
-        # In real usage, this would be an actual food photo
+        # Create a more realistic test image that looks like food
         import io
         try:
-            from PIL import Image
-            # Create a small test image
-            img = Image.new('RGB', (100, 100), color='red')
+            from PIL import Image, ImageDraw
+            # Create a simple test image that looks like food (apple)
+            img = Image.new('RGB', (200, 200), color='white')
+            draw = ImageDraw.Draw(img)
+            
+            # Draw a simple apple shape
+            draw.ellipse([50, 50, 150, 150], fill='red', outline='darkred')
+            draw.ellipse([90, 40, 110, 60], fill='green')  # stem
+            
             buffer = io.BytesIO()
             img.save(buffer, format='PNG')
             img_data = buffer.getvalue()
             return base64.b64encode(img_data).decode('utf-8')
         except ImportError:
-            # Fallback: create a minimal PNG base64 string
-            # This is a 1x1 red pixel PNG
-            return "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+            # Fallback: create a minimal PNG base64 string that represents food
+            # This is a small red square that could represent food
+            return "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"
 
     def test_health_check(self):
         """Test health check endpoint"""
