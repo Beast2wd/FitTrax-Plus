@@ -218,27 +218,33 @@ backend:
 
   - task: "User plans management"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "User plan start/update endpoints implemented"
+      - working: true
+        agent: "testing"
+        comment: "User plans management tested successfully - POST /api/user-plans starts workout plans, GET /api/user-plans/{user_id} retrieves with status filtering, PUT /api/user-plans/{user_plan_id} updates progress with query parameters"
 
   - task: "Scheduled workouts and reminders"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Scheduled workout endpoints implemented"
+      - working: true
+        agent: "testing"
+        comment: "Scheduled workouts tested successfully - POST /api/scheduled-workouts creates schedules, GET /api/scheduled-workouts/{user_id} retrieves with date filtering, PUT /api/scheduled-workouts/{scheduled_id} updates completion status, DELETE removes schedules, GET /api/scheduled-workouts/reminders/{user_id} returns upcoming reminders"
 
   - task: "Dashboard comprehensive data"
     implemented: true
