@@ -785,3 +785,114 @@ const styles = StyleSheet.create({
     color: Colors.brand.primary,
   },
 });
+
+  mapContainer: {
+    height: 300,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  map: {
+    flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Colors.background.light,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  modalContent: {
+    flex: 1,
+  },
+  detailMapContainer: {
+    height: 300,
+    margin: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  detailMap: {
+    flex: 1,
+  },
+  detailCard: {
+    margin: 16,
+    backgroundColor: Colors.background.card,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  detailTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  detailDate: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 24,
+  },
+  detailStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginBottom: 20,
+  },
+  detailStatItem: {
+    flex: 1,
+    minWidth: '45%',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.background.light,
+    borderRadius: 12,
+  },
+  detailStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginTop: 8,
+  },
+  detailStatLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginTop: 4,
+  },
+  detailInfoCard: {
+    backgroundColor: Colors.background.light,
+    borderRadius: 12,
+    padding: 16,
+  },
+  detailInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  detailInfoLabel: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  detailInfoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+});
