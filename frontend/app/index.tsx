@@ -26,8 +26,11 @@ export default function DashboardScreen() {
     if (userId) {
       loadDashboard();
     } else if (!profile) {
-      // Redirect to profile if no user
-      router.push('/profile');
+      // Redirect to profile if no user - delay to ensure navigation is ready
+      const timer = setTimeout(() => {
+        router.push('/profile');
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [userId]);
 
