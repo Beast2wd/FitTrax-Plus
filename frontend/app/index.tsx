@@ -142,92 +142,197 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
-        {/* Logo Header */}
-        <View style={styles.logoHeader}>
-          <FitTraxxLogo size="medium" showText={true} />
+        {/* Enhanced Header with Gradient */}
+        <View style={styles.headerCard}>
+          <View style={styles.logoContainer}>
+            <FitTraxxLogo size="small" showText={false} />
+          </View>
+          <View style={styles.greetingContainer}>
+            <Text style={styles.greeting}>
+              {getGreeting()}, {profile?.name || 'User'}! 👋
+            </Text>
+            <Text style={styles.motivationText}>{getMotivationalMessage()}</Text>
+            <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</Text>
+          </View>
         </View>
 
-        {/* Welcome Section */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Hello, {profile?.name || 'User'}! 👋</Text>
-          <Text style={styles.date}>{new Date().toDateString()}</Text>
-        </View>
-
-        {/* Calorie Goal Card */}
-        <View style={styles.calorieCard}>
-          <Text style={styles.cardTitle}>Daily Calorie Goal</Text>
-          <View style={styles.calorieRow}>
-            <View>
-              <Text style={styles.calorieValue}>
-                {Math.round(today.net_calories || 0)}
-              </Text>
-              <Text style={styles.calorieLabel}>Consumed</Text>
+        {/* Enhanced Calorie Goal Card with Gradient */}
+        <View style={styles.calorieCardWrapper}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.calorieGradient}
+          >
+            <View style={styles.calorieHeader}>
+              <Ionicons name="flame" size={28} color="#fff" />
+              <Text style={styles.calorieTitle}>Today's Calorie Goal</Text>
             </View>
-            <View style={styles.calorieDivider} />
-            <View>
-              <Text style={styles.calorieValue}>
-                {Math.round(today.calories_burned || 0)}
-              </Text>
-              <Text style={styles.calorieLabel}>Burned</Text>
+            
+            <View style={styles.calorieStatsRow}>
+              <View style={styles.calorieStatItem}>
+                <Text style={styles.calorieStatValue}>
+                  {Math.round(today.calories_consumed || 0)}
+                </Text>
+                <Text style={styles.calorieStatLabel}>Consumed</Text>
+              </View>
+              <View style={styles.calorieDivider} />
+              <View style={styles.calorieStatItem}>
+                <Text style={styles.calorieStatValue}>
+                  {Math.round(today.calories_burned || 0)}
+                </Text>
+                <Text style={styles.calorieStatLabel}>Burned</Text>
+              </View>
+              <View style={styles.calorieDivider} />
+              <View style={styles.calorieStatItem}>
+                <Text style={[styles.calorieStatValue, caloriesRemaining < 0 && styles.calorieOver]}>
+                  {Math.round(Math.abs(caloriesRemaining))}
+                </Text>
+                <Text style={styles.calorieStatLabel}>
+                  {caloriesRemaining >= 0 ? 'Remaining' : 'Over'}
+                </Text>
+              </View>
             </View>
-            <View style={styles.calorieDivider} />
-            <View>
-              <Text style={[styles.calorieValue, caloriesRemaining < 0 && styles.calorieOver]}>
-                {Math.round(Math.abs(caloriesRemaining))}
-              </Text>
-              <Text style={styles.calorieLabel}>
-                {caloriesRemaining >= 0 ? 'Remaining' : 'Over'}
+
+            <View style={styles.progressBarContainer}>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${progressPercentage}%` },
+                    progressPercentage > 100 && { backgroundColor: '#ef4444' }
+                  ]} 
+                />
+              </View>
+              <Text style={styles.progressText}>
+                {Math.round(progressPercentage)}% of goal
               </Text>
             </View>
-          </View>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressFill, 
-                { width: `${progressPercentage}%` },
-                progressPercentage > 100 && { backgroundColor: Colors.status.error }
-              ]} 
-            />
+          </LinearGradient>
+        </View>
+
+        {/* Today's Stats Grid with Colors */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>Today's Progress</Text>
+          <View style={styles.statsGrid}>
+            <TouchableOpacity 
+              style={[styles.statCard, { backgroundColor: '#EFF6FF' }]}
+              onPress={() => router.push('/meals-history')}
+            >
+              <View style={[styles.statIconCircle, { backgroundColor: '#3B82F6' }]}>
+                <Ionicons name="fast-food" size={24} color="#fff" />
+              </View>
+              <Text style={[styles.statValue, { color: '#3B82F6' }]}>
+                {today.meals_count || 0}
+              </Text>
+              <Text style={styles.statLabel}>Meals</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.statCard, { backgroundColor: '#F0FDF4' }]}
+              onPress={() => router.push('/plans')}
+            >
+              <View style={[styles.statIconCircle, { backgroundColor: '#10B981' }]}>
+                <MaterialIcons name="fitness-center" size={24} color="#fff" />
+              </View>
+              <Text style={[styles.statValue, { color: '#10B981' }]}>
+                {today.workouts_count || 0}
+              </Text>
+              <Text style={styles.statLabel}>Workouts</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.statCard, { backgroundColor: '#ECFDF5' }]}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.statIconCircle, { backgroundColor: '#0EA5E9' }]}>
+                <Ionicons name="water" size={24} color="#fff" />
+              </View>
+              <Text style={[styles.statValue, { color: '#0EA5E9' }]}>
+                {Math.round(today.water_intake || 0)}
+              </Text>
+              <Text style={styles.statLabel}>oz Water</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.statCard, { backgroundColor: '#FEF2F2' }]}
+              onPress={() => router.push('/heart-rate')}
+            >
+              <View style={[styles.statIconCircle, { backgroundColor: '#EF4444' }]}>
+                <MaterialIcons name="favorite" size={24} color="#fff" />
+              </View>
+              <Text style={[styles.statValue, { color: '#EF4444' }]}>
+                {Math.round(today.avg_heart_rate || 0)}
+              </Text>
+              <Text style={styles.statLabel}>Avg BPM</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Today's Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: '#EFF6FF' }]}>
-            <Ionicons name="fast-food" size={32} color={Colors.brand.primary} />
-            <Text style={styles.statValue}>{today.meals_count || 0}</Text>
-            <Text style={styles.statLabel}>Meals</Text>
+        {/* Water Tracking Section */}
+        <View style={styles.waterSection}>
+          <View style={styles.waterHeader}>
+            <Ionicons name="water" size={24} color="#0EA5E9" />
+            <Text style={styles.waterTitle}>Quick Log Water</Text>
           </View>
-
-          <View style={[styles.statCard, { backgroundColor: '#F0FDF4' }]}>
-            <MaterialIcons name="fitness-center" size={32} color={Colors.status.success} />
-            <Text style={styles.statValue}>{today.workouts_count || 0}</Text>
-            <Text style={styles.statLabel}>Workouts</Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: '#ECFDF5' }]}>
-            <Ionicons name="water" size={32} color="#0EA5E9" />
-            <Text style={styles.statValue}>{Math.round(today.water_intake || 0)}</Text>
-            <Text style={styles.statLabel}>oz Water</Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: '#FEF2F2' }]}>
-            <MaterialIcons name="favorite" size={32} color={Colors.status.error} />
-            <Text style={styles.statValue}>{Math.round(today.avg_heart_rate || 0)}</Text>
-            <Text style={styles.statLabel}>Avg BPM</Text>
+          <View style={styles.waterButtons}>
+            {[8, 16, 24, 32].map((amount) => (
+              <TouchableOpacity
+                key={amount}
+                style={styles.waterButton}
+                onPress={() => addWater(amount)}
+              >
+                <Ionicons name="water" size={20} color="#0EA5E9" />
+                <Text style={styles.waterButtonText}>{amount} oz</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
+
+        {/* Macros Section */}
+        {today.meals_count > 0 && (
+          <View style={styles.macrosSection}>
+            <Text style={styles.sectionTitle}>Today's Nutrition</Text>
+            <View style={styles.macrosCard}>
+              <View style={styles.macroItem}>
+                <View style={[styles.macroCircle, { backgroundColor: '#3B82F6' }]}>
+                  <MaterialIcons name="fitness-center" size={20} color="#fff" />
+                </View>
+                <Text style={styles.macroValue}>{Math.round(today.protein || 0)}g</Text>
+                <Text style={styles.macroLabel}>Protein</Text>
+              </View>
+              <View style={styles.macroItem}>
+                <View style={[styles.macroCircle, { backgroundColor: '#F59E0B' }]}>
+                  <Ionicons name="pizza" size={20} color="#fff" />
+                </View>
+                <Text style={styles.macroValue}>{Math.round(today.carbs || 0)}g</Text>
+                <Text style={styles.macroLabel}>Carbs</Text>
+              </View>
+              <View style={styles.macroItem}>
+                <View style={[styles.macroCircle, { backgroundColor: '#8B5CF6' }]}>
+                  <Ionicons name="nutrition" size={20} color="#fff" />
+                </View>
+                <Text style={styles.macroValue}>{Math.round(today.fat || 0)}g</Text>
+                <Text style={styles.macroLabel}>Fat</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Quick Actions */}
-        <View style={styles.section}>
+        <View style={styles.actionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           
           <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, { borderLeftColor: '#3B82F6', borderLeftWidth: 4 }]}
             onPress={() => router.push('/scan')}
           >
-            <View style={styles.actionIcon}>
-              <Ionicons name="camera" size={24} color={Colors.brand.primary} />
+            <View style={[styles.actionIcon, { backgroundColor: '#EFF6FF' }]}>
+              <Ionicons name="camera" size={24} color="#3B82F6" />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Scan Food</Text>
@@ -237,11 +342,11 @@ export default function DashboardScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, { borderLeftColor: '#10B981', borderLeftWidth: 4 }]}
             onPress={() => router.push('/plans')}
           >
-            <View style={styles.actionIcon}>
-              <MaterialIcons name="fitness-center" size={24} color={Colors.status.success} />
+            <View style={[styles.actionIcon, { backgroundColor: '#F0FDF4' }]}>
+              <MaterialIcons name="fitness-center" size={24} color="#10B981" />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Browse Workout Plans</Text>
@@ -251,11 +356,11 @@ export default function DashboardScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, { borderLeftColor: '#EF4444', borderLeftWidth: 4 }]}
             onPress={() => router.push('/heart-rate')}
           >
-            <View style={styles.actionIcon}>
-              <MaterialIcons name="favorite" size={24} color={Colors.status.error} />
+            <View style={[styles.actionIcon, { backgroundColor: '#FEF2F2' }]}>
+              <MaterialIcons name="favorite" size={24} color="#EF4444" />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Heart Rate Tracking</Text>
@@ -265,39 +370,11 @@ export default function DashboardScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={() => router.push('/meals-history')}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="fast-food" size={24} color={'#8B5CF6'} />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Meal History</Text>
-              <Text style={styles.actionSubtitle}>View all your logged meals</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={() => router.push('/schedule')}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="calendar" size={24} color={'#F59E0B'} />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Workout Schedule</Text>
-              <Text style={styles.actionSubtitle}>Plan and track your workouts</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
             onPress={() => router.push('/analytics')}
           >
-            <View style={styles.actionIcon}>
-              <Ionicons name="stats-chart" size={24} color={'#10B981'} />
+            <View style={[styles.actionIcon, { backgroundColor: '#F5F3FF' }]}>
+              <Ionicons name="stats-chart" size={24} color="#8B5CF6" />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Analytics & Insights</Text>
@@ -305,45 +382,24 @@ export default function DashboardScreen() {
             </View>
             <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
           </TouchableOpacity>
-        </View>
 
-        {/* Water Tracking */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Log Water</Text>
-          <View style={styles.waterButtons}>
-            {[8, 16, 24, 32].map((amount) => (
-              <TouchableOpacity
-                key={amount}
-                style={styles.waterButton}
-                onPress={() => addWater(amount)}
-              >
-                <Ionicons name="water" size={20} color={Colors.brand.primary} />
-                <Text style={styles.waterButtonText}>{amount} oz</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Macros */}
-        {today.meals_count > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Today's Macros</Text>
-            <View style={styles.macrosCard}>
-              <View style={styles.macroItem}>
-                <Text style={styles.macroValue}>{Math.round(today.protein || 0)}g</Text>
-                <Text style={styles.macroLabel}>Protein</Text>
-              </View>
-              <View style={styles.macroItem}>
-                <Text style={styles.macroValue}>{Math.round(today.carbs || 0)}g</Text>
-                <Text style={styles.macroLabel}>Carbs</Text>
-              </View>
-              <View style={styles.macroItem}>
-                <Text style={styles.macroValue}>{Math.round(today.fat || 0)}g</Text>
-                <Text style={styles.macroLabel}>Fat</Text>
-              </View>
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#F59E0B', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/schedule')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#FFFBEB' }]}>
+              <Ionicons name="calendar" size={24} color="#F59E0B" />
             </View>
-          </View>
-        )}
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Workout Schedule</Text>
+              <Text style={styles.actionSubtitle}>Plan and track workouts</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Bottom Spacer */}
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
