@@ -65,15 +65,6 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
-  useEffect(() => {
-    if (userId) {
-      setLoading(true);
-      loadDashboard();
-    } else {
-      setLoading(false);
-    }
-  }, [userId]);
-
   // If no profile exists, show onboarding message without navigation
   if (!userId || !profile) {
     return (
