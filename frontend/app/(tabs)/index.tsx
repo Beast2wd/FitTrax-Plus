@@ -12,11 +12,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/Colors';
-import { useUserStore } from '../stores/userStore';
-import { dashboardAPI, waterAPI, workoutAPI } from '../services/api';
+import { Colors } from '../../constants/Colors';
+import { useUserStore } from '../../stores/userStore';
+import { dashboardAPI, waterAPI, workoutAPI } from '../../services/api';
 import { router } from 'expo-router';
-import FitTraxxLogo from '../components/FitTraxxLogo';
+import FitTraxxLogo from '../../components/FitTraxxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
