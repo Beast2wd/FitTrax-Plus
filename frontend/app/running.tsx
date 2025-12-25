@@ -784,8 +784,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.brand.primary,
   },
-});
-
   mapContainer: {
     height: 300,
     borderRadius: 16,
@@ -896,3 +894,4 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
   },
 });
+
