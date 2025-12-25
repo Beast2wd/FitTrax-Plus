@@ -146,15 +146,18 @@ backend:
 
   - task: "Meals CRUD operations"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Meals endpoints implemented, needs testing"
+      - working: true
+        agent: "testing"
+        comment: "Meals CRUD tested successfully - GET /api/meals/{user_id} retrieves meals correctly, DELETE /api/meals/{meal_id} works properly"
 
   - task: "Workouts CRUD operations"
     implemented: true
