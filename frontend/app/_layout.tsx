@@ -1,11 +1,10 @@
-import { Tabs } from 'expo-router';
+import { Stack } from 'expo-router';
 import React, { useEffect } from 'react';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
 import { storage } from '../services/storage';
 
-export default function TabLayout() {
+export default function RootLayout() {
   const { setUserId, setProfile } = useUserStore();
 
   useEffect(() => {
@@ -20,68 +19,55 @@ export default function TabLayout() {
   }, []);
 
   return (
-    <Tabs
+    <Stack
       screenOptions={{
-        tabBarActiveTintColor: Colors.brand.primary,
-        tabBarInactiveTintColor: Colors.text.secondary,
-        tabBarStyle: {
-          backgroundColor: Colors.background.page,
-          borderTopWidth: 1,
-          borderTopColor: Colors.border.light,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 65,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
         headerStyle: {
           backgroundColor: Colors.background.page,
         },
         headerTintColor: Colors.text.primary,
         headerTitleStyle: {
           fontWeight: '600',
-          fontSize: 20,
+          fontSize: 18,
         },
+        headerBackTitleVisible: false,
       }}
     >
-      <Tabs.Screen
-        name="index"
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="analytics"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="dashboard" size={size} color={color} />
-          ),
+          title: 'Analytics',
+          presentation: 'card',
         }}
       />
-      <Tabs.Screen
-        name="plans"
+      <Stack.Screen
+        name="heart-rate"
         options={{
-          title: 'Plans',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="fitness-center" size={size} color={color} />
-          ),
+          title: 'Heart Rate',
+          presentation: 'card',
         }}
       />
-      <Tabs.Screen
-        name="scan"
+      <Stack.Screen
+        name="running"
         options={{
-          title: 'Scan',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="camera" size={size} color={color} />
-          ),
+          title: 'Running Tracker',
+          presentation: 'card',
         }}
       />
-      <Tabs.Screen
-        name="profile"
+      <Stack.Screen
+        name="schedule"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
+          title: 'Workout Schedule',
+          presentation: 'card',
         }}
       />
-    </Tabs>
+      <Stack.Screen
+        name="meals-history"
+        options={{
+          title: 'Meal History',
+          presentation: 'card',
+        }}
+      />
+    </Stack>
   );
 }
