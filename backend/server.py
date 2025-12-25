@@ -1062,6 +1062,116 @@ async def get_dashboard(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# RUNNING DISTANCE TRACKER ENDPOINTS
+# ============================================================================
+
+class RunCreate(BaseModel):
+    run_id: str
+    user_id: str
+    distance: float  # in kilometers
+    duration: int  # in seconds
+    average_pace: float  # min/km
+    calories_burned: float
+    route_data: Optional[list] = []  # GPS coordinates
+    notes: Optional[str] = ""
+    timestamp: str
+
+@api_router.post("/runs")
+async def add_run(run: RunCreate):
+    """Add a running session"""
+    await db.runs.insert_one(run.dict())
+    return {"message": "Run added successfully", "run": run.dict()}
+
+@api_router.get("/runs/{user_id}")
+async def get_runs(user_id: str, days: int = 30):
+    """Get user's running sessions"""
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    cutoff_iso = cutoff_date.isoformat()
+    
+    runs_cursor = db.runs.find({
+        "user_id": user_id,
+        "timestamp": {"$gte": cutoff_iso}
+    }).sort("timestamp", -1)
+    
+    runs = await runs_cursor.to_list(length=1000)
+    
+    for run in runs:
+        run.pop('_id', None)
+    
+    return {"runs": runs}
+
+@api_router.delete("/runs/{run_id}")
+async def delete_run(run_id: str):
+    """Delete a run"""
+    result = await db.runs.delete_one({"run_id": run_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Run not found")
+    
+    return {"message": "Run deleted successfully"}
+
+@api_router.get("/runs/stats/{user_id}")
+async def get_running_stats(user_id: str):
+    """Get weekly and monthly running statistics"""
+    try:
+        # Get all runs for calculations
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        month_ago = datetime.utcnow() - timedelta(days=30)
+        
+        week_iso = week_ago.isoformat()
+        month_iso = month_ago.isoformat()
+        
+        # Weekly runs
+        weekly_runs_cursor = db.runs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": week_iso}
+        })
+        weekly_runs = await weekly_runs_cursor.to_list(length=1000)
+        
+        # Monthly runs
+        monthly_runs_cursor = db.runs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": month_iso}
+        })
+        monthly_runs = await monthly_runs_cursor.to_list(length=1000)
+        
+        # Calculate weekly stats
+        weekly_distance = sum(r['distance'] for r in weekly_runs)
+        weekly_duration = sum(r['duration'] for r in weekly_runs)
+        weekly_calories = sum(r['calories_burned'] for r in weekly_runs)
+        weekly_count = len(weekly_runs)
+        weekly_avg_pace = sum(r['average_pace'] for r in weekly_runs) / weekly_count if weekly_count > 0 else 0
+        
+        # Calculate monthly stats
+        monthly_distance = sum(r['distance'] for r in monthly_runs)
+        monthly_duration = sum(r['duration'] for r in monthly_runs)
+        monthly_calories = sum(r['calories_burned'] for r in monthly_runs)
+        monthly_count = len(monthly_runs)
+        monthly_avg_pace = sum(r['average_pace'] for r in monthly_runs) / monthly_count if monthly_count > 0 else 0
+        
+        return {
+            "weekly": {
+                "total_distance": round(weekly_distance, 2),
+                "total_duration": weekly_duration,
+                "total_calories": round(weekly_calories, 1),
+                "run_count": weekly_count,
+                "average_pace": round(weekly_avg_pace, 2),
+                "average_distance": round(weekly_distance / weekly_count, 2) if weekly_count > 0 else 0
+            },
+            "monthly": {
+                "total_distance": round(monthly_distance, 2),
+                "total_duration": monthly_duration,
+                "total_calories": round(monthly_calories, 1),
+                "run_count": monthly_count,
+                "average_pace": round(monthly_avg_pace, 2),
+                "average_distance": round(monthly_distance / monthly_count, 2) if monthly_count > 0 else 0
+            }
+        }
+    
+    except Exception as e:
+        logger.error(f"Error getting running stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
