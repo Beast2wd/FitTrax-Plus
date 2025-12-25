@@ -7,16 +7,20 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Dimensions,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import MapView, { Polyline, Marker } from 'react-native-maps';
 import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
+const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
 export default function RunningScreen() {
@@ -31,15 +35,20 @@ export default function RunningScreen() {
   const [runs, setRuns] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<any>(null);
+  const [selectedRun, setSelectedRun] = useState<any>(null);
+  const [showRunDetail, setShowRunDetail] = useState(false);
   
   const locationSubscription = useRef<any>(null);
   const timerInterval = useRef<any>(null);
   const lastLocation = useRef<any>(null);
+  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     if (userId) {
       loadRuns();
       loadStats();
+      getCurrentLocation();
     }
     requestLocationPermissions();
     
@@ -47,6 +56,20 @@ export default function RunningScreen() {
       stopTracking();
     };
   }, [userId]);
+
+  const getCurrentLocation = async () => {
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      setCurrentLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    } catch (error) {
+      console.error('Error getting location:', error);
+    }
+  };
 
   const requestLocationPermissions = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -208,6 +231,7 @@ export default function RunningScreen() {
               await axios.delete(`${API_URL}/api/runs/${runId}`);
               loadRuns();
               loadStats();
+              setShowRunDetail(false);
             } catch (error) {
               Alert.alert('Error', 'Failed to delete run');
             }
@@ -215,6 +239,11 @@ export default function RunningScreen() {
         },
       ]
     );
+  };
+
+  const viewRunDetail = (run: any) => {
+    setSelectedRun(run);
+    setShowRunDetail(true);
   };
 
   const formatTime = (seconds: number) => {
@@ -245,6 +274,40 @@ export default function RunningScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Running Tracker</Text>
+
+        {/* Live Map During Tracking */}
+        {isTracking && routeCoords.length > 0 && (
+          <View style={styles.mapContainer}>
+            <MapView
+              ref={mapRef}
+              style={styles.map}
+              initialRegion={{
+                latitude: routeCoords[0].latitude,
+                longitude: routeCoords[0].longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              showsUserLocation
+              followsUserLocation
+            >
+              <Polyline
+                coordinates={routeCoords}
+                strokeColor={Colors.brand.primary}
+                strokeWidth={4}
+              />
+              {routeCoords.length > 0 && (
+                <>
+                  <Marker coordinate={routeCoords[0]} title="Start" pinColor="green" />
+                  <Marker
+                    coordinate={routeCoords[routeCoords.length - 1]}
+                    title="Current"
+                    pinColor="blue"
+                  />
+                </>
+              )}
+            </MapView>
+          </View>
+        )}
 
         {/* Active Tracking Card */}
         {!isTracking ? (
@@ -355,7 +418,11 @@ export default function RunningScreen() {
           <View style={styles.runsSection}>
             <Text style={styles.sectionTitle}>Recent Runs</Text>
             {runs.slice(0, 10).map((run) => (
-              <View key={run.run_id} style={styles.runCard}>
+              <TouchableOpacity 
+                key={run.run_id} 
+                style={styles.runCard}
+                onPress={() => viewRunDetail(run)}
+              >
                 <View style={styles.runLeft}>
                   <Ionicons name="footsteps" size={32} color={Colors.brand.primary} />
                   <View style={styles.runInfo}>
@@ -370,15 +437,122 @@ export default function RunningScreen() {
                 </View>
                 <View style={styles.runRight}>
                   <Text style={styles.runCalories}>{Math.round(run.calories_burned)} cal</Text>
-                  <TouchableOpacity onPress={() => deleteRun(run.run_id)}>
-                    <Ionicons name="trash-outline" size={20} color={Colors.status.error} />
-                  </TouchableOpacity>
+                  <Ionicons name="chevron-forward" size={20} color={Colors.text.muted} />
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
       </ScrollView>
+
+      {/* Run Detail Modal */}
+      <Modal
+        visible={showRunDetail}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowRunDetail(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowRunDetail(false)}>
+              <Ionicons name="close" size={28} color={Colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Run Details</Text>
+            <TouchableOpacity onPress={() => selectedRun && deleteRun(selectedRun.run_id)}>
+              <Ionicons name="trash-outline" size={24} color={Colors.status.error} />
+            </TouchableOpacity>
+          </View>
+
+          {selectedRun && (
+            <ScrollView style={styles.modalContent}>
+              {/* Map of the run route */}
+              {selectedRun.route_data && selectedRun.route_data.length > 1 && (
+                <View style={styles.detailMapContainer}>
+                  <MapView
+                    style={styles.detailMap}
+                    initialRegion={{
+                      latitude: selectedRun.route_data[0].latitude,
+                      longitude: selectedRun.route_data[0].longitude,
+                      latitudeDelta: 0.02,
+                      longitudeDelta: 0.02,
+                    }}
+                  >
+                    <Polyline
+                      coordinates={selectedRun.route_data}
+                      strokeColor={Colors.brand.primary}
+                      strokeWidth={4}
+                    />
+                    <Marker
+                      coordinate={selectedRun.route_data[0]}
+                      title="Start"
+                      pinColor="green"
+                    />
+                    <Marker
+                      coordinate={selectedRun.route_data[selectedRun.route_data.length - 1]}
+                      title="Finish"
+                      pinColor="red"
+                    />
+                  </MapView>
+                </View>
+              )}
+
+              {/* Run Statistics */}
+              <View style={styles.detailCard}>
+                <Text style={styles.detailTitle}>Run Summary</Text>
+                <Text style={styles.detailDate}>
+                  {format(new Date(selectedRun.timestamp), 'EEEE, MMMM d, yyyy • h:mm a')}
+                </Text>
+
+                <View style={styles.detailStatsGrid}>
+                  <View style={styles.detailStatItem}>
+                    <Ionicons name="navigate" size={32} color={Colors.brand.primary} />
+                    <Text style={styles.detailStatValue}>{selectedRun.distance}</Text>
+                    <Text style={styles.detailStatLabel}>Kilometers</Text>
+                  </View>
+
+                  <View style={styles.detailStatItem}>
+                    <Ionicons name="time" size={32} color={Colors.status.success} />
+                    <Text style={styles.detailStatValue}>{formatTime(selectedRun.duration)}</Text>
+                    <Text style={styles.detailStatLabel}>Duration</Text>
+                  </View>
+
+                  <View style={styles.detailStatItem}>
+                    <Ionicons name="speedometer" size={32} color={Colors.status.warning} />
+                    <Text style={styles.detailStatValue}>
+                      {formatPace(selectedRun.average_pace)}
+                    </Text>
+                    <Text style={styles.detailStatLabel}>Pace (min/km)</Text>
+                  </View>
+
+                  <View style={styles.detailStatItem}>
+                    <Ionicons name="flame" size={32} color={Colors.status.error} />
+                    <Text style={styles.detailStatValue}>
+                      {Math.round(selectedRun.calories_burned)}
+                    </Text>
+                    <Text style={styles.detailStatLabel}>Calories</Text>
+                  </View>
+                </View>
+
+                {/* Additional Info */}
+                <View style={styles.detailInfoCard}>
+                  <View style={styles.detailInfoRow}>
+                    <Text style={styles.detailInfoLabel}>Average Speed</Text>
+                    <Text style={styles.detailInfoValue}>
+                      {(selectedRun.distance / (selectedRun.duration / 3600)).toFixed(2)} km/h
+                    </Text>
+                  </View>
+                  <View style={styles.detailInfoRow}>
+                    <Text style={styles.detailInfoLabel}>GPS Points</Text>
+                    <Text style={styles.detailInfoValue}>
+                      {selectedRun.route_data?.length || 0} points
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
