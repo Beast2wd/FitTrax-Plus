@@ -9,16 +9,25 @@ import {
   ActivityIndicator,
   Dimensions,
   Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import MapView, { Polyline, Marker } from 'react-native-maps';
 import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// Conditionally import MapView only for native platforms
+let MapView: any, Polyline: any, Marker: any;
+if (Platform.OS !== 'web') {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Polyline = maps.Polyline;
+  Marker = maps.Marker;
+}
 
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
