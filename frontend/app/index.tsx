@@ -28,7 +28,7 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
-  // If no profile exists, show onboarding message instead of navigating
+  // If no profile exists, show onboarding message without navigation
   if (!userId || !profile) {
     return (
       <SafeAreaView style={styles.container}>
@@ -37,12 +37,9 @@ export default function DashboardScreen() {
           <Text style={styles.subtitle}>
             Let's set up your profile to get started with your fitness journey.
           </Text>
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => router.push('/profile')}
-          >
-            <Text style={styles.buttonText}>Create Profile</Text>
-          </TouchableOpacity>
+          <Text style={styles.subtitle}>
+            Please go to the Profile tab to create your account.
+          </Text>
         </View>
       </SafeAreaView>
     );
