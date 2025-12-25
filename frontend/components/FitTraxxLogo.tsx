@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Colors } from '../constants/Colors';
 
 interface FitTraxxLogoProps {
@@ -10,18 +9,23 @@ interface FitTraxxLogoProps {
 
 export default function FitTraxxLogo({ size = 'medium', showText = true }: FitTraxxLogoProps) {
   const sizes = {
-    small: { icon: 24, text: 16 },
-    medium: { icon: 40, text: 24 },
-    large: { icon: 64, text: 32 },
+    small: { icon: 36, text: 16 },
+    medium: { icon: 56, text: 24 },
+    large: { icon: 80, text: 32 },
   };
 
   const currentSize = sizes[size];
 
   return (
     <View style={styles.container}>
-      <View style={[styles.logoIcon, size === 'small' && styles.logoIconSmall]}>
-        <MaterialIcons name="fitness-center" size={currentSize.icon} color={Colors.text.white} />
-      </View>
+      <Image
+        source={require('../assets/images/icon.png')}
+        style={[
+          styles.logoIcon,
+          { width: currentSize.icon, height: currentSize.icon },
+          size === 'small' && styles.logoIconSmall
+        ]}
+      />
       {showText && (
         <Text style={[styles.logoText, { fontSize: currentSize.text }]}>FitTraxx</Text>
       )}
@@ -36,12 +40,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logoIcon: {
-    width: 56,
-    height: 56,
     borderRadius: 16,
-    backgroundColor: Colors.brand.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -49,8 +48,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   logoIconSmall: {
-    width: 36,
-    height: 36,
     borderRadius: 10,
   },
   logoText: {
