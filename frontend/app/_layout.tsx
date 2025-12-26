@@ -68,6 +68,20 @@ export default function RootLayout() {
           presentation: 'card',
         }}
       />
+      <Stack.Screen
+        name="membership"
+        options={{
+          title: 'Premium Membership',
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="badges"
+        options={{
+          title: 'Badges & Achievements',
+          presentation: 'card',
+        }}
+      />
     </Stack>
   );
 }
