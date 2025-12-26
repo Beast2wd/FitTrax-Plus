@@ -1172,6 +1172,543 @@ async def get_running_stats(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# MEMBERSHIP & SUBSCRIPTION ENDPOINTS
+# ============================================================================
+
+import stripe
+import time
+
+# Initialize Stripe with test key
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY', 'sk_test_placeholder')
+STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', 'price_placeholder')
+
+# Membership Models
+class MembershipCustomerCreate(BaseModel):
+    user_id: str
+    email: str
+    name: str
+
+class SubscriptionCreate(BaseModel):
+    user_id: str
+    price_id: Optional[str] = None
+
+class MembershipStatus(BaseModel):
+    user_id: str
+    is_premium: bool
+    is_trial: bool
+    trial_days_remaining: int
+    subscription_status: str
+    subscription_ends_at: Optional[str] = None
+    features: List[str]
+
+# Premium Features List
+PREMIUM_FEATURES = [
+    "personalized_workouts",
+    "ai_workout_generation",
+    "nutrition_integration",
+    "meal_planning",
+    "gamification",
+    "badges_challenges",
+    "advanced_analytics",
+    "wearable_integration",
+    "diverse_workouts",
+    "accessibility_features",
+    "multi_language"
+]
+
+FREE_FEATURES = [
+    "basic_tracking",
+    "food_scanning",
+    "water_tracking",
+    "heart_rate_logging"
+]
+
+@api_router.post("/membership/create-customer")
+async def create_membership_customer(request: MembershipCustomerCreate):
+    """Create or retrieve a Stripe customer for the user"""
+    try:
+        # Check if customer already exists
+        existing = await db.membership_customers.find_one({"user_id": request.user_id})
+        if existing:
+            return {
+                "customer_id": existing["stripe_customer_id"],
+                "user_id": request.user_id,
+                "email": existing["email"]
+            }
+        
+        # Check if Stripe key is configured
+        if stripe.api_key == 'sk_test_placeholder':
+            # Mock mode - create local record only
+            mock_customer_id = f"cus_mock_{request.user_id}"
+            await db.membership_customers.insert_one({
+                "user_id": request.user_id,
+                "email": request.email,
+                "name": request.name,
+                "stripe_customer_id": mock_customer_id,
+                "mock_mode": True,
+                "created_at": datetime.utcnow().isoformat()
+            })
+            return {
+                "customer_id": mock_customer_id,
+                "user_id": request.user_id,
+                "email": request.email,
+                "mock_mode": True
+            }
+        
+        # Create Stripe customer
+        customer = stripe.Customer.create(
+            email=request.email,
+            name=request.name,
+            metadata={"user_id": request.user_id, "app": "fittraxx"}
+        )
+        
+        # Store in MongoDB
+        await db.membership_customers.insert_one({
+            "user_id": request.user_id,
+            "email": request.email,
+            "name": request.name,
+            "stripe_customer_id": customer.id,
+            "mock_mode": False,
+            "created_at": datetime.utcnow().isoformat()
+        })
+        
+        return {
+            "customer_id": customer.id,
+            "user_id": request.user_id,
+            "email": request.email
+        }
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error creating customer: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/membership/start-trial")
+async def start_free_trial(request: SubscriptionCreate):
+    """Start a 3-day free trial for the user"""
+    try:
+        # Get customer
+        customer = await db.membership_customers.find_one({"user_id": request.user_id})
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found. Create customer first.")
+        
+        # Check if already has subscription
+        existing_sub = await db.subscriptions.find_one({
+            "user_id": request.user_id,
+            "status": {"$in": ["trialing", "active"]}
+        })
+        if existing_sub:
+            raise HTTPException(status_code=400, detail="User already has an active subscription or trial")
+        
+        trial_end = datetime.utcnow() + timedelta(days=3)
+        
+        # Mock mode handling
+        if customer.get("mock_mode", False) or stripe.api_key == 'sk_test_placeholder':
+            subscription_id = f"sub_mock_{request.user_id}_{int(time.time())}"
+            
+            await db.subscriptions.insert_one({
+                "subscription_id": subscription_id,
+                "user_id": request.user_id,
+                "stripe_customer_id": customer["stripe_customer_id"],
+                "status": "trialing",
+                "trial_start": datetime.utcnow().isoformat(),
+                "trial_end": trial_end.isoformat(),
+                "mock_mode": True,
+                "created_at": datetime.utcnow().isoformat()
+            })
+            
+            return {
+                "subscription_id": subscription_id,
+                "status": "trialing",
+                "trial_ends_at": trial_end.isoformat(),
+                "mock_mode": True,
+                "message": "3-day free trial started! Stripe integration pending."
+            }
+        
+        # Real Stripe subscription with trial
+        price_id = request.price_id or STRIPE_PRICE_ID
+        subscription = stripe.Subscription.create(
+            customer=customer["stripe_customer_id"],
+            items=[{"price": price_id}],
+            trial_period_days=3,
+            payment_behavior="default_incomplete",
+            payment_settings={"save_default_payment_method": "on_subscription"},
+            expand=["latest_invoice.payment_intent"]
+        )
+        
+        await db.subscriptions.insert_one({
+            "subscription_id": subscription.id,
+            "user_id": request.user_id,
+            "stripe_customer_id": customer["stripe_customer_id"],
+            "status": subscription.status,
+            "trial_start": datetime.fromtimestamp(subscription.trial_start).isoformat() if subscription.trial_start else None,
+            "trial_end": datetime.fromtimestamp(subscription.trial_end).isoformat() if subscription.trial_end else None,
+            "mock_mode": False,
+            "created_at": datetime.utcnow().isoformat()
+        })
+        
+        return {
+            "subscription_id": subscription.id,
+            "status": subscription.status,
+            "trial_ends_at": datetime.fromtimestamp(subscription.trial_end).isoformat() if subscription.trial_end else None,
+            "client_secret": subscription.latest_invoice.payment_intent.client_secret if subscription.latest_invoice and subscription.latest_invoice.payment_intent else None
+        }
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error starting trial: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error starting trial: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/membership/status/{user_id}")
+async def get_membership_status(user_id: str):
+    """Get the membership status for a user"""
+    try:
+        # Get latest subscription
+        subscription = await db.subscriptions.find_one(
+            {"user_id": user_id},
+            sort=[("created_at", -1)]
+        )
+        
+        if not subscription:
+            return {
+                "user_id": user_id,
+                "is_premium": False,
+                "is_trial": False,
+                "trial_days_remaining": 0,
+                "subscription_status": "none",
+                "subscription_ends_at": None,
+                "features": FREE_FEATURES
+            }
+        
+        # Calculate trial days remaining
+        trial_days_remaining = 0
+        is_trial = subscription["status"] == "trialing"
+        is_premium = subscription["status"] in ["trialing", "active"]
+        
+        if is_trial and subscription.get("trial_end"):
+            trial_end = datetime.fromisoformat(subscription["trial_end"].replace("Z", ""))
+            remaining = (trial_end - datetime.utcnow()).days
+            trial_days_remaining = max(0, remaining)
+            
+            # Check if trial has expired
+            if trial_days_remaining == 0 and is_trial:
+                await db.subscriptions.update_one(
+                    {"subscription_id": subscription["subscription_id"]},
+                    {"$set": {"status": "trial_expired"}}
+                )
+                is_premium = False
+                is_trial = False
+        
+        features = PREMIUM_FEATURES + FREE_FEATURES if is_premium else FREE_FEATURES
+        
+        return {
+            "user_id": user_id,
+            "is_premium": is_premium,
+            "is_trial": is_trial,
+            "trial_days_remaining": trial_days_remaining,
+            "subscription_status": subscription["status"],
+            "subscription_ends_at": subscription.get("trial_end") or subscription.get("current_period_end"),
+            "features": features
+        }
+    except Exception as e:
+        logger.error(f"Error getting membership status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/membership/subscribe")
+async def subscribe_annual(request: SubscriptionCreate):
+    """Subscribe to the $25/year annual plan"""
+    try:
+        customer = await db.membership_customers.find_one({"user_id": request.user_id})
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        # Mock mode
+        if customer.get("mock_mode", False) or stripe.api_key == 'sk_test_placeholder':
+            subscription_id = f"sub_annual_{request.user_id}_{int(time.time())}"
+            period_end = datetime.utcnow() + timedelta(days=365)
+            
+            # Update or create subscription
+            await db.subscriptions.update_one(
+                {"user_id": request.user_id},
+                {"$set": {
+                    "subscription_id": subscription_id,
+                    "status": "active",
+                    "current_period_start": datetime.utcnow().isoformat(),
+                    "current_period_end": period_end.isoformat(),
+                    "plan": "annual",
+                    "amount": 2500,
+                    "mock_mode": True,
+                    "updated_at": datetime.utcnow().isoformat()
+                }},
+                upsert=True
+            )
+            
+            return {
+                "subscription_id": subscription_id,
+                "status": "active",
+                "plan": "annual",
+                "amount": "$25.00/year",
+                "period_ends_at": period_end.isoformat(),
+                "mock_mode": True,
+                "message": "Annual subscription activated! (Mock mode)"
+            }
+        
+        # Real Stripe subscription
+        price_id = request.price_id or STRIPE_PRICE_ID
+        subscription = stripe.Subscription.create(
+            customer=customer["stripe_customer_id"],
+            items=[{"price": price_id}],
+            payment_behavior="default_incomplete",
+            payment_settings={"save_default_payment_method": "on_subscription"},
+            expand=["latest_invoice.payment_intent"]
+        )
+        
+        await db.subscriptions.update_one(
+            {"user_id": request.user_id},
+            {"$set": {
+                "subscription_id": subscription.id,
+                "status": subscription.status,
+                "current_period_start": datetime.fromtimestamp(subscription.current_period_start).isoformat(),
+                "current_period_end": datetime.fromtimestamp(subscription.current_period_end).isoformat(),
+                "plan": "annual",
+                "mock_mode": False,
+                "updated_at": datetime.utcnow().isoformat()
+            }},
+            upsert=True
+        )
+        
+        return {
+            "subscription_id": subscription.id,
+            "status": subscription.status,
+            "client_secret": subscription.latest_invoice.payment_intent.client_secret if subscription.latest_invoice and subscription.latest_invoice.payment_intent else None
+        }
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error subscribing: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/membership/cancel/{user_id}")
+async def cancel_subscription(user_id: str):
+    """Cancel an active subscription"""
+    try:
+        subscription = await db.subscriptions.find_one({
+            "user_id": user_id,
+            "status": {"$in": ["trialing", "active"]}
+        })
+        
+        if not subscription:
+            raise HTTPException(status_code=404, detail="No active subscription found")
+        
+        # Mock mode
+        if subscription.get("mock_mode", False):
+            await db.subscriptions.update_one(
+                {"subscription_id": subscription["subscription_id"]},
+                {"$set": {
+                    "status": "canceled",
+                    "canceled_at": datetime.utcnow().isoformat()
+                }}
+            )
+            return {"status": "canceled", "message": "Subscription canceled (Mock mode)"}
+        
+        # Cancel in Stripe
+        canceled = stripe.Subscription.delete(subscription["subscription_id"])
+        
+        await db.subscriptions.update_one(
+            {"subscription_id": subscription["subscription_id"]},
+            {"$set": {
+                "status": "canceled",
+                "canceled_at": datetime.utcnow().isoformat()
+            }}
+        )
+        
+        return {"status": "canceled", "subscription_id": canceled.id}
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error canceling: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error canceling subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/membership/pricing")
+async def get_pricing():
+    """Get membership pricing information"""
+    return {
+        "plan": "annual",
+        "name": "FitTraxx Premium",
+        "price": 25.00,
+        "currency": "USD",
+        "interval": "year",
+        "trial_days": 3,
+        "features": [
+            "AI-Personalized Workouts",
+            "Custom Meal Planning & Nutrition",
+            "Gamification: Badges & Challenges",
+            "Advanced Progress Analytics",
+            "Wearable Device Integration",
+            "Diverse Workout Library (Yoga, HIIT, Dance, Martial Arts)",
+            "Multi-Language Support (EN, ES, DE)",
+            "Accessibility Features"
+        ],
+        "free_features": [
+            "Basic Food Tracking",
+            "Water Intake Logging",
+            "Heart Rate Monitoring",
+            "Running Tracker"
+        ]
+    }
+
+# ============================================================================
+# GAMIFICATION ENDPOINTS
+# ============================================================================
+
+# Badge definitions
+BADGES = [
+    {"id": "first_workout", "name": "First Step", "description": "Complete your first workout", "icon": "🏃", "points": 10},
+    {"id": "week_streak", "name": "Week Warrior", "description": "7-day workout streak", "icon": "🔥", "points": 50},
+    {"id": "month_streak", "name": "Monthly Champion", "description": "30-day workout streak", "icon": "🏆", "points": 200},
+    {"id": "calorie_crusher", "name": "Calorie Crusher", "description": "Burn 10,000 calories total", "icon": "💪", "points": 100},
+    {"id": "hydration_hero", "name": "Hydration Hero", "description": "Log water for 7 consecutive days", "icon": "💧", "points": 30},
+    {"id": "meal_master", "name": "Meal Master", "description": "Log 50 meals", "icon": "🍽️", "points": 75},
+    {"id": "run_5k", "name": "5K Runner", "description": "Complete a 5km run", "icon": "🏅", "points": 50},
+    {"id": "run_10k", "name": "10K Champion", "description": "Complete a 10km run", "icon": "🥇", "points": 100},
+    {"id": "early_bird", "name": "Early Bird", "description": "Complete 10 workouts before 7am", "icon": "🌅", "points": 40},
+    {"id": "night_owl", "name": "Night Owl", "description": "Complete 10 workouts after 8pm", "icon": "🦉", "points": 40},
+]
+
+@api_router.get("/gamification/badges")
+async def get_all_badges():
+    """Get all available badges"""
+    return {"badges": BADGES}
+
+@api_router.get("/gamification/user-badges/{user_id}")
+async def get_user_badges(user_id: str):
+    """Get badges earned by a user"""
+    try:
+        user_badges = await db.user_badges.find({"user_id": user_id}).to_list(100)
+        earned_badge_ids = [b["badge_id"] for b in user_badges]
+        
+        badges_with_status = []
+        for badge in BADGES:
+            badges_with_status.append({
+                **badge,
+                "earned": badge["id"] in earned_badge_ids,
+                "earned_at": next((b["earned_at"] for b in user_badges if b["badge_id"] == badge["id"]), None)
+            })
+        
+        total_points = sum(b["points"] for b in BADGES if b["id"] in earned_badge_ids)
+        
+        return {
+            "user_id": user_id,
+            "badges": badges_with_status,
+            "total_points": total_points,
+            "badges_earned": len(earned_badge_ids),
+            "badges_total": len(BADGES)
+        }
+    except Exception as e:
+        logger.error(f"Error getting user badges: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/gamification/check-badges/{user_id}")
+async def check_and_award_badges(user_id: str):
+    """Check user progress and award any earned badges"""
+    try:
+        awarded = []
+        
+        # Get user stats
+        workouts = await db.workouts.find({"user_id": user_id}).to_list(1000)
+        meals = await db.meals.find({"user_id": user_id}).to_list(1000)
+        water = await db.water_intake.find({"user_id": user_id}).to_list(1000)
+        runs = await db.runs.find({"user_id": user_id}).to_list(100)
+        
+        existing_badges = await db.user_badges.find({"user_id": user_id}).to_list(100)
+        existing_ids = [b["badge_id"] for b in existing_badges]
+        
+        async def award_badge(badge_id: str):
+            if badge_id not in existing_ids:
+                badge = next((b for b in BADGES if b["id"] == badge_id), None)
+                if badge:
+                    await db.user_badges.insert_one({
+                        "user_id": user_id,
+                        "badge_id": badge_id,
+                        "earned_at": datetime.utcnow().isoformat()
+                    })
+                    awarded.append(badge)
+        
+        # Check badges
+        if len(workouts) >= 1:
+            await award_badge("first_workout")
+        
+        if len(meals) >= 50:
+            await award_badge("meal_master")
+        
+        # Check for 5K and 10K runs
+        for run in runs:
+            if run.get("distance", 0) >= 5:
+                await award_badge("run_5k")
+            if run.get("distance", 0) >= 10:
+                await award_badge("run_10k")
+        
+        # Check total calories burned
+        total_calories = sum(w.get("calories_burned", 0) for w in workouts)
+        total_calories += sum(r.get("calories_burned", 0) for r in runs)
+        if total_calories >= 10000:
+            await award_badge("calorie_crusher")
+        
+        return {
+            "user_id": user_id,
+            "new_badges_awarded": awarded,
+            "total_badges": len(existing_ids) + len(awarded)
+        }
+    except Exception as e:
+        logger.error(f"Error checking badges: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/gamification/leaderboard")
+async def get_leaderboard(limit: int = 10):
+    """Get top users by points"""
+    try:
+        # Aggregate user points
+        pipeline = [
+            {"$group": {"_id": "$user_id", "badges": {"$push": "$badge_id"}}},
+            {"$project": {
+                "user_id": "$_id",
+                "badge_count": {"$size": "$badges"},
+                "badges": 1
+            }},
+            {"$sort": {"badge_count": -1}},
+            {"$limit": limit}
+        ]
+        
+        results = await db.user_badges.aggregate(pipeline).to_list(limit)
+        
+        leaderboard = []
+        for i, result in enumerate(results):
+            points = sum(
+                next((b["points"] for b in BADGES if b["id"] == bid), 0)
+                for bid in result.get("badges", [])
+            )
+            
+            # Get user profile for name
+            profile = await db.user_profiles.find_one({"user_id": result["user_id"]})
+            
+            leaderboard.append({
+                "rank": i + 1,
+                "user_id": result["user_id"],
+                "name": profile.get("name", "Anonymous") if profile else "Anonymous",
+                "badge_count": result["badge_count"],
+                "total_points": points
+            })
+        
+        return {"leaderboard": leaderboard}
+    except Exception as e:
+        logger.error(f"Error getting leaderboard: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
