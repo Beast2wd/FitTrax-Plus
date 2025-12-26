@@ -20,14 +20,10 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// Conditionally import MapView only for native platforms
-let MapView: any, Polyline: any, Marker: any;
-if (Platform.OS !== 'web') {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Polyline = maps.Polyline;
-  Marker = maps.Marker;
-}
+// Map components - only used on native, web gets placeholder
+const MapView = Platform.OS !== 'web' ? require('react-native-maps').default : View;
+const Polyline = Platform.OS !== 'web' ? require('react-native-maps').Polyline : View;
+const Marker = Platform.OS !== 'web' ? require('react-native-maps').Marker : View;
 
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
