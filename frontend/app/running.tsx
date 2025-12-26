@@ -23,21 +23,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
-// Map placeholder component for web
-const MapPlaceholder = ({ children, style, ...props }: any) => (
-  <View style={[style, styles.webMapPlaceholder]}>
-    <Ionicons name="map" size={48} color={Colors.text.muted} />
-    <Text style={styles.webMapText}>Map view available on mobile</Text>
-  </View>
-);
-
 export default function RunningScreen() {
   const { userId } = useUserStore();
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [distance, setDistance] = useState(0); // in kilometers
-  const [duration, setDuration] = useState(0); // in seconds
-  const [currentPace, setCurrentPace] = useState(0); // min/km
+  const [distance, setDistance] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [currentPace, setCurrentPace] = useState(0);
   const [calories, setCalories] = useState(0);
   const [routeCoords, setRouteCoords] = useState<any[]>([]);
   const [runs, setRuns] = useState<any[]>([]);
@@ -50,7 +42,6 @@ export default function RunningScreen() {
   const locationSubscription = useRef<any>(null);
   const timerInterval = useRef<any>(null);
   const lastLocation = useRef<any>(null);
-  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     if (userId) {
@@ -105,7 +96,7 @@ export default function RunningScreen() {
   };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -117,7 +108,6 @@ export default function RunningScreen() {
   };
 
   const calculateCalories = (distanceKm: number, durationSeconds: number) => {
-    // Estimate: ~60 calories per km for running
     return distanceKm * 60;
   };
 
@@ -131,7 +121,6 @@ export default function RunningScreen() {
       setRouteCoords([]);
       lastLocation.current = null;
 
-      // Start location tracking
       locationSubscription.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
@@ -158,7 +147,6 @@ export default function RunningScreen() {
         }
       );
 
-      // Start timer
       timerInterval.current = setInterval(() => {
         if (!isPaused) {
           setDuration((prev) => prev + 1);
@@ -269,7 +257,6 @@ export default function RunningScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Calculate current pace
   useEffect(() => {
     if (duration > 0 && distance > 0) {
       const pace = (duration / 60) / distance;
@@ -283,49 +270,16 @@ export default function RunningScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Running Tracker</Text>
 
-        {/* Live Map During Tracking */}
-        {isTracking && routeCoords.length > 0 && Platform.OS !== 'web' && MapView && (
-          <View style={styles.mapContainer}>
-            <MapView
-              ref={mapRef}
-              style={styles.map}
-              initialRegion={{
-                latitude: routeCoords[0].latitude,
-                longitude: routeCoords[0].longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-              showsUserLocation
-              followsUserLocation
-            >
-              <Polyline
-                coordinates={routeCoords}
-                strokeColor={Colors.brand.primary}
-                strokeWidth={4}
-              />
-              {routeCoords.length > 0 && (
-                <>
-                  <Marker coordinate={routeCoords[0]} title="Start" pinColor="green" />
-                  <Marker
-                    coordinate={routeCoords[routeCoords.length - 1]}
-                    title="Current"
-                    pinColor="blue"
-                  />
-                </>
-              )}
-            </MapView>
-          </View>
-        )}
-
-        {/* Web fallback message */}
-        {isTracking && routeCoords.length > 0 && Platform.OS === 'web' && (
-          <View style={[styles.mapContainer, styles.webMapPlaceholder]}>
-            <Ionicons name="map" size={48} color={Colors.text.muted} />
-            <Text style={styles.webMapText}>
-              Map tracking is available on mobile devices
+        {/* GPS Tracking Status */}
+        {isTracking && routeCoords.length > 0 && (
+          <View style={styles.mapPlaceholder}>
+            <Ionicons name="navigate" size={48} color={Colors.brand.primary} />
+            <Text style={styles.mapPlaceholderTitle}>GPS Tracking Active</Text>
+            <Text style={styles.mapPlaceholderText}>
+              {routeCoords.length} location points recorded
             </Text>
-            <Text style={styles.webMapSubtext}>
-              {routeCoords.length} GPS points recorded
+            <Text style={styles.mapPlaceholderSubtext}>
+              Map visualization available on mobile app
             </Text>
           </View>
         )}
@@ -411,10 +365,10 @@ export default function RunningScreen() {
                 </View>
                 <Text style={styles.statCardLabel}>This Week</Text>
                 <Text style={[styles.statCardValue, { color: '#3B82F6' }]}>
-                  {stats.weekly.total_distance} km
+                  {stats.weekly?.total_distance || 0} km
                 </Text>
                 <Text style={styles.statCardDetail}>
-                  {stats.weekly.run_count} runs • {Math.round(stats.weekly.total_calories)} cal
+                  {stats.weekly?.run_count || 0} runs • {Math.round(stats.weekly?.total_calories || 0)} cal
                 </Text>
               </View>
 
@@ -424,10 +378,10 @@ export default function RunningScreen() {
                 </View>
                 <Text style={styles.statCardLabel}>This Month</Text>
                 <Text style={[styles.statCardValue, { color: '#10B981' }]}>
-                  {stats.monthly.total_distance} km
+                  {stats.monthly?.total_distance || 0} km
                 </Text>
                 <Text style={styles.statCardDetail}>
-                  {stats.monthly.run_count} runs • {Math.round(stats.monthly.total_calories)} cal
+                  {stats.monthly?.run_count || 0} runs • {Math.round(stats.monthly?.total_calories || 0)} cal
                 </Text>
               </View>
             </View>
@@ -486,44 +440,16 @@ export default function RunningScreen() {
 
           {selectedRun && (
             <ScrollView style={styles.modalContent}>
-              {/* Map of the run route */}
-              {selectedRun.route_data && selectedRun.route_data.length > 1 && Platform.OS !== 'web' && MapView && (
-                <View style={styles.detailMapContainer}>
-                  <MapView
-                    style={styles.detailMap}
-                    initialRegion={{
-                      latitude: selectedRun.route_data[0].latitude,
-                      longitude: selectedRun.route_data[0].longitude,
-                      latitudeDelta: 0.02,
-                      longitudeDelta: 0.02,
-                    }}
-                  >
-                    <Polyline
-                      coordinates={selectedRun.route_data}
-                      strokeColor={Colors.brand.primary}
-                      strokeWidth={4}
-                    />
-                    <Marker
-                      coordinate={selectedRun.route_data[0]}
-                      title="Start"
-                      pinColor="green"
-                    />
-                    <Marker
-                      coordinate={selectedRun.route_data[selectedRun.route_data.length - 1]}
-                      title="Finish"
-                      pinColor="red"
-                    />
-                  </MapView>
-                </View>
-              )}
-
-              {/* Web fallback */}
-              {selectedRun.route_data && selectedRun.route_data.length > 1 && Platform.OS === 'web' && (
-                <View style={[styles.detailMapContainer, styles.webMapPlaceholder]}>
+              {/* Route info placeholder */}
+              {selectedRun.route_data && selectedRun.route_data.length > 1 && (
+                <View style={styles.detailMapPlaceholder}>
                   <Ionicons name="map-outline" size={64} color={Colors.text.muted} />
-                  <Text style={styles.webMapText}>Route Map</Text>
-                  <Text style={styles.webMapSubtext}>
-                    Available on mobile • {selectedRun.route_data.length} GPS points
+                  <Text style={styles.mapPlaceholderTitle}>Route Map</Text>
+                  <Text style={styles.mapPlaceholderText}>
+                    {selectedRun.route_data.length} GPS points recorded
+                  </Text>
+                  <Text style={styles.mapPlaceholderSubtext}>
+                    Full map visualization available on mobile
                   </Text>
                 </View>
               )}
@@ -816,14 +742,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.brand.primary,
   },
-  mapContainer: {
-    height: 300,
+  mapPlaceholder: {
+    height: 200,
     borderRadius: 16,
-    overflow: 'hidden',
+    backgroundColor: Colors.background.card,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  map: {
-    flex: 1,
+  mapPlaceholderTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  mapPlaceholderText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  mapPlaceholderSubtext: {
+    fontSize: 12,
+    color: Colors.text.muted,
   },
   modalContainer: {
     flex: 1,
@@ -845,19 +789,19 @@ const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
   },
-  detailMapContainer: {
-    height: 300,
+  detailMapPlaceholder: {
+    height: 200,
     margin: 16,
     borderRadius: 16,
-    overflow: 'hidden',
+    backgroundColor: Colors.background.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-  },
-  detailMap: {
-    flex: 1,
   },
   detailCard: {
     margin: 16,
@@ -925,20 +869,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text.primary,
   },
-  webMapPlaceholder: {
-    backgroundColor: Colors.background.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
-  },
-  webMapText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text.primary,
-  },
-  webMapSubtext: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-  },
 });
-
