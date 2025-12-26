@@ -20,13 +20,16 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// Map components - only used on native, web gets placeholder
-const MapView = Platform.OS !== 'web' ? require('react-native-maps').default : View;
-const Polyline = Platform.OS !== 'web' ? require('react-native-maps').Polyline : View;
-const Marker = Platform.OS !== 'web' ? require('react-native-maps').Marker : View;
-
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+
+// Map placeholder component for web
+const MapPlaceholder = ({ children, style, ...props }: any) => (
+  <View style={[style, styles.webMapPlaceholder]}>
+    <Ionicons name="map" size={48} color={Colors.text.muted} />
+    <Text style={styles.webMapText}>Map view available on mobile</Text>
+  </View>
+);
 
 export default function RunningScreen() {
   const { userId } = useUserStore();
