@@ -407,6 +407,20 @@ export default function DashboardScreen() {
             </View>
             <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#7C3AED', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/weight-training')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#EDE9FE' }]}>
+              <Ionicons name="barbell" size={24} color="#7C3AED" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Weight Training</Text>
+              <Text style={styles.actionSubtitle}>Log sets, reps & track PRs</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
         </View>
 
         {/* Premium Section */}
