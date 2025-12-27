@@ -96,6 +96,13 @@ export default function RootLayout() {
           presentation: 'card',
         }}
       />
+      <Stack.Screen
+        name="progress"
+        options={{
+          title: 'Progress',
+          presentation: 'card',
+        }}
+      />
     </Stack>
   );
 }
