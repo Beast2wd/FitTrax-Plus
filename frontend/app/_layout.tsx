@@ -82,6 +82,13 @@ export default function RootLayout() {
           presentation: 'card',
         }}
       />
+      <Stack.Screen
+        name="ai-workouts"
+        options={{
+          title: 'AI Workouts',
+          presentation: 'card',
+        }}
+      />
     </Stack>
   );
 }
