@@ -570,44 +570,60 @@ export default function AIWorkoutsScreen() {
                 <View style={styles.exerciseSection}>
                   <Text style={styles.exerciseSectionTitle}>🔥 Warm-up</Text>
                   {selectedWorkout.warmup.map((ex: any, idx: number) => (
-                    <View key={idx} style={styles.exerciseItem}>
-                      <View style={styles.exerciseNumber}>
-                        <Text style={styles.exerciseNumberText}>{idx + 1}</Text>
-                      </View>
-                      <View style={styles.exerciseInfo}>
-                        <Text style={styles.exerciseName}>{ex.name}</Text>
-                        <Text style={styles.exerciseDetail}>
-                          {ex.duration ? `${ex.duration}s` : ex.reps}
-                        </Text>
-                        {ex.instructions && (
-                          <Text style={styles.exerciseInstructions}>{ex.instructions}</Text>
-                        )}
-                      </View>
-                    </View>
+                    <ExerciseItem
+                      key={idx}
+                      exercise={ex}
+                      index={idx}
+                      workoutType={selectedWorkout.workout_type}
+                      isPremium={isPremium}
+                      onGenerateImage={() => {}}
+                    />
                   ))}
                 </View>
               )}
 
               {/* Main Exercises */}
               <View style={styles.exerciseSection}>
-                <Text style={styles.exerciseSectionTitle}>💪 Main Workout</Text>
-                {selectedWorkout.exercises?.map((ex: any, idx: number) => (
-                  <View key={idx} style={styles.exerciseItem}>
-                    <View style={styles.exerciseNumber}>
-                      <Text style={styles.exerciseNumberText}>{idx + 1}</Text>
-                    </View>
-                    <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseName}>{ex.name}</Text>
-                      <Text style={styles.exerciseDetail}>
-                        {ex.sets && `${ex.sets} sets × `}
-                        {ex.reps || (ex.duration ? `${ex.duration}s` : '')}
-                        {ex.rest && ` • ${ex.rest}s rest`}
-                      </Text>
-                      {ex.instructions && (
-                        <Text style={styles.exerciseInstructions}>{ex.instructions}</Text>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.exerciseSectionTitle}>💪 Main Workout</Text>
+                  {isPremium && selectedWorkout.workout_id && (
+                    <TouchableOpacity
+                      style={styles.generateAllBtn}
+                      onPress={async () => {
+                        setGeneratingImages(true);
+                        try {
+                          await axios.post(
+                            `${API_URL}/api/exercises/generate-workout-images/${selectedWorkout.workout_id}?user_id=${userId}`
+                          );
+                          Alert.alert('Success', 'Exercise images are being generated! Tap the eye icon on each exercise to view.');
+                        } catch (error: any) {
+                          Alert.alert('Error', error.response?.data?.detail || 'Failed to generate images');
+                        } finally {
+                          setGeneratingImages(false);
+                        }
+                      }}
+                      disabled={generatingImages}
+                    >
+                      {generatingImages ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons name="images" size={16} color="#fff" />
+                          <Text style={styles.generateAllBtnText}>Generate Images</Text>
+                        </>
                       )}
-                    </View>
-                  </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {selectedWorkout.exercises?.map((ex: any, idx: number) => (
+                  <ExerciseItem
+                    key={idx}
+                    exercise={ex}
+                    index={idx}
+                    workoutType={selectedWorkout.workout_type}
+                    isPremium={isPremium}
+                    onGenerateImage={() => {}}
+                  />
                 ))}
               </View>
 
@@ -616,20 +632,14 @@ export default function AIWorkoutsScreen() {
                 <View style={styles.exerciseSection}>
                   <Text style={styles.exerciseSectionTitle}>🧘 Cool-down</Text>
                   {selectedWorkout.cooldown.map((ex: any, idx: number) => (
-                    <View key={idx} style={styles.exerciseItem}>
-                      <View style={styles.exerciseNumber}>
-                        <Text style={styles.exerciseNumberText}>{idx + 1}</Text>
-                      </View>
-                      <View style={styles.exerciseInfo}>
-                        <Text style={styles.exerciseName}>{ex.name}</Text>
-                        <Text style={styles.exerciseDetail}>
-                          {ex.duration ? `${ex.duration}s` : ex.reps}
-                        </Text>
-                        {ex.instructions && (
-                          <Text style={styles.exerciseInstructions}>{ex.instructions}</Text>
-                        )}
-                      </View>
-                    </View>
+                    <ExerciseItem
+                      key={idx}
+                      exercise={ex}
+                      index={idx}
+                      workoutType={selectedWorkout.workout_type}
+                      isPremium={isPremium}
+                      onGenerateImage={() => {}}
+                    />
                   ))}
                 </View>
               )}
