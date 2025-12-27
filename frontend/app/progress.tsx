@@ -46,10 +46,13 @@ export default function ProgressScreen() {
   useEffect(() => {
     if (userId) {
       loadData();
+    } else {
+      setLoading(false);
     }
   }, [userId, selectedPeriod]);
 
   const loadData = async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       const [progressRes, breakdownRes, goalsRes] = await Promise.all([
