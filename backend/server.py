@@ -2676,6 +2676,440 @@ async def get_weight_training_stats(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# ADVANCED PROGRESS & ANALYTICS
+# ============================================================================
+
+class BodyMeasurement(BaseModel):
+    user_id: str
+    weight: Optional[float] = None  # lbs
+    body_fat: Optional[float] = None  # percentage
+    chest: Optional[float] = None  # inches
+    waist: Optional[float] = None  # inches
+    hips: Optional[float] = None  # inches
+    biceps: Optional[float] = None  # inches
+    thighs: Optional[float] = None  # inches
+    notes: Optional[str] = None
+
+@api_router.post("/progress/body-measurements")
+async def log_body_measurement(measurement: BodyMeasurement):
+    """Log body measurements"""
+    try:
+        measurement_dict = measurement.dict()
+        measurement_dict["measurement_id"] = f"bm_{measurement.user_id}_{int(datetime.utcnow().timestamp())}"
+        measurement_dict["timestamp"] = datetime.utcnow().isoformat()
+        
+        await db.body_measurements.insert_one(measurement_dict)
+        
+        return {"message": "Measurement logged", "measurement_id": measurement_dict["measurement_id"]}
+    except Exception as e:
+        logger.error(f"Error logging measurement: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/progress/body-measurements/{user_id}")
+async def get_body_measurements(user_id: str, days: int = 90):
+    """Get body measurement history"""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        measurements = await db.body_measurements.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff.isoformat()}
+        }).sort("timestamp", 1).to_list(100)
+        
+        for m in measurements:
+            m.pop("_id", None)
+        
+        return {"measurements": measurements}
+    except Exception as e:
+        logger.error(f"Error getting measurements: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/progress/comprehensive/{user_id}")
+async def get_comprehensive_progress(user_id: str, days: int = 30):
+    """Get comprehensive progress data for charts and analytics"""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat()
+        
+        # Get all workout data
+        workouts = await db.workouts.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff_iso}
+        }).sort("timestamp", 1).to_list(1000)
+        
+        # Get weight training data
+        weight_workouts = await db.weight_training_logs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff_iso}
+        }).sort("timestamp", 1).to_list(100)
+        
+        # Get runs
+        runs = await db.runs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff_iso}
+        }).sort("timestamp", 1).to_list(100)
+        
+        # Get meals
+        meals = await db.meals.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff_iso}
+        }).sort("timestamp", 1).to_list(500)
+        
+        # Get water intake
+        water = await db.water_intake.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff_iso}
+        }).sort("timestamp", 1).to_list(500)
+        
+        # Get body measurements
+        body_measurements = await db.body_measurements.find({
+            "user_id": user_id
+        }).sort("timestamp", -1).limit(30).to_list(30)
+        
+        # Aggregate daily stats
+        daily_stats = {}
+        
+        # Process workouts
+        for w in workouts:
+            date = w.get("timestamp", "")[:10]
+            if date not in daily_stats:
+                daily_stats[date] = {
+                    "date": date,
+                    "calories_burned": 0,
+                    "workout_minutes": 0,
+                    "workouts_count": 0,
+                    "calories_consumed": 0,
+                    "protein": 0,
+                    "carbs": 0,
+                    "fat": 0,
+                    "water_oz": 0,
+                    "weight_volume": 0,
+                    "run_distance": 0
+                }
+            daily_stats[date]["calories_burned"] += w.get("calories_burned", 0)
+            daily_stats[date]["workout_minutes"] += w.get("duration", 0)
+            daily_stats[date]["workouts_count"] += 1
+        
+        # Process weight training
+        for wt in weight_workouts:
+            date = wt.get("timestamp", "")[:10]
+            if date not in daily_stats:
+                daily_stats[date] = {
+                    "date": date,
+                    "calories_burned": 0,
+                    "workout_minutes": 0,
+                    "workouts_count": 0,
+                    "calories_consumed": 0,
+                    "protein": 0,
+                    "carbs": 0,
+                    "fat": 0,
+                    "water_oz": 0,
+                    "weight_volume": 0,
+                    "run_distance": 0
+                }
+            
+            # Calculate volume
+            volume = 0
+            for ex in wt.get("exercises", []):
+                for s in ex.get("sets", []):
+                    volume += s.get("weight", 0) * s.get("reps", 0)
+            
+            daily_stats[date]["weight_volume"] += volume
+            daily_stats[date]["workout_minutes"] += wt.get("duration_minutes", 0)
+            daily_stats[date]["workouts_count"] += 1
+        
+        # Process runs
+        for r in runs:
+            date = r.get("timestamp", "")[:10]
+            if date not in daily_stats:
+                daily_stats[date] = {
+                    "date": date,
+                    "calories_burned": 0,
+                    "workout_minutes": 0,
+                    "workouts_count": 0,
+                    "calories_consumed": 0,
+                    "protein": 0,
+                    "carbs": 0,
+                    "fat": 0,
+                    "water_oz": 0,
+                    "weight_volume": 0,
+                    "run_distance": 0
+                }
+            daily_stats[date]["calories_burned"] += r.get("calories_burned", 0)
+            daily_stats[date]["run_distance"] += r.get("distance", 0)
+            daily_stats[date]["workout_minutes"] += r.get("duration", 0) // 60
+        
+        # Process meals
+        for m in meals:
+            date = m.get("timestamp", "")[:10]
+            if date not in daily_stats:
+                daily_stats[date] = {
+                    "date": date,
+                    "calories_burned": 0,
+                    "workout_minutes": 0,
+                    "workouts_count": 0,
+                    "calories_consumed": 0,
+                    "protein": 0,
+                    "carbs": 0,
+                    "fat": 0,
+                    "water_oz": 0,
+                    "weight_volume": 0,
+                    "run_distance": 0
+                }
+            nutrition = m.get("nutrition", {})
+            daily_stats[date]["calories_consumed"] += nutrition.get("calories", 0)
+            daily_stats[date]["protein"] += nutrition.get("protein", 0)
+            daily_stats[date]["carbs"] += nutrition.get("carbs", 0)
+            daily_stats[date]["fat"] += nutrition.get("fat", 0)
+        
+        # Process water
+        for w in water:
+            date = w.get("timestamp", "")[:10]
+            if date not in daily_stats:
+                daily_stats[date] = {
+                    "date": date,
+                    "calories_burned": 0,
+                    "workout_minutes": 0,
+                    "workouts_count": 0,
+                    "calories_consumed": 0,
+                    "protein": 0,
+                    "carbs": 0,
+                    "fat": 0,
+                    "water_oz": 0,
+                    "weight_volume": 0,
+                    "run_distance": 0
+                }
+            daily_stats[date]["water_oz"] += w.get("amount", 0)
+        
+        # Convert to sorted list
+        daily_data = sorted(daily_stats.values(), key=lambda x: x["date"])
+        
+        # Calculate totals and averages
+        total_calories_burned = sum(d["calories_burned"] for d in daily_data)
+        total_workout_minutes = sum(d["workout_minutes"] for d in daily_data)
+        total_workouts = sum(d["workouts_count"] for d in daily_data)
+        total_distance = sum(d["run_distance"] for d in daily_data)
+        total_volume = sum(d["weight_volume"] for d in daily_data)
+        
+        days_with_data = len([d for d in daily_data if d["workouts_count"] > 0])
+        
+        # Calculate streak
+        streak = 0
+        today = datetime.utcnow().date()
+        for i in range(days):
+            check_date = (today - timedelta(days=i)).isoformat()
+            if check_date in daily_stats and daily_stats[check_date]["workouts_count"] > 0:
+                streak += 1
+            else:
+                break
+        
+        # Get PRs
+        prs = await db.personal_records.find({"user_id": user_id}).to_list(50)
+        for pr in prs:
+            pr.pop("_id", None)
+        
+        # Body measurements for chart
+        for bm in body_measurements:
+            bm.pop("_id", None)
+        
+        return {
+            "period_days": days,
+            "daily_data": daily_data,
+            "summary": {
+                "total_calories_burned": round(total_calories_burned),
+                "total_workout_minutes": round(total_workout_minutes),
+                "total_workouts": total_workouts,
+                "total_run_distance": round(total_distance, 2),
+                "total_weight_volume": round(total_volume),
+                "avg_daily_calories_burned": round(total_calories_burned / max(days_with_data, 1)),
+                "avg_workout_duration": round(total_workout_minutes / max(total_workouts, 1)),
+                "current_streak": streak,
+                "active_days": days_with_data
+            },
+            "personal_records": prs,
+            "body_measurements": list(reversed(body_measurements))
+        }
+    except Exception as e:
+        logger.error(f"Error getting comprehensive progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/progress/workout-breakdown/{user_id}")
+async def get_workout_breakdown(user_id: str, days: int = 30):
+    """Get breakdown of workout types"""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        # Get all workouts
+        workouts = await db.workouts.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff.isoformat()}
+        }).to_list(500)
+        
+        weight_workouts = await db.weight_training_logs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff.isoformat()}
+        }).to_list(100)
+        
+        runs = await db.runs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff.isoformat()}
+        }).to_list(100)
+        
+        ai_workouts = await db.ai_workouts.find({
+            "user_id": user_id,
+            "last_completed": {"$exists": True}
+        }).to_list(100)
+        
+        # Count by type
+        breakdown = {
+            "weight_training": len(weight_workouts),
+            "running": len(runs),
+            "ai_workouts": len([w for w in ai_workouts if w.get("completion_count", 0) > 0]),
+            "other": len(workouts)
+        }
+        
+        # Muscle group breakdown from weight training
+        muscle_groups = {}
+        for wt in weight_workouts:
+            for ex in wt.get("exercises", []):
+                # Try to determine muscle group from exercise name
+                ex_name = ex.get("exercise_name", "").lower()
+                if any(w in ex_name for w in ["bench", "chest", "fly", "push"]):
+                    muscle_groups["chest"] = muscle_groups.get("chest", 0) + 1
+                elif any(w in ex_name for w in ["row", "pull", "lat", "deadlift", "back"]):
+                    muscle_groups["back"] = muscle_groups.get("back", 0) + 1
+                elif any(w in ex_name for w in ["squat", "leg", "lunge", "calf", "hip"]):
+                    muscle_groups["legs"] = muscle_groups.get("legs", 0) + 1
+                elif any(w in ex_name for w in ["shoulder", "press", "lateral", "raise"]):
+                    muscle_groups["shoulders"] = muscle_groups.get("shoulders", 0) + 1
+                elif any(w in ex_name for w in ["curl", "tricep", "bicep", "arm"]):
+                    muscle_groups["arms"] = muscle_groups.get("arms", 0) + 1
+                elif any(w in ex_name for w in ["plank", "crunch", "ab", "core"]):
+                    muscle_groups["core"] = muscle_groups.get("core", 0) + 1
+        
+        return {
+            "workout_types": breakdown,
+            "muscle_groups": muscle_groups,
+            "total_workouts": sum(breakdown.values())
+        }
+    except Exception as e:
+        logger.error(f"Error getting workout breakdown: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/progress/goals/{user_id}")
+async def get_goals_progress(user_id: str):
+    """Get progress towards fitness goals"""
+    try:
+        # Get user profile for goals
+        profile = await db.user_profiles.find_one({"user_id": user_id})
+        
+        if not profile:
+            return {"message": "No profile found", "goals": []}
+        
+        goals = []
+        
+        # Weight goal
+        if profile.get("goal_weight") and profile.get("weight"):
+            current = profile.get("weight")
+            target = profile.get("goal_weight")
+            start = profile.get("starting_weight", current)
+            
+            if target < start:  # Weight loss
+                progress = max(0, min(100, ((start - current) / (start - target)) * 100))
+                goals.append({
+                    "name": "Weight Loss Goal",
+                    "current": current,
+                    "target": target,
+                    "start": start,
+                    "progress": round(progress),
+                    "remaining": round(current - target, 1),
+                    "unit": "lbs"
+                })
+            else:  # Weight gain
+                progress = max(0, min(100, ((current - start) / (target - start)) * 100))
+                goals.append({
+                    "name": "Weight Gain Goal",
+                    "current": current,
+                    "target": target,
+                    "start": start,
+                    "progress": round(progress),
+                    "remaining": round(target - current, 1),
+                    "unit": "lbs"
+                })
+        
+        # Weekly workout goal (default: 4 workouts)
+        weekly_goal = profile.get("weekly_workout_goal", 4)
+        this_week_start = datetime.utcnow() - timedelta(days=datetime.utcnow().weekday())
+        
+        weekly_workouts = await db.workouts.count_documents({
+            "user_id": user_id,
+            "timestamp": {"$gte": this_week_start.isoformat()}
+        })
+        weekly_wt = await db.weight_training_logs.count_documents({
+            "user_id": user_id,
+            "timestamp": {"$gte": this_week_start.isoformat()}
+        })
+        weekly_runs = await db.runs.count_documents({
+            "user_id": user_id,
+            "timestamp": {"$gte": this_week_start.isoformat()}
+        })
+        
+        total_weekly = weekly_workouts + weekly_wt + weekly_runs
+        
+        goals.append({
+            "name": "Weekly Workouts",
+            "current": total_weekly,
+            "target": weekly_goal,
+            "progress": min(100, round((total_weekly / weekly_goal) * 100)),
+            "remaining": max(0, weekly_goal - total_weekly),
+            "unit": "workouts"
+        })
+        
+        # Daily calorie goal
+        calorie_goal = profile.get("calorie_goal")
+        if calorie_goal:
+            today = datetime.utcnow().date().isoformat()
+            today_meals = await db.meals.find({
+                "user_id": user_id,
+                "timestamp": {"$regex": f"^{today}"}
+            }).to_list(50)
+            
+            today_calories = sum(m.get("nutrition", {}).get("calories", 0) for m in today_meals)
+            
+            goals.append({
+                "name": "Daily Calories",
+                "current": round(today_calories),
+                "target": calorie_goal,
+                "progress": min(100, round((today_calories / calorie_goal) * 100)),
+                "remaining": max(0, calorie_goal - today_calories),
+                "unit": "cal"
+            })
+        
+        # Water goal (default: 64 oz)
+        water_goal = profile.get("daily_water_goal", 64)
+        today = datetime.utcnow().date().isoformat()
+        today_water = await db.water_intake.find({
+            "user_id": user_id,
+            "timestamp": {"$regex": f"^{today}"}
+        }).to_list(50)
+        
+        total_water = sum(w.get("amount", 0) for w in today_water)
+        
+        goals.append({
+            "name": "Daily Water",
+            "current": round(total_water),
+            "target": water_goal,
+            "progress": min(100, round((total_water / water_goal) * 100)),
+            "remaining": max(0, water_goal - total_water),
+            "unit": "oz"
+        })
+        
+        return {"goals": goals}
+    except Exception as e:
+        logger.error(f"Error getting goals progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # GAMIFICATION ENDPOINTS
 # ============================================================================
 
