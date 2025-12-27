@@ -1728,13 +1728,17 @@ Return ONLY valid JSON in this exact format:
 
         # Call AI
         emergent_key = os.getenv("EMERGENT_LLM_KEY")
+        import uuid
+        session_id = f"workout_gen_{request.user_id}_{uuid.uuid4().hex[:8]}"
+        
         chat = LlmChat(
             api_key=emergent_key,
-            model="gpt-4o",
+            session_id=session_id,
             system_message="You are an expert fitness trainer. Generate detailed, safe, and effective workout plans. Always return valid JSON only, no markdown."
-        )
+        ).with_model('openai', 'gpt-4o')
         
-        response = await chat.send_async([UserMessage(prompt)])
+        user_msg = UserMessage(text=prompt)
+        response = await chat.send_message(user_msg)
         
         # Parse the response
         try:
