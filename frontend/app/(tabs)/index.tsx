@@ -421,6 +421,20 @@ export default function DashboardScreen() {
             </View>
             <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#10B981', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/wearables')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#D1FAE5' }]}>
+              <Ionicons name="watch" size={24} color="#10B981" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Health & Wearables</Text>
+              <Text style={styles.actionSubtitle}>Sync Apple Health & Google Fit</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
         </View>
 
         {/* Premium Section */}
