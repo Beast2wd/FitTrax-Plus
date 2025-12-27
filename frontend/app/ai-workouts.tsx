@@ -1068,4 +1068,46 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
+  // Exercise Image Styles
+  exerciseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  generateImageBtn: {
+    padding: 8,
+  },
+  showImageBtn: {
+    padding: 8,
+  },
+  exerciseImageContainer: {
+    marginTop: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  exerciseImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  generateAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.brand.primary,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  generateAllBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+  },
 });
