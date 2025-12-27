@@ -451,7 +451,7 @@ export default function DashboardScreen() {
 
             <TouchableOpacity 
               style={styles.premiumFeatureCard}
-              onPress={() => router.push('/membership')}
+              onPress={() => router.push('/ai-workouts')}
             >
               <View style={[styles.premiumFeatureIcon, { backgroundColor: '#DBEAFE' }]}>
                 <Ionicons name="barbell" size={28} color="#3B82F6" />
