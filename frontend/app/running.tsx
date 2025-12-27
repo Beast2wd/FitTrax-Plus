@@ -134,8 +134,8 @@ export default function RunningScreen() {
     return R * c; // Returns distance in miles
   };
 
-  const calculateCalories = (distanceKm: number, durationSeconds: number) => {
-    return distanceKm * 60;
+  const calculateCalories = (distanceMiles: number, durationSeconds: number) => {
+    return distanceMiles * 100; // ~100 calories per mile
   };
 
   const startTracking = async () => {
