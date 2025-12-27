@@ -39,7 +39,7 @@ export default function RunningScreen() {
   const [selectedRun, setSelectedRun] = useState<any>(null);
   const [showRunDetail, setShowRunDetail] = useState(false);
   const [dailyProgress, setDailyProgress] = useState<any>(null);
-  const [dailyGoal, setDailyGoal] = useState(5); // Default 5km daily goal
+  const [dailyGoal, setDailyGoal] = useState(3); // Default 3 miles daily goal
   
   const locationSubscription = useRef<any>(null);
   const timerInterval = useRef<any>(null);
@@ -322,9 +322,9 @@ export default function RunningScreen() {
             </View>
             <View style={styles.goalProgressLabels}>
               <Text style={styles.goalProgressCurrent}>
-                {(dailyProgress?.distance || 0).toFixed(2)} km
+                {(dailyProgress?.distance || 0).toFixed(2)} mi
               </Text>
-              <Text style={styles.goalProgressTarget}>Goal: {dailyGoal} km</Text>
+              <Text style={styles.goalProgressTarget}>Goal: {dailyGoal} mi</Text>
             </View>
           </View>
 
@@ -343,7 +343,7 @@ export default function RunningScreen() {
                 <Ionicons name="navigate" size={20} color="#3B82F6" />
               </View>
               <Text style={styles.dailyStatValue}>{(dailyProgress?.distance || 0).toFixed(1)}</Text>
-              <Text style={styles.dailyStatLabel}>km</Text>
+              <Text style={styles.dailyStatLabel}>mi</Text>
             </View>
             
             <View style={styles.dailyStatCard}>
@@ -373,7 +373,7 @@ export default function RunningScreen() {
             <View style={styles.goalRemaining}>
               <Ionicons name="trending-up" size={20} color="#10B981" />
               <Text style={styles.goalRemainingText}>
-                {(dailyGoal - (dailyProgress?.distance || 0)).toFixed(2)} km to reach your goal
+                {(dailyGoal - (dailyProgress?.distance || 0)).toFixed(2)} mi to reach your goal
               </Text>
             </View>
           ) : null}
@@ -421,7 +421,7 @@ export default function RunningScreen() {
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{distance.toFixed(2)}</Text>
-                <Text style={styles.statLabel}>km</Text>
+                <Text style={styles.statLabel}>mi</Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{formatTime(duration)}</Text>
@@ -431,7 +431,7 @@ export default function RunningScreen() {
                 <Text style={styles.statValue}>
                   {currentPace > 0 ? formatPace(currentPace) : '--:--'}
                 </Text>
-                <Text style={styles.statLabel}>min/km</Text>
+                <Text style={styles.statLabel}>min/mi</Text>
               </View>
             </View>
 
@@ -474,7 +474,7 @@ export default function RunningScreen() {
                 </View>
                 <Text style={styles.statCardLabel}>This Week</Text>
                 <Text style={[styles.statCardValue, { color: '#3B82F6' }]}>
-                  {stats.weekly?.total_distance || 0} km
+                  {stats.weekly?.total_distance || 0} mi
                 </Text>
                 <Text style={styles.statCardDetail}>
                   {stats.weekly?.run_count || 0} runs • {Math.round(stats.weekly?.total_calories || 0)} cal
@@ -487,7 +487,7 @@ export default function RunningScreen() {
                 </View>
                 <Text style={styles.statCardLabel}>This Month</Text>
                 <Text style={[styles.statCardValue, { color: '#10B981' }]}>
-                  {stats.monthly?.total_distance || 0} km
+                  {stats.monthly?.total_distance || 0} mi
                 </Text>
                 <Text style={styles.statCardDetail}>
                   {stats.monthly?.run_count || 0} runs • {Math.round(stats.monthly?.total_calories || 0)} cal
@@ -510,9 +510,9 @@ export default function RunningScreen() {
                 <View style={styles.runLeft}>
                   <Ionicons name="footsteps" size={32} color={Colors.brand.primary} />
                   <View style={styles.runInfo}>
-                    <Text style={styles.runDistance}>{run.distance} km</Text>
+                    <Text style={styles.runDistance}>{run.distance} mi</Text>
                     <Text style={styles.runDetails}>
-                      {formatTime(run.duration)} • {formatPace(run.average_pace)}/km
+                      {formatTime(run.duration)} • {formatPace(run.average_pace)}/mi
                     </Text>
                     <Text style={styles.runDate}>
                       {format(new Date(run.timestamp), 'MMM d, yyyy • h:mm a')}
@@ -574,7 +574,7 @@ export default function RunningScreen() {
                   <View style={styles.detailStatItem}>
                     <Ionicons name="navigate" size={32} color={Colors.brand.primary} />
                     <Text style={styles.detailStatValue}>{selectedRun.distance}</Text>
-                    <Text style={styles.detailStatLabel}>Kilometers</Text>
+                    <Text style={styles.detailStatLabel}>Miles</Text>
                   </View>
 
                   <View style={styles.detailStatItem}>
@@ -588,7 +588,7 @@ export default function RunningScreen() {
                     <Text style={styles.detailStatValue}>
                       {formatPace(selectedRun.average_pace)}
                     </Text>
-                    <Text style={styles.detailStatLabel}>Pace (min/km)</Text>
+                    <Text style={styles.detailStatLabel}>Pace (min/mi)</Text>
                   </View>
 
                   <View style={styles.detailStatItem}>
@@ -605,7 +605,7 @@ export default function RunningScreen() {
                   <View style={styles.detailInfoRow}>
                     <Text style={styles.detailInfoLabel}>Average Speed</Text>
                     <Text style={styles.detailInfoValue}>
-                      {(selectedRun.distance / (selectedRun.duration / 3600)).toFixed(2)} km/h
+                      {(selectedRun.distance / (selectedRun.duration / 3600)).toFixed(2)} mph
                     </Text>
                   </View>
                   <View style={styles.detailInfoRow}>
