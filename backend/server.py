@@ -474,7 +474,7 @@ async def add_workout(workout: WorkoutCreate):
     await db.workouts.insert_one(workout.dict())
     return {"message": "Workout added successfully", "workout": workout.dict()}
 
-@api_router.get("/workouts/{user_id}")
+@api_router.get("/workouts/user/{user_id}")
 async def get_workouts(user_id: str, days: int = 7):
     """Get user's workouts"""
     cutoff_date = datetime.utcnow() - timedelta(days=days)
@@ -492,7 +492,7 @@ async def get_workouts(user_id: str, days: int = 7):
     
     return {"workouts": workouts}
 
-@api_router.delete("/workouts/{workout_id}")
+@api_router.delete("/workouts/item/{workout_id}")
 async def delete_workout(workout_id: str):
     """Delete a workout"""
     result = await db.workouts.delete_one({"workout_id": workout_id})
