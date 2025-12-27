@@ -1562,6 +1562,452 @@ async def get_pricing():
     }
 
 # ============================================================================
+# AI PERSONALIZED WORKOUTS
+# ============================================================================
+
+import json
+
+# Workout Categories
+WORKOUT_CATEGORIES = {
+    "strength": {
+        "name": "Strength Training",
+        "description": "Build muscle and increase strength",
+        "icon": "💪",
+        "color": "#EF4444"
+    },
+    "cardio": {
+        "name": "Cardio",
+        "description": "Improve heart health and burn calories",
+        "icon": "🏃",
+        "color": "#3B82F6"
+    },
+    "hiit": {
+        "name": "HIIT",
+        "description": "High-Intensity Interval Training",
+        "icon": "⚡",
+        "color": "#F59E0B"
+    },
+    "yoga": {
+        "name": "Yoga",
+        "description": "Flexibility, balance, and mindfulness",
+        "icon": "🧘",
+        "color": "#10B981"
+    },
+    "pilates": {
+        "name": "Pilates",
+        "description": "Core strength and body control",
+        "icon": "🤸",
+        "color": "#8B5CF6"
+    },
+    "dance": {
+        "name": "Dance Fitness",
+        "description": "Fun, rhythmic cardio workouts",
+        "icon": "💃",
+        "color": "#EC4899"
+    },
+    "martial_arts": {
+        "name": "Martial Arts",
+        "description": "Combat-inspired fitness training",
+        "icon": "🥋",
+        "color": "#14B8A6"
+    },
+    "stretching": {
+        "name": "Stretching & Recovery",
+        "description": "Improve flexibility and aid recovery",
+        "icon": "🙆",
+        "color": "#6366F1"
+    }
+}
+
+class AIWorkoutRequest(BaseModel):
+    user_id: str
+    workout_type: str  # strength, cardio, hiit, yoga, pilates, dance, martial_arts, stretching
+    duration_minutes: int = 30
+    difficulty: str = "intermediate"  # beginner, intermediate, advanced
+    focus_area: Optional[str] = None  # upper_body, lower_body, core, full_body
+    equipment: List[str] = []  # dumbbells, barbell, kettlebell, resistance_bands, none
+    goals: Optional[List[str]] = None  # weight_loss, muscle_gain, endurance, flexibility
+
+class AIWorkoutResponse(BaseModel):
+    workout_id: str
+    title: str
+    description: str
+    workout_type: str
+    difficulty: str
+    duration_minutes: int
+    calories_estimate: int
+    exercises: List[dict]
+    warmup: List[dict]
+    cooldown: List[dict]
+    tips: List[str]
+    generated_at: str
+
+@api_router.get("/workouts/categories")
+async def get_workout_categories():
+    """Get all available workout categories"""
+    return {"categories": WORKOUT_CATEGORIES}
+
+@api_router.post("/workouts/generate-ai")
+async def generate_ai_workout(request: AIWorkoutRequest):
+    """Generate a personalized workout using AI"""
+    try:
+        # Check premium status
+        subscription = await db.subscriptions.find_one({
+            "user_id": request.user_id,
+            "status": {"$in": ["trialing", "active"]}
+        })
+        
+        if not subscription:
+            raise HTTPException(
+                status_code=403, 
+                detail="Premium membership required for AI workout generation"
+            )
+        
+        # Get user profile for personalization
+        profile = await db.user_profiles.find_one({"user_id": request.user_id})
+        
+        # Build the prompt
+        equipment_str = ", ".join(request.equipment) if request.equipment else "no equipment (bodyweight only)"
+        focus_str = request.focus_area.replace("_", " ") if request.focus_area else "full body"
+        goals_str = ", ".join(request.goals) if request.goals else "general fitness"
+        
+        profile_context = ""
+        if profile:
+            profile_context = f"""
+User Profile:
+- Age: {profile.get('age', 'unknown')}
+- Gender: {profile.get('gender', 'unknown')}
+- Current Weight: {profile.get('weight', 'unknown')} lbs
+- Goal Weight: {profile.get('goal_weight', 'unknown')} lbs
+- Fitness Goal: {profile.get('goal', 'general fitness')}
+"""
+        
+        prompt = f"""Create a {request.duration_minutes}-minute {request.workout_type} workout plan.
+
+{profile_context}
+
+Requirements:
+- Difficulty Level: {request.difficulty}
+- Focus Area: {focus_str}
+- Available Equipment: {equipment_str}
+- User Goals: {goals_str}
+
+Generate a complete workout with:
+1. Warm-up exercises (3-5 minutes)
+2. Main workout exercises
+3. Cool-down/stretching (3-5 minutes)
+
+For each exercise, include:
+- Exercise name
+- Duration (seconds) or reps
+- Sets (if applicable)
+- Rest period (seconds)
+- Brief instructions
+
+Also provide:
+- Estimated calories burned
+- 3 helpful tips for the workout
+
+Return ONLY valid JSON in this exact format:
+{{
+    "title": "Workout Title",
+    "description": "Brief workout description",
+    "calories_estimate": 250,
+    "warmup": [
+        {{"name": "Exercise Name", "duration": 60, "instructions": "How to do it"}}
+    ],
+    "exercises": [
+        {{"name": "Exercise Name", "reps": "12", "sets": 3, "rest": 30, "instructions": "How to do it"}}
+    ],
+    "cooldown": [
+        {{"name": "Stretch Name", "duration": 30, "instructions": "How to do it"}}
+    ],
+    "tips": ["Tip 1", "Tip 2", "Tip 3"]
+}}"""
+
+        # Call AI
+        emergent_key = os.getenv("EMERGENT_LLM_KEY")
+        chat = LlmChat(
+            api_key=emergent_key,
+            model="gpt-4o",
+            system_message="You are an expert fitness trainer. Generate detailed, safe, and effective workout plans. Always return valid JSON only, no markdown."
+        )
+        
+        response = await chat.send_async([UserMessage(prompt)])
+        
+        # Parse the response
+        try:
+            # Clean up response if needed
+            response_text = response.strip()
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+            response_text = response_text.strip()
+            
+            workout_data = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse AI response: {response}")
+            raise HTTPException(status_code=500, detail="Failed to generate workout plan")
+        
+        # Create workout record
+        workout_id = f"ai_workout_{request.user_id}_{int(datetime.utcnow().timestamp())}"
+        
+        workout = {
+            "workout_id": workout_id,
+            "user_id": request.user_id,
+            "title": workout_data.get("title", f"{request.workout_type.title()} Workout"),
+            "description": workout_data.get("description", ""),
+            "workout_type": request.workout_type,
+            "difficulty": request.difficulty,
+            "duration_minutes": request.duration_minutes,
+            "focus_area": request.focus_area,
+            "equipment": request.equipment,
+            "calories_estimate": workout_data.get("calories_estimate", request.duration_minutes * 8),
+            "warmup": workout_data.get("warmup", []),
+            "exercises": workout_data.get("exercises", []),
+            "cooldown": workout_data.get("cooldown", []),
+            "tips": workout_data.get("tips", []),
+            "generated_at": datetime.utcnow().isoformat(),
+            "is_ai_generated": True
+        }
+        
+        # Save to database
+        await db.ai_workouts.insert_one(workout)
+        
+        return workout
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating AI workout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/workouts/ai-history/{user_id}")
+async def get_ai_workout_history(user_id: str, limit: int = 20):
+    """Get user's AI-generated workout history"""
+    try:
+        workouts = await db.ai_workouts.find(
+            {"user_id": user_id}
+        ).sort("generated_at", -1).limit(limit).to_list(limit)
+        
+        for w in workouts:
+            w.pop("_id", None)
+        
+        return {"workouts": workouts}
+    except Exception as e:
+        logger.error(f"Error getting AI workout history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/workouts/ai/{workout_id}")
+async def get_ai_workout(workout_id: str):
+    """Get a specific AI-generated workout"""
+    try:
+        workout = await db.ai_workouts.find_one({"workout_id": workout_id})
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        
+        workout.pop("_id", None)
+        return workout
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting AI workout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/workouts/ai/{workout_id}/complete")
+async def complete_ai_workout(workout_id: str, user_id: str, actual_duration: int = None):
+    """Mark an AI workout as completed and log it"""
+    try:
+        workout = await db.ai_workouts.find_one({"workout_id": workout_id})
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        
+        # Create workout log entry
+        workout_log = {
+            "workout_id": f"log_{workout_id}_{int(datetime.utcnow().timestamp())}",
+            "user_id": user_id,
+            "workout_type": workout["workout_type"],
+            "duration": actual_duration or workout["duration_minutes"],
+            "calories_burned": workout["calories_estimate"],
+            "notes": f"Completed AI workout: {workout['title']}",
+            "timestamp": datetime.utcnow().isoformat(),
+            "ai_workout_id": workout_id
+        }
+        
+        await db.workouts.insert_one(workout_log)
+        
+        # Update AI workout completion count
+        await db.ai_workouts.update_one(
+            {"workout_id": workout_id},
+            {"$inc": {"completion_count": 1}, "$set": {"last_completed": datetime.utcnow().isoformat()}}
+        )
+        
+        # Check for badges
+        await check_and_award_badges(user_id)
+        
+        return {
+            "message": "Workout completed!",
+            "calories_burned": workout_log["calories_burned"],
+            "duration": workout_log["duration"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error completing AI workout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Pre-built workout templates for each category
+WORKOUT_TEMPLATES = {
+    "yoga": [
+        {
+            "template_id": "yoga_morning_flow",
+            "title": "Morning Flow Yoga",
+            "description": "Energizing morning sequence to start your day",
+            "duration_minutes": 20,
+            "difficulty": "beginner",
+            "exercises": [
+                {"name": "Cat-Cow Stretch", "duration": 60, "instructions": "Flow between arching and rounding your spine"},
+                {"name": "Downward Dog", "duration": 45, "instructions": "Form an inverted V shape"},
+                {"name": "Sun Salutation A", "reps": "5 rounds", "instructions": "Complete flow sequence"},
+                {"name": "Warrior I", "duration": 30, "instructions": "Hold each side"},
+                {"name": "Warrior II", "duration": 30, "instructions": "Hold each side"},
+                {"name": "Triangle Pose", "duration": 30, "instructions": "Hold each side"},
+                {"name": "Tree Pose", "duration": 30, "instructions": "Balance on each leg"},
+                {"name": "Seated Forward Fold", "duration": 60, "instructions": "Relax and breathe deeply"},
+                {"name": "Savasana", "duration": 120, "instructions": "Final relaxation"}
+            ]
+        }
+    ],
+    "hiit": [
+        {
+            "template_id": "hiit_fat_burner",
+            "title": "Fat Burning HIIT",
+            "description": "High-intensity intervals to maximize calorie burn",
+            "duration_minutes": 25,
+            "difficulty": "intermediate",
+            "exercises": [
+                {"name": "Jumping Jacks", "duration": 30, "rest": 10, "sets": 3},
+                {"name": "Burpees", "reps": "10", "rest": 20, "sets": 3},
+                {"name": "Mountain Climbers", "duration": 30, "rest": 10, "sets": 3},
+                {"name": "Squat Jumps", "reps": "15", "rest": 20, "sets": 3},
+                {"name": "High Knees", "duration": 30, "rest": 10, "sets": 3},
+                {"name": "Push-Up to Plank", "reps": "10", "rest": 20, "sets": 3}
+            ]
+        }
+    ],
+    "dance": [
+        {
+            "template_id": "dance_cardio_party",
+            "title": "Dance Cardio Party",
+            "description": "Fun, energetic dance workout",
+            "duration_minutes": 30,
+            "difficulty": "beginner",
+            "exercises": [
+                {"name": "Warm-Up Groove", "duration": 180, "instructions": "Light movement to music"},
+                {"name": "Step Touch Combo", "duration": 120, "instructions": "Side steps with arm movements"},
+                {"name": "Grapevine", "duration": 90, "instructions": "Step behind and travel sideways"},
+                {"name": "Cha-Cha Slides", "duration": 120, "instructions": "Quick feet forward and back"},
+                {"name": "Hip Hop Bounce", "duration": 120, "instructions": "Rhythmic bouncing with attitude"},
+                {"name": "Salsa Steps", "duration": 120, "instructions": "Basic salsa forward and back"},
+                {"name": "Free Dance", "duration": 180, "instructions": "Express yourself!"},
+                {"name": "Cool Down Sway", "duration": 120, "instructions": "Gentle swaying to slow music"}
+            ]
+        }
+    ],
+    "martial_arts": [
+        {
+            "template_id": "kickboxing_basics",
+            "title": "Kickboxing Basics",
+            "description": "Combat-inspired cardio and strength",
+            "duration_minutes": 30,
+            "difficulty": "intermediate",
+            "exercises": [
+                {"name": "Fighter Stance & Footwork", "duration": 120, "instructions": "Practice basic stance and movement"},
+                {"name": "Jab-Cross Combo", "reps": "20 each side", "sets": 3, "rest": 15},
+                {"name": "Front Kicks", "reps": "15 each leg", "sets": 3, "rest": 15},
+                {"name": "Hook Punches", "reps": "15 each side", "sets": 3, "rest": 15},
+                {"name": "Roundhouse Kicks", "reps": "10 each leg", "sets": 3, "rest": 20},
+                {"name": "Uppercuts", "reps": "15 each side", "sets": 3, "rest": 15},
+                {"name": "Speed Bag Simulation", "duration": 60, "sets": 3, "rest": 15},
+                {"name": "Shadow Boxing", "duration": 180, "instructions": "Combine all moves freely"}
+            ]
+        }
+    ]
+}
+
+@api_router.get("/workouts/templates")
+async def get_workout_templates(category: str = None):
+    """Get pre-built workout templates"""
+    if category:
+        templates = WORKOUT_TEMPLATES.get(category, [])
+        return {"templates": templates, "category": category}
+    
+    all_templates = []
+    for cat, templates in WORKOUT_TEMPLATES.items():
+        for t in templates:
+            t["category"] = cat
+            all_templates.append(t)
+    
+    return {"templates": all_templates}
+
+@api_router.get("/workouts/recommended/{user_id}")
+async def get_recommended_workouts(user_id: str):
+    """Get personalized workout recommendations based on user history"""
+    try:
+        # Get user profile
+        profile = await db.user_profiles.find_one({"user_id": user_id})
+        
+        # Get recent workouts
+        recent_workouts = await db.workouts.find(
+            {"user_id": user_id}
+        ).sort("timestamp", -1).limit(10).to_list(10)
+        
+        # Analyze workout patterns
+        workout_types = {}
+        for w in recent_workouts:
+            wt = w.get("workout_type", "other")
+            workout_types[wt] = workout_types.get(wt, 0) + 1
+        
+        # Recommend variety - suggest categories user hasn't tried recently
+        all_categories = list(WORKOUT_CATEGORIES.keys())
+        tried_categories = list(workout_types.keys())
+        
+        recommendations = []
+        
+        # Add untried categories first
+        for cat in all_categories:
+            if cat not in tried_categories:
+                cat_info = WORKOUT_CATEGORIES[cat]
+                recommendations.append({
+                    "category": cat,
+                    "name": cat_info["name"],
+                    "reason": "Try something new!",
+                    "icon": cat_info["icon"]
+                })
+        
+        # Add templates from favorite categories
+        most_popular = sorted(workout_types.items(), key=lambda x: x[1], reverse=True)[:2]
+        for cat, count in most_popular:
+            if cat in WORKOUT_TEMPLATES:
+                for template in WORKOUT_TEMPLATES[cat]:
+                    recommendations.append({
+                        "category": cat,
+                        "template_id": template["template_id"],
+                        "title": template["title"],
+                        "reason": f"You enjoy {cat} workouts!",
+                        "duration": template["duration_minutes"]
+                    })
+        
+        return {
+            "recommendations": recommendations[:6],
+            "workout_history_count": len(recent_workouts)
+        }
+    except Exception as e:
+        logger.error(f"Error getting recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # GAMIFICATION ENDPOINTS
 # ============================================================================
 
