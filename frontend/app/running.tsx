@@ -38,6 +38,8 @@ export default function RunningScreen() {
   const [currentLocation, setCurrentLocation] = useState<any>(null);
   const [selectedRun, setSelectedRun] = useState<any>(null);
   const [showRunDetail, setShowRunDetail] = useState(false);
+  const [dailyProgress, setDailyProgress] = useState<any>(null);
+  const [dailyGoal, setDailyGoal] = useState(5); // Default 5km daily goal
   
   const locationSubscription = useRef<any>(null);
   const timerInterval = useRef<any>(null);
@@ -48,6 +50,7 @@ export default function RunningScreen() {
       loadRuns();
       loadStats();
       getCurrentLocation();
+      loadDailyProgress();
     }
     requestLocationPermissions();
     
@@ -55,6 +58,30 @@ export default function RunningScreen() {
       stopTracking();
     };
   }, [userId]);
+
+  const loadDailyProgress = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await axios.get(`${API_URL}/api/runs/${userId}?days=1`);
+      const todayRuns = (response.data.runs || []).filter((run: any) => 
+        run.timestamp && run.timestamp.startsWith(today)
+      );
+      
+      const totalDistance = todayRuns.reduce((sum: number, run: any) => sum + (run.distance || 0), 0);
+      const totalDuration = todayRuns.reduce((sum: number, run: any) => sum + (run.duration || 0), 0);
+      const totalCalories = todayRuns.reduce((sum: number, run: any) => sum + (run.calories_burned || 0), 0);
+      
+      setDailyProgress({
+        runs: todayRuns.length,
+        distance: totalDistance,
+        duration: totalDuration,
+        calories: totalCalories,
+        date: today
+      });
+    } catch (error) {
+      console.error('Error loading daily progress:', error);
+    }
+  };
 
   const getCurrentLocation = async () => {
     try {
