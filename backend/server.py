@@ -2244,6 +2244,438 @@ async def get_recommended_workouts(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# WEIGHT TRAINING
+# ============================================================================
+
+# Exercise Library
+WEIGHT_EXERCISES = {
+    "chest": [
+        {"name": "Bench Press", "equipment": ["barbell", "bench"], "muscle_groups": ["chest", "triceps", "shoulders"]},
+        {"name": "Incline Bench Press", "equipment": ["barbell", "bench"], "muscle_groups": ["upper chest", "shoulders"]},
+        {"name": "Dumbbell Flyes", "equipment": ["dumbbells", "bench"], "muscle_groups": ["chest"]},
+        {"name": "Cable Crossover", "equipment": ["cable machine"], "muscle_groups": ["chest"]},
+        {"name": "Dumbbell Press", "equipment": ["dumbbells", "bench"], "muscle_groups": ["chest", "triceps"]},
+        {"name": "Push-Ups", "equipment": ["bodyweight"], "muscle_groups": ["chest", "triceps", "core"]},
+    ],
+    "back": [
+        {"name": "Deadlift", "equipment": ["barbell"], "muscle_groups": ["back", "hamstrings", "glutes"]},
+        {"name": "Bent Over Row", "equipment": ["barbell"], "muscle_groups": ["back", "biceps"]},
+        {"name": "Lat Pulldown", "equipment": ["cable machine"], "muscle_groups": ["lats", "biceps"]},
+        {"name": "Seated Cable Row", "equipment": ["cable machine"], "muscle_groups": ["back", "biceps"]},
+        {"name": "Pull-Ups", "equipment": ["pull-up bar"], "muscle_groups": ["lats", "biceps"]},
+        {"name": "Dumbbell Row", "equipment": ["dumbbells"], "muscle_groups": ["back", "biceps"]},
+        {"name": "T-Bar Row", "equipment": ["barbell", "landmine"], "muscle_groups": ["back"]},
+    ],
+    "shoulders": [
+        {"name": "Overhead Press", "equipment": ["barbell"], "muscle_groups": ["shoulders", "triceps"]},
+        {"name": "Dumbbell Shoulder Press", "equipment": ["dumbbells"], "muscle_groups": ["shoulders"]},
+        {"name": "Lateral Raises", "equipment": ["dumbbells"], "muscle_groups": ["side delts"]},
+        {"name": "Front Raises", "equipment": ["dumbbells"], "muscle_groups": ["front delts"]},
+        {"name": "Face Pulls", "equipment": ["cable machine"], "muscle_groups": ["rear delts", "traps"]},
+        {"name": "Arnold Press", "equipment": ["dumbbells"], "muscle_groups": ["shoulders"]},
+    ],
+    "legs": [
+        {"name": "Squat", "equipment": ["barbell", "squat rack"], "muscle_groups": ["quads", "glutes", "hamstrings"]},
+        {"name": "Leg Press", "equipment": ["leg press machine"], "muscle_groups": ["quads", "glutes"]},
+        {"name": "Romanian Deadlift", "equipment": ["barbell"], "muscle_groups": ["hamstrings", "glutes"]},
+        {"name": "Leg Curl", "equipment": ["leg curl machine"], "muscle_groups": ["hamstrings"]},
+        {"name": "Leg Extension", "equipment": ["leg extension machine"], "muscle_groups": ["quads"]},
+        {"name": "Lunges", "equipment": ["dumbbells"], "muscle_groups": ["quads", "glutes"]},
+        {"name": "Calf Raises", "equipment": ["machine", "dumbbells"], "muscle_groups": ["calves"]},
+        {"name": "Hip Thrust", "equipment": ["barbell", "bench"], "muscle_groups": ["glutes"]},
+    ],
+    "arms": [
+        {"name": "Barbell Curl", "equipment": ["barbell"], "muscle_groups": ["biceps"]},
+        {"name": "Dumbbell Curl", "equipment": ["dumbbells"], "muscle_groups": ["biceps"]},
+        {"name": "Hammer Curl", "equipment": ["dumbbells"], "muscle_groups": ["biceps", "forearms"]},
+        {"name": "Tricep Pushdown", "equipment": ["cable machine"], "muscle_groups": ["triceps"]},
+        {"name": "Skull Crushers", "equipment": ["barbell", "bench"], "muscle_groups": ["triceps"]},
+        {"name": "Tricep Dips", "equipment": ["dip bars"], "muscle_groups": ["triceps", "chest"]},
+        {"name": "Preacher Curl", "equipment": ["ez bar", "preacher bench"], "muscle_groups": ["biceps"]},
+    ],
+    "core": [
+        {"name": "Plank", "equipment": ["bodyweight"], "muscle_groups": ["core"]},
+        {"name": "Cable Crunch", "equipment": ["cable machine"], "muscle_groups": ["abs"]},
+        {"name": "Hanging Leg Raise", "equipment": ["pull-up bar"], "muscle_groups": ["abs", "hip flexors"]},
+        {"name": "Russian Twist", "equipment": ["bodyweight", "weight plate"], "muscle_groups": ["obliques"]},
+        {"name": "Ab Wheel Rollout", "equipment": ["ab wheel"], "muscle_groups": ["abs", "core"]},
+    ]
+}
+
+# Pre-built weight training programs
+WEIGHT_TRAINING_PROGRAMS = {
+    "push_pull_legs": {
+        "name": "Push/Pull/Legs",
+        "description": "Classic 3-day split focusing on movement patterns",
+        "frequency": "3-6 days/week",
+        "level": "intermediate",
+        "days": [
+            {
+                "name": "Push Day",
+                "focus": ["chest", "shoulders", "triceps"],
+                "exercises": [
+                    {"name": "Bench Press", "sets": 4, "reps": "8-10", "rest": 90},
+                    {"name": "Overhead Press", "sets": 3, "reps": "8-10", "rest": 90},
+                    {"name": "Incline Dumbbell Press", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Lateral Raises", "sets": 3, "reps": "12-15", "rest": 45},
+                    {"name": "Tricep Pushdown", "sets": 3, "reps": "12-15", "rest": 45},
+                    {"name": "Overhead Tricep Extension", "sets": 3, "reps": "12-15", "rest": 45},
+                ]
+            },
+            {
+                "name": "Pull Day", 
+                "focus": ["back", "biceps", "rear delts"],
+                "exercises": [
+                    {"name": "Deadlift", "sets": 4, "reps": "5-6", "rest": 120},
+                    {"name": "Bent Over Row", "sets": 4, "reps": "8-10", "rest": 90},
+                    {"name": "Lat Pulldown", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Face Pulls", "sets": 3, "reps": "15-20", "rest": 45},
+                    {"name": "Barbell Curl", "sets": 3, "reps": "10-12", "rest": 45},
+                    {"name": "Hammer Curl", "sets": 3, "reps": "12-15", "rest": 45},
+                ]
+            },
+            {
+                "name": "Legs Day",
+                "focus": ["quads", "hamstrings", "glutes", "calves"],
+                "exercises": [
+                    {"name": "Squat", "sets": 4, "reps": "6-8", "rest": 120},
+                    {"name": "Romanian Deadlift", "sets": 3, "reps": "10-12", "rest": 90},
+                    {"name": "Leg Press", "sets": 3, "reps": "12-15", "rest": 60},
+                    {"name": "Leg Curl", "sets": 3, "reps": "12-15", "rest": 45},
+                    {"name": "Leg Extension", "sets": 3, "reps": "12-15", "rest": 45},
+                    {"name": "Calf Raises", "sets": 4, "reps": "15-20", "rest": 45},
+                ]
+            }
+        ]
+    },
+    "upper_lower": {
+        "name": "Upper/Lower Split",
+        "description": "4-day split alternating upper and lower body",
+        "frequency": "4 days/week",
+        "level": "intermediate",
+        "days": [
+            {
+                "name": "Upper A (Strength)",
+                "focus": ["chest", "back", "shoulders", "arms"],
+                "exercises": [
+                    {"name": "Bench Press", "sets": 4, "reps": "5-6", "rest": 120},
+                    {"name": "Bent Over Row", "sets": 4, "reps": "5-6", "rest": 120},
+                    {"name": "Overhead Press", "sets": 3, "reps": "6-8", "rest": 90},
+                    {"name": "Pull-Ups", "sets": 3, "reps": "6-10", "rest": 90},
+                    {"name": "Barbell Curl", "sets": 2, "reps": "10-12", "rest": 60},
+                    {"name": "Tricep Dips", "sets": 2, "reps": "10-12", "rest": 60},
+                ]
+            },
+            {
+                "name": "Lower A (Strength)",
+                "focus": ["quads", "hamstrings", "glutes"],
+                "exercises": [
+                    {"name": "Squat", "sets": 4, "reps": "5-6", "rest": 120},
+                    {"name": "Romanian Deadlift", "sets": 4, "reps": "6-8", "rest": 120},
+                    {"name": "Leg Press", "sets": 3, "reps": "8-10", "rest": 90},
+                    {"name": "Leg Curl", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Calf Raises", "sets": 4, "reps": "12-15", "rest": 45},
+                ]
+            },
+            {
+                "name": "Upper B (Hypertrophy)",
+                "focus": ["chest", "back", "shoulders", "arms"],
+                "exercises": [
+                    {"name": "Dumbbell Press", "sets": 4, "reps": "10-12", "rest": 60},
+                    {"name": "Seated Cable Row", "sets": 4, "reps": "10-12", "rest": 60},
+                    {"name": "Dumbbell Shoulder Press", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Lat Pulldown", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Lateral Raises", "sets": 3, "reps": "15-20", "rest": 45},
+                    {"name": "Dumbbell Curl", "sets": 3, "reps": "12-15", "rest": 45},
+                    {"name": "Tricep Pushdown", "sets": 3, "reps": "12-15", "rest": 45},
+                ]
+            },
+            {
+                "name": "Lower B (Hypertrophy)",
+                "focus": ["quads", "hamstrings", "glutes"],
+                "exercises": [
+                    {"name": "Leg Press", "sets": 4, "reps": "12-15", "rest": 60},
+                    {"name": "Lunges", "sets": 3, "reps": "12 each", "rest": 60},
+                    {"name": "Leg Extension", "sets": 3, "reps": "15-20", "rest": 45},
+                    {"name": "Leg Curl", "sets": 3, "reps": "15-20", "rest": 45},
+                    {"name": "Hip Thrust", "sets": 3, "reps": "12-15", "rest": 60},
+                    {"name": "Calf Raises", "sets": 4, "reps": "15-20", "rest": 45},
+                ]
+            }
+        ]
+    },
+    "full_body": {
+        "name": "Full Body",
+        "description": "3-day full body workout for beginners",
+        "frequency": "3 days/week",
+        "level": "beginner",
+        "days": [
+            {
+                "name": "Workout A",
+                "focus": ["full body"],
+                "exercises": [
+                    {"name": "Squat", "sets": 3, "reps": "8-10", "rest": 90},
+                    {"name": "Bench Press", "sets": 3, "reps": "8-10", "rest": 90},
+                    {"name": "Bent Over Row", "sets": 3, "reps": "8-10", "rest": 90},
+                    {"name": "Overhead Press", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Plank", "sets": 3, "reps": "30-60s", "rest": 45},
+                ]
+            },
+            {
+                "name": "Workout B",
+                "focus": ["full body"],
+                "exercises": [
+                    {"name": "Deadlift", "sets": 3, "reps": "6-8", "rest": 120},
+                    {"name": "Dumbbell Press", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Lat Pulldown", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Lunges", "sets": 3, "reps": "10 each", "rest": 60},
+                    {"name": "Dumbbell Curl", "sets": 2, "reps": "12-15", "rest": 45},
+                    {"name": "Tricep Pushdown", "sets": 2, "reps": "12-15", "rest": 45},
+                ]
+            },
+            {
+                "name": "Workout C",
+                "focus": ["full body"],
+                "exercises": [
+                    {"name": "Leg Press", "sets": 3, "reps": "10-12", "rest": 90},
+                    {"name": "Incline Dumbbell Press", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Seated Cable Row", "sets": 3, "reps": "10-12", "rest": 60},
+                    {"name": "Romanian Deadlift", "sets": 3, "reps": "10-12", "rest": 90},
+                    {"name": "Lateral Raises", "sets": 3, "reps": "15-20", "rest": 45},
+                    {"name": "Cable Crunch", "sets": 3, "reps": "15-20", "rest": 45},
+                ]
+            }
+        ]
+    }
+}
+
+# Weight Training Models
+class WeightSet(BaseModel):
+    set_number: int
+    weight: float  # in lbs
+    reps: int
+    rpe: Optional[int] = None  # Rate of Perceived Exertion (1-10)
+
+class WeightExerciseLog(BaseModel):
+    exercise_name: str
+    sets: List[WeightSet]
+    notes: Optional[str] = None
+
+class WeightWorkoutLog(BaseModel):
+    workout_id: str
+    user_id: str
+    workout_name: str
+    exercises: List[WeightExerciseLog]
+    duration_minutes: int
+    notes: Optional[str] = None
+    timestamp: Optional[str] = None
+
+class PersonalRecord(BaseModel):
+    exercise_name: str
+    weight: float
+    reps: int
+    date: str
+
+@api_router.get("/weight-training/exercises")
+async def get_weight_exercises(muscle_group: str = None):
+    """Get weight training exercises, optionally filtered by muscle group"""
+    if muscle_group and muscle_group in WEIGHT_EXERCISES:
+        return {"muscle_group": muscle_group, "exercises": WEIGHT_EXERCISES[muscle_group]}
+    return {"exercises": WEIGHT_EXERCISES}
+
+@api_router.get("/weight-training/programs")
+async def get_weight_programs():
+    """Get all weight training programs"""
+    return {"programs": WEIGHT_TRAINING_PROGRAMS}
+
+@api_router.get("/weight-training/programs/{program_id}")
+async def get_weight_program(program_id: str):
+    """Get a specific weight training program"""
+    if program_id not in WEIGHT_TRAINING_PROGRAMS:
+        raise HTTPException(status_code=404, detail="Program not found")
+    return {"program": WEIGHT_TRAINING_PROGRAMS[program_id]}
+
+@api_router.post("/weight-training/log")
+async def log_weight_workout(workout: WeightWorkoutLog):
+    """Log a completed weight training workout"""
+    try:
+        workout_dict = workout.dict()
+        workout_dict["timestamp"] = workout.timestamp or datetime.utcnow().isoformat()
+        workout_dict["log_id"] = f"wt_{workout.user_id}_{int(datetime.utcnow().timestamp())}"
+        
+        await db.weight_training_logs.insert_one(workout_dict)
+        
+        # Check for new PRs
+        new_prs = []
+        for exercise in workout.exercises:
+            for s in exercise.sets:
+                # Calculate estimated 1RM using Epley formula
+                estimated_1rm = s.weight * (1 + s.reps / 30)
+                
+                # Check if this is a PR
+                existing_pr = await db.personal_records.find_one({
+                    "user_id": workout.user_id,
+                    "exercise_name": exercise.exercise_name
+                })
+                
+                if not existing_pr or estimated_1rm > existing_pr.get("estimated_1rm", 0):
+                    pr_data = {
+                        "user_id": workout.user_id,
+                        "exercise_name": exercise.exercise_name,
+                        "weight": s.weight,
+                        "reps": s.reps,
+                        "estimated_1rm": estimated_1rm,
+                        "date": workout_dict["timestamp"]
+                    }
+                    
+                    await db.personal_records.update_one(
+                        {"user_id": workout.user_id, "exercise_name": exercise.exercise_name},
+                        {"$set": pr_data},
+                        upsert=True
+                    )
+                    new_prs.append({
+                        "exercise": exercise.exercise_name,
+                        "weight": s.weight,
+                        "reps": s.reps,
+                        "estimated_1rm": round(estimated_1rm, 1)
+                    })
+        
+        # Calculate total volume
+        total_volume = sum(
+            sum(s.weight * s.reps for s in ex.sets)
+            for ex in workout.exercises
+        )
+        
+        return {
+            "message": "Workout logged successfully",
+            "log_id": workout_dict["log_id"],
+            "total_volume": round(total_volume, 1),
+            "new_prs": new_prs
+        }
+    except Exception as e:
+        logger.error(f"Error logging weight workout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weight-training/history/{user_id}")
+async def get_weight_history(user_id: str, days: int = 30):
+    """Get user's weight training history"""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        workouts = await db.weight_training_logs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff.isoformat()}
+        }).sort("timestamp", -1).to_list(100)
+        
+        for w in workouts:
+            w.pop("_id", None)
+        
+        return {"workouts": workouts}
+    except Exception as e:
+        logger.error(f"Error getting weight history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weight-training/prs/{user_id}")
+async def get_personal_records(user_id: str):
+    """Get user's personal records"""
+    try:
+        prs = await db.personal_records.find({"user_id": user_id}).to_list(100)
+        
+        for pr in prs:
+            pr.pop("_id", None)
+        
+        return {"personal_records": prs}
+    except Exception as e:
+        logger.error(f"Error getting PRs: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weight-training/exercise-progress/{user_id}/{exercise_name}")
+async def get_exercise_progress(user_id: str, exercise_name: str, days: int = 90):
+    """Get progress for a specific exercise over time"""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        # Get all workout logs containing this exercise
+        workouts = await db.weight_training_logs.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": cutoff.isoformat()},
+            "exercises.exercise_name": exercise_name
+        }).sort("timestamp", 1).to_list(100)
+        
+        progress_data = []
+        for w in workouts:
+            for ex in w.get("exercises", []):
+                if ex.get("exercise_name") == exercise_name:
+                    # Get best set (highest estimated 1RM)
+                    best_set = max(
+                        ex.get("sets", []),
+                        key=lambda s: s.get("weight", 0) * (1 + s.get("reps", 0) / 30),
+                        default=None
+                    )
+                    if best_set:
+                        progress_data.append({
+                            "date": w.get("timestamp"),
+                            "weight": best_set.get("weight"),
+                            "reps": best_set.get("reps"),
+                            "estimated_1rm": round(best_set.get("weight", 0) * (1 + best_set.get("reps", 0) / 30), 1),
+                            "total_volume": sum(s.get("weight", 0) * s.get("reps", 0) for s in ex.get("sets", []))
+                        })
+        
+        return {
+            "exercise_name": exercise_name,
+            "progress": progress_data
+        }
+    except Exception as e:
+        logger.error(f"Error getting exercise progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/weight-training/stats/{user_id}")
+async def get_weight_training_stats(user_id: str):
+    """Get overall weight training statistics"""
+    try:
+        # Get all workouts
+        workouts = await db.weight_training_logs.find({"user_id": user_id}).to_list(1000)
+        
+        if not workouts:
+            return {
+                "total_workouts": 0,
+                "total_volume": 0,
+                "total_sets": 0,
+                "favorite_exercises": [],
+                "streak": 0
+            }
+        
+        # Calculate stats
+        total_volume = 0
+        total_sets = 0
+        exercise_counts = {}
+        
+        for w in workouts:
+            for ex in w.get("exercises", []):
+                ex_name = ex.get("exercise_name")
+                exercise_counts[ex_name] = exercise_counts.get(ex_name, 0) + 1
+                for s in ex.get("sets", []):
+                    total_sets += 1
+                    total_volume += s.get("weight", 0) * s.get("reps", 0)
+        
+        # Top exercises
+        top_exercises = sorted(exercise_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        # Get PR count
+        prs = await db.personal_records.count_documents({"user_id": user_id})
+        
+        return {
+            "total_workouts": len(workouts),
+            "total_volume": round(total_volume, 1),
+            "total_sets": total_sets,
+            "total_prs": prs,
+            "favorite_exercises": [{"name": name, "count": count} for name, count in top_exercises]
+        }
+    except Exception as e:
+        logger.error(f"Error getting weight training stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # GAMIFICATION ENDPOINTS
 # ============================================================================
 
