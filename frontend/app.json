@@ -15,7 +15,15 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fittraxx.app"
+      "bundleIdentifier": "com.fittraxx.app",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "FitTraxx needs access to your health data to track your fitness progress, including steps, workouts, heart rate, and sleep.",
+        "NSHealthUpdateUsageDescription": "FitTraxx needs permission to save your workout data to Apple Health."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": ["health-records"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +31,20 @@
         "backgroundColor": "#0080FF"
       },
       "package": "com.fittraxx.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.WRITE_STEPS",
+        "android.permission.health.WRITE_DISTANCE",
+        "android.permission.health.WRITE_EXERCISE",
+        "android.permission.health.WRITE_ACTIVE_CALORIES_BURNED"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -39,6 +60,12 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#0080FF"
+        }
+      ],
+      [
+        "react-native-health-connect",
+        {
+          "requestPermissionsRationale": "FitTraxx uses Health Connect to sync your fitness data including steps, workouts, heart rate, and sleep for a comprehensive view of your health."
         }
       ]
     ],
