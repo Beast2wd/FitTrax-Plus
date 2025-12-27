@@ -89,6 +89,13 @@ export default function RootLayout() {
           presentation: 'card',
         }}
       />
+      <Stack.Screen
+        name="weight-training"
+        options={{
+          title: 'Weight Training',
+          presentation: 'card',
+        }}
+      />
     </Stack>
   );
 }
