@@ -1778,7 +1778,10 @@ Return ONLY valid JSON in this exact format:
         }
         
         # Save to database
-        await db.ai_workouts.insert_one(workout)
+        await db.ai_workouts.insert_one(workout.copy())
+        
+        # Remove any ObjectId that MongoDB might have added
+        workout.pop("_id", None)
         
         return workout
         
