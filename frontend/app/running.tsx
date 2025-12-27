@@ -638,6 +638,119 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     marginBottom: 20,
   },
+  
+  // Daily Progress Section Styles
+  dailyProgressSection: {
+    backgroundColor: Colors.background.card,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  dailyProgressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dailyProgressTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  dailyProgressDate: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  goalProgressContainer: {
+    marginBottom: 20,
+  },
+  goalProgressBar: {
+    height: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  goalProgressFill: {
+    height: '100%',
+    borderRadius: 6,
+    minWidth: 12,
+  },
+  goalProgressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  goalProgressCurrent: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#EC4899',
+  },
+  goalProgressTarget: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  dailyStatsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  dailyStatCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  dailyStatIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dailyStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  dailyStatLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginTop: 2,
+  },
+  goalAchieved: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  goalAchievedText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#D97706',
+  },
+  goalRemaining: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D1FAE5',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  goalRemainingText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#059669',
+  },
+  
   startCard: {
     backgroundColor: Colors.background.card,
     borderRadius: 20,
