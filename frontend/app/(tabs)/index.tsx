@@ -487,6 +487,29 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* Progress Section */}
+        <View style={styles.section}>
+          <TouchableOpacity onPress={() => router.push('/progress')}>
+            <LinearGradient
+              colors={['#10B981', '#059669']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.progressBanner}
+            >
+              <View style={styles.progressContent}>
+                <Ionicons name="analytics" size={32} color="#fff" />
+                <View style={styles.progressText}>
+                  <Text style={styles.progressTitle}>View Progress</Text>
+                  <Text style={styles.progressSubtitle}>
+                    Charts • Goals • Body Measurements
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
         {/* Bottom Spacer */}
         <View style={{ height: 40 }} />
       </ScrollView>
