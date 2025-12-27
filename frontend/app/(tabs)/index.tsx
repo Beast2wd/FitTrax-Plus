@@ -922,4 +922,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
   },
+  
+  // Progress Banner Styles
+  progressBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  progressContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  progressText: {},
+  progressTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  progressSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+  },
 });
