@@ -9,6 +9,7 @@ import {
   Modal,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -19,6 +20,120 @@ import axios from 'axios';
 import { router } from 'expo-router';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+
+// Exercise Item Component with image support
+const ExerciseItem = ({ 
+  exercise, 
+  index, 
+  workoutType,
+  isPremium,
+  onGenerateImage 
+}: { 
+  exercise: any; 
+  index: number;
+  workoutType?: string;
+  isPremium: boolean;
+  onGenerateImage: (name: string, type: string, instructions?: string) => void;
+}) => {
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [loadingImage, setLoadingImage] = useState(false);
+  const [showImage, setShowImage] = useState(false);
+
+  const fetchImage = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/exercises/image/${encodeURIComponent(exercise.name)}`);
+      if (response.data.exists && response.data.image_base64) {
+        setImageData(response.data.image_base64);
+      }
+    } catch (error) {
+      console.log('No cached image for:', exercise.name);
+    }
+  };
+
+  useEffect(() => {
+    fetchImage();
+  }, [exercise.name]);
+
+  const handleGenerateImage = async () => {
+    if (!isPremium) {
+      Alert.alert('Premium Required', 'Exercise image generation requires Premium membership');
+      return;
+    }
+    
+    setLoadingImage(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/exercises/generate-image`, {
+        exercise_name: exercise.name,
+        exercise_type: workoutType || 'strength',
+        instructions: exercise.instructions
+      });
+      
+      if (response.data.image_base64) {
+        setImageData(response.data.image_base64);
+        setShowImage(true);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.detail || 'Failed to generate image');
+    } finally {
+      setLoadingImage(false);
+    }
+  };
+
+  return (
+    <View style={styles.exerciseItem}>
+      <View style={styles.exerciseNumber}>
+        <Text style={styles.exerciseNumberText}>{index + 1}</Text>
+      </View>
+      <View style={styles.exerciseInfo}>
+        <View style={styles.exerciseHeader}>
+          <Text style={styles.exerciseName}>{exercise.name}</Text>
+          {isPremium && !imageData && (
+            <TouchableOpacity 
+              onPress={handleGenerateImage}
+              disabled={loadingImage}
+              style={styles.generateImageBtn}
+            >
+              {loadingImage ? (
+                <ActivityIndicator size="small" color={Colors.brand.primary} />
+              ) : (
+                <Ionicons name="image" size={20} color={Colors.brand.primary} />
+              )}
+            </TouchableOpacity>
+          )}
+          {imageData && (
+            <TouchableOpacity 
+              onPress={() => setShowImage(!showImage)}
+              style={styles.showImageBtn}
+            >
+              <Ionicons 
+                name={showImage ? "eye-off" : "eye"} 
+                size={20} 
+                color={Colors.brand.primary} 
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+        <Text style={styles.exerciseDetail}>
+          {exercise.sets && `${exercise.sets} sets × `}
+          {exercise.reps || (exercise.duration ? `${exercise.duration}s` : '')}
+          {exercise.rest && ` • ${exercise.rest}s rest`}
+        </Text>
+        {exercise.instructions && (
+          <Text style={styles.exerciseInstructions}>{exercise.instructions}</Text>
+        )}
+        {showImage && imageData && (
+          <View style={styles.exerciseImageContainer}>
+            <Image
+              source={{ uri: `data:image/png;base64,${imageData}` }}
+              style={styles.exerciseImage}
+              resizeMode="cover"
+            />
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
 
 export default function AIWorkoutsScreen() {
   const { userId, profile } = useUserStore();
@@ -32,6 +147,7 @@ export default function AIWorkoutsScreen() {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+  const [generatingImages, setGeneratingImages] = useState(false);
   
   // Generate options
   const [selectedCategory, setSelectedCategory] = useState('strength');
