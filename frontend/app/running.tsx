@@ -298,6 +298,87 @@ export default function RunningScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Running Tracker</Text>
 
+        {/* Daily Run Progress Section */}
+        <View style={styles.dailyProgressSection}>
+          <View style={styles.dailyProgressHeader}>
+            <Text style={styles.dailyProgressTitle}>Today's Progress</Text>
+            <Text style={styles.dailyProgressDate}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </Text>
+          </View>
+          
+          {/* Progress Bar */}
+          <View style={styles.goalProgressContainer}>
+            <View style={styles.goalProgressBar}>
+              <LinearGradient
+                colors={['#EC4899', '#F472B6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.goalProgressFill,
+                  { width: `${Math.min(100, ((dailyProgress?.distance || 0) / dailyGoal) * 100)}%` }
+                ]}
+              />
+            </View>
+            <View style={styles.goalProgressLabels}>
+              <Text style={styles.goalProgressCurrent}>
+                {(dailyProgress?.distance || 0).toFixed(2)} km
+              </Text>
+              <Text style={styles.goalProgressTarget}>Goal: {dailyGoal} km</Text>
+            </View>
+          </View>
+
+          {/* Daily Stats Grid */}
+          <View style={styles.dailyStatsGrid}>
+            <View style={styles.dailyStatCard}>
+              <View style={[styles.dailyStatIcon, { backgroundColor: '#FCE7F3' }]}>
+                <Ionicons name="footsteps" size={20} color="#EC4899" />
+              </View>
+              <Text style={styles.dailyStatValue}>{dailyProgress?.runs || 0}</Text>
+              <Text style={styles.dailyStatLabel}>Runs</Text>
+            </View>
+            
+            <View style={styles.dailyStatCard}>
+              <View style={[styles.dailyStatIcon, { backgroundColor: '#DBEAFE' }]}>
+                <Ionicons name="navigate" size={20} color="#3B82F6" />
+              </View>
+              <Text style={styles.dailyStatValue}>{(dailyProgress?.distance || 0).toFixed(1)}</Text>
+              <Text style={styles.dailyStatLabel}>km</Text>
+            </View>
+            
+            <View style={styles.dailyStatCard}>
+              <View style={[styles.dailyStatIcon, { backgroundColor: '#D1FAE5' }]}>
+                <Ionicons name="time" size={20} color="#10B981" />
+              </View>
+              <Text style={styles.dailyStatValue}>{formatTime(dailyProgress?.duration || 0)}</Text>
+              <Text style={styles.dailyStatLabel}>Time</Text>
+            </View>
+            
+            <View style={styles.dailyStatCard}>
+              <View style={[styles.dailyStatIcon, { backgroundColor: '#FEF3C7' }]}>
+                <Ionicons name="flame" size={20} color="#F59E0B" />
+              </View>
+              <Text style={styles.dailyStatValue}>{Math.round(dailyProgress?.calories || 0)}</Text>
+              <Text style={styles.dailyStatLabel}>cal</Text>
+            </View>
+          </View>
+
+          {/* Motivational Message */}
+          {dailyProgress?.distance >= dailyGoal ? (
+            <View style={styles.goalAchieved}>
+              <Ionicons name="trophy" size={24} color="#F59E0B" />
+              <Text style={styles.goalAchievedText}>Daily goal achieved! 🎉</Text>
+            </View>
+          ) : dailyProgress?.distance > 0 ? (
+            <View style={styles.goalRemaining}>
+              <Ionicons name="trending-up" size={20} color="#10B981" />
+              <Text style={styles.goalRemainingText}>
+                {(dailyGoal - (dailyProgress?.distance || 0)).toFixed(2)} km to reach your goal
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
         {/* GPS Tracking Status */}
         {isTracking && routeCoords.length > 0 && (
           <View style={styles.mapPlaceholder}>
