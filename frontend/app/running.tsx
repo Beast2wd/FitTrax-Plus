@@ -233,6 +233,7 @@ export default function RunningScreen() {
       
       loadRuns();
       loadStats();
+      loadDailyProgress();
     } catch (error) {
       Alert.alert('Error', 'Failed to save run');
     } finally {
