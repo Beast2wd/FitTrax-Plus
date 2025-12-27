@@ -3257,6 +3257,185 @@ async def get_leaderboard(limit: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# HEALTH SYNC ENDPOINTS (Apple Health / Google Health Connect)
+# ============================================================================
+
+class HealthHeartRate(BaseModel):
+    current: int
+    min: int
+    max: int
+    avg: int
+
+class HealthSleep(BaseModel):
+    totalMinutes: int
+    deepMinutes: int
+    lightMinutes: int
+    remMinutes: int
+    awakeMinutes: int
+
+class HealthWorkout(BaseModel):
+    type: str
+    duration: float  # minutes
+    calories: float
+    distance: Optional[float] = None
+    startTime: str
+    endTime: str
+
+class HealthSyncData(BaseModel):
+    user_id: str
+    steps: int
+    distance: float  # miles
+    activeCalories: int
+    totalCalories: Optional[int] = 0
+    heartRate: Optional[HealthHeartRate] = None
+    sleep: Optional[HealthSleep] = None
+    workouts: List[HealthWorkout] = []
+    lastSyncTime: str
+
+@api_router.post("/health/sync")
+async def sync_health_data(data: HealthSyncData):
+    """Sync health data from wearables (Apple Health / Google Health Connect)"""
+    try:
+        # Store in health_sync collection
+        sync_record = {
+            "user_id": data.user_id,
+            "steps": data.steps,
+            "distance": data.distance,
+            "active_calories": data.activeCalories,
+            "total_calories": data.totalCalories,
+            "heart_rate": data.heartRate.dict() if data.heartRate else None,
+            "sleep": data.sleep.dict() if data.sleep else None,
+            "workouts": [w.dict() for w in data.workouts],
+            "sync_time": data.lastSyncTime,
+            "sync_date": datetime.fromisoformat(data.lastSyncTime.replace('Z', '+00:00')).date().isoformat(),
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # Upsert based on user_id and sync_date
+        await db.health_sync.update_one(
+            {"user_id": data.user_id, "sync_date": sync_record["sync_date"]},
+            {"$set": sync_record},
+            upsert=True
+        )
+        
+        # Update user's daily stats in the water/workout tracking
+        # This allows health data to be reflected in other parts of the app
+        
+        return {
+            "success": True,
+            "message": "Health data synced successfully",
+            "sync_time": data.lastSyncTime
+        }
+    except Exception as e:
+        logger.error(f"Error syncing health data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/health/summary/{user_id}")
+async def get_health_summary(user_id: str, days: int = 7):
+    """Get health data summary for a user"""
+    try:
+        cutoff_date = (datetime.utcnow() - timedelta(days=days)).date().isoformat()
+        
+        records = await db.health_sync.find({
+            "user_id": user_id,
+            "sync_date": {"$gte": cutoff_date}
+        }).sort("sync_date", -1).to_list(length=days)
+        
+        if not records:
+            return {
+                "has_data": False,
+                "days": [],
+                "totals": {
+                    "steps": 0,
+                    "distance": 0,
+                    "active_calories": 0,
+                    "workouts": 0
+                },
+                "averages": {
+                    "steps": 0,
+                    "distance": 0,
+                    "active_calories": 0,
+                    "sleep_minutes": 0,
+                    "heart_rate": 0
+                }
+            }
+        
+        # Calculate totals and averages
+        total_steps = sum(r.get("steps", 0) for r in records)
+        total_distance = sum(r.get("distance", 0) for r in records)
+        total_active_calories = sum(r.get("active_calories", 0) for r in records)
+        total_workouts = sum(len(r.get("workouts", [])) for r in records)
+        
+        sleep_records = [r for r in records if r.get("sleep") and r["sleep"].get("totalMinutes", 0) > 0]
+        total_sleep = sum(r["sleep"]["totalMinutes"] for r in sleep_records) if sleep_records else 0
+        
+        heart_rate_records = [r for r in records if r.get("heart_rate") and r["heart_rate"].get("avg", 0) > 0]
+        avg_heart_rate = sum(r["heart_rate"]["avg"] for r in heart_rate_records) / len(heart_rate_records) if heart_rate_records else 0
+        
+        num_days = len(records)
+        
+        return {
+            "has_data": True,
+            "days": [{
+                "date": r["sync_date"],
+                "steps": r.get("steps", 0),
+                "distance": r.get("distance", 0),
+                "active_calories": r.get("active_calories", 0),
+                "sleep_minutes": r["sleep"]["totalMinutes"] if r.get("sleep") else 0,
+                "workouts": len(r.get("workouts", []))
+            } for r in records],
+            "totals": {
+                "steps": total_steps,
+                "distance": round(total_distance, 2),
+                "active_calories": total_active_calories,
+                "workouts": total_workouts
+            },
+            "averages": {
+                "steps": round(total_steps / num_days) if num_days > 0 else 0,
+                "distance": round(total_distance / num_days, 2) if num_days > 0 else 0,
+                "active_calories": round(total_active_calories / num_days) if num_days > 0 else 0,
+                "sleep_minutes": round(total_sleep / len(sleep_records)) if sleep_records else 0,
+                "heart_rate": round(avg_heart_rate) if avg_heart_rate > 0 else 0
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting health summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/health/connection-status/{user_id}")
+async def get_health_connection_status(user_id: str):
+    """Get the last health sync status for a user"""
+    try:
+        latest_sync = await db.health_sync.find_one(
+            {"user_id": user_id},
+            sort=[("sync_time", -1)]
+        )
+        
+        if not latest_sync:
+            return {
+                "connected": False,
+                "last_sync": None,
+                "days_since_sync": None
+            }
+        
+        last_sync_time = datetime.fromisoformat(latest_sync["sync_time"].replace('Z', '+00:00'))
+        days_since = (datetime.utcnow() - last_sync_time.replace(tzinfo=None)).days
+        
+        return {
+            "connected": days_since < 7,  # Consider connected if synced within 7 days
+            "last_sync": latest_sync["sync_time"],
+            "days_since_sync": days_since,
+            "last_data": {
+                "steps": latest_sync.get("steps", 0),
+                "distance": latest_sync.get("distance", 0),
+                "active_calories": latest_sync.get("active_calories", 0)
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting health connection status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
