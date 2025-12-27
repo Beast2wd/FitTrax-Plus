@@ -1858,6 +1858,228 @@ async def complete_ai_workout(workout_id: str, user_id: str, actual_duration: in
         logger.error(f"Error completing AI workout: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ============================================================================
+# EXERCISE IMAGE GENERATION
+# ============================================================================
+
+class ExerciseImageRequest(BaseModel):
+    exercise_name: str
+    exercise_type: str = "strength"  # strength, yoga, cardio, stretching
+    instructions: Optional[str] = None
+
+@api_router.post("/exercises/generate-image")
+async def generate_exercise_image(request: ExerciseImageRequest):
+    """Generate an AI image demonstrating proper exercise form"""
+    try:
+        # Check cache first
+        cached = await db.exercise_images.find_one({
+            "exercise_name": request.exercise_name.lower()
+        })
+        if cached and cached.get("image_base64"):
+            return {
+                "exercise_name": request.exercise_name,
+                "image_base64": cached["image_base64"],
+                "cached": True
+            }
+        
+        # Generate image using GPT-image-1
+        emergent_key = os.getenv("EMERGENT_LLM_KEY")
+        image_gen = OpenAIImageGeneration(api_key=emergent_key)
+        
+        # Build detailed prompt for exercise demonstration
+        exercise_type_style = {
+            "strength": "athletic person performing strength training exercise",
+            "yoga": "person in yoga pose, peaceful studio setting",
+            "cardio": "athletic person doing cardio exercise, energetic pose",
+            "stretching": "person doing stretching exercise, flexible pose",
+            "hiit": "athletic person in high-intensity exercise position",
+            "martial_arts": "martial artist demonstrating technique",
+            "dance": "dancer in dynamic dance fitness pose",
+            "pilates": "person performing pilates exercise on mat"
+        }
+        
+        style = exercise_type_style.get(request.exercise_type, "athletic person exercising")
+        
+        prompt = f"""Create a clear, professional fitness instruction image showing:
+Exercise: {request.exercise_name}
+Style: {style}
+{f'Movement: {request.instructions}' if request.instructions else ''}
+
+Requirements:
+- Clean white or gym background
+- Professional fitness photography style
+- Clear demonstration of proper form
+- Athletic person with proper posture
+- No text or labels on the image
+- Well-lit, high quality
+- Safe, achievable position"""
+
+        logger.info(f"Generating exercise image for: {request.exercise_name}")
+        
+        images = await image_gen.generate_images(
+            prompt=prompt,
+            model="gpt-image-1",
+            number_of_images=1
+        )
+        
+        if not images or len(images) == 0:
+            raise HTTPException(status_code=500, detail="Failed to generate image")
+        
+        # Convert to base64
+        image_base64 = base64.b64encode(images[0]).decode('utf-8')
+        
+        # Cache the result
+        await db.exercise_images.update_one(
+            {"exercise_name": request.exercise_name.lower()},
+            {
+                "$set": {
+                    "exercise_name": request.exercise_name.lower(),
+                    "display_name": request.exercise_name,
+                    "exercise_type": request.exercise_type,
+                    "image_base64": image_base64,
+                    "generated_at": datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "exercise_name": request.exercise_name,
+            "image_base64": image_base64,
+            "cached": False
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating exercise image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/exercises/image/{exercise_name}")
+async def get_exercise_image(exercise_name: str):
+    """Get a cached exercise image or return placeholder info"""
+    try:
+        cached = await db.exercise_images.find_one({
+            "exercise_name": exercise_name.lower()
+        })
+        
+        if cached and cached.get("image_base64"):
+            return {
+                "exercise_name": exercise_name,
+                "image_base64": cached["image_base64"],
+                "exists": True
+            }
+        
+        return {
+            "exercise_name": exercise_name,
+            "image_base64": None,
+            "exists": False
+        }
+    except Exception as e:
+        logger.error(f"Error getting exercise image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/exercises/generate-workout-images/{workout_id}")
+async def generate_workout_images(workout_id: str, user_id: str):
+    """Generate images for all exercises in a workout (Premium feature)"""
+    try:
+        # Check premium status
+        subscription = await db.subscriptions.find_one({
+            "user_id": user_id,
+            "status": {"$in": ["trialing", "active"]}
+        })
+        
+        if not subscription:
+            raise HTTPException(
+                status_code=403, 
+                detail="Premium membership required for exercise image generation"
+            )
+        
+        # Get workout
+        workout = await db.ai_workouts.find_one({"workout_id": workout_id})
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        
+        # Collect all exercises
+        all_exercises = []
+        if workout.get("warmup"):
+            all_exercises.extend(workout["warmup"])
+        if workout.get("exercises"):
+            all_exercises.extend(workout["exercises"])
+        if workout.get("cooldown"):
+            all_exercises.extend(workout["cooldown"])
+        
+        generated_images = []
+        for exercise in all_exercises[:5]:  # Limit to 5 images per request
+            exercise_name = exercise.get("name", "")
+            if not exercise_name:
+                continue
+                
+            # Check cache first
+            cached = await db.exercise_images.find_one({
+                "exercise_name": exercise_name.lower()
+            })
+            
+            if cached and cached.get("image_base64"):
+                generated_images.append({
+                    "exercise_name": exercise_name,
+                    "cached": True
+                })
+                continue
+            
+            # Generate new image
+            try:
+                emergent_key = os.getenv("EMERGENT_LLM_KEY")
+                image_gen = OpenAIImageGeneration(api_key=emergent_key)
+                
+                prompt = f"""Professional fitness instruction image:
+Exercise: {exercise_name}
+{f'Instructions: {exercise.get("instructions", "")}' if exercise.get("instructions") else ''}
+Style: Clean gym background, proper form demonstration, athletic person, well-lit, no text"""
+                
+                images = await image_gen.generate_images(
+                    prompt=prompt,
+                    model="gpt-image-1",
+                    number_of_images=1
+                )
+                
+                if images and len(images) > 0:
+                    image_base64 = base64.b64encode(images[0]).decode('utf-8')
+                    
+                    await db.exercise_images.update_one(
+                        {"exercise_name": exercise_name.lower()},
+                        {
+                            "$set": {
+                                "exercise_name": exercise_name.lower(),
+                                "display_name": exercise_name,
+                                "exercise_type": workout.get("workout_type", "strength"),
+                                "image_base64": image_base64,
+                                "generated_at": datetime.utcnow().isoformat()
+                            }
+                        },
+                        upsert=True
+                    )
+                    
+                    generated_images.append({
+                        "exercise_name": exercise_name,
+                        "cached": False
+                    })
+            except Exception as img_error:
+                logger.error(f"Error generating image for {exercise_name}: {str(img_error)}")
+                continue
+        
+        return {
+            "workout_id": workout_id,
+            "images_generated": len(generated_images),
+            "exercises": generated_images
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating workout images: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Pre-built workout templates for each category
 WORKOUT_TEMPLATES = {
     "yoga": [
