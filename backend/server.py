@@ -1576,6 +1576,12 @@ WORKOUT_CATEGORIES = {
         "icon": "💪",
         "color": "#EF4444"
     },
+    "weight_training": {
+        "name": "Weight Training",
+        "description": "Progressive overload with weights",
+        "icon": "🏋️",
+        "color": "#7C3AED"
+    },
     "cardio": {
         "name": "Cardio",
         "description": "Improve heart health and burn calories",
