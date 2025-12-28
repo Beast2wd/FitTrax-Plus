@@ -3314,6 +3314,305 @@ async def get_leaderboard(limit: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# CHALLENGES ENDPOINTS
+# ============================================================================
+
+def get_daily_challenges_for_date(date: datetime):
+    """Get the daily challenges for a specific date (rotates based on day of year)"""
+    import random
+    day_of_year = date.timetuple().tm_yday
+    random.seed(day_of_year)
+    # Pick 3 random challenges for the day
+    challenges = random.sample(DAILY_CHALLENGES, min(3, len(DAILY_CHALLENGES)))
+    return challenges
+
+def get_weekly_challenges_for_week(date: datetime):
+    """Get the weekly challenges for a specific week"""
+    import random
+    week_number = date.isocalendar()[1]
+    random.seed(week_number * 100)
+    # Pick 2 random weekly challenges
+    challenges = random.sample(WEEKLY_CHALLENGES, min(2, len(WEEKLY_CHALLENGES)))
+    return challenges
+
+@api_router.get("/challenges/daily/{user_id}")
+async def get_daily_challenges(user_id: str):
+    """Get today's daily challenges with user progress"""
+    try:
+        today = datetime.utcnow()
+        today_str = today.date().isoformat()
+        challenges = get_daily_challenges_for_date(today)
+        
+        # Get user's progress on these challenges
+        user_challenges = await db.user_challenges.find({
+            "user_id": user_id,
+            "date": today_str,
+            "type": "daily"
+        }).to_list(100)
+        
+        completed_ids = {c["challenge_id"] for c in user_challenges if c.get("completed")}
+        progress_map = {c["challenge_id"]: c.get("progress", 0) for c in user_challenges}
+        
+        # Calculate actual progress from user data
+        for challenge in challenges:
+            challenge["progress"] = progress_map.get(challenge["id"], 0)
+            challenge["completed"] = challenge["id"] in completed_ids
+            challenge["date"] = today_str
+        
+        return {
+            "date": today_str,
+            "challenges": challenges,
+            "completed_count": len(completed_ids),
+            "total_count": len(challenges)
+        }
+    except Exception as e:
+        logger.error(f"Error getting daily challenges: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/challenges/weekly/{user_id}")
+async def get_weekly_challenges(user_id: str):
+    """Get this week's challenges with user progress"""
+    try:
+        today = datetime.utcnow()
+        week_start = (today - timedelta(days=today.weekday())).date().isoformat()
+        challenges = get_weekly_challenges_for_week(today)
+        
+        # Get user's progress
+        user_challenges = await db.user_challenges.find({
+            "user_id": user_id,
+            "week_start": week_start,
+            "type": "weekly"
+        }).to_list(100)
+        
+        completed_ids = {c["challenge_id"] for c in user_challenges if c.get("completed")}
+        progress_map = {c["challenge_id"]: c.get("progress", 0) for c in user_challenges}
+        
+        for challenge in challenges:
+            challenge["progress"] = progress_map.get(challenge["id"], 0)
+            challenge["completed"] = challenge["id"] in completed_ids
+            challenge["week_start"] = week_start
+        
+        return {
+            "week_start": week_start,
+            "challenges": challenges,
+            "completed_count": len(completed_ids),
+            "total_count": len(challenges)
+        }
+    except Exception as e:
+        logger.error(f"Error getting weekly challenges: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ChallengeProgressUpdate(BaseModel):
+    challenge_id: str
+    progress: float
+    challenge_type: str  # "daily" or "weekly"
+
+@api_router.post("/challenges/update-progress/{user_id}")
+async def update_challenge_progress(user_id: str, data: ChallengeProgressUpdate):
+    """Update progress on a challenge"""
+    try:
+        today = datetime.utcnow()
+        
+        if data.challenge_type == "daily":
+            date_key = today.date().isoformat()
+            challenge_list = DAILY_CHALLENGES
+            filter_key = "date"
+        else:
+            date_key = (today - timedelta(days=today.weekday())).date().isoformat()
+            challenge_list = WEEKLY_CHALLENGES
+            filter_key = "week_start"
+        
+        # Find the challenge
+        challenge = next((c for c in challenge_list if c["id"] == data.challenge_id), None)
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge not found")
+        
+        completed = data.progress >= challenge["target"]
+        
+        # Update or insert progress
+        await db.user_challenges.update_one(
+            {
+                "user_id": user_id,
+                "challenge_id": data.challenge_id,
+                filter_key: date_key
+            },
+            {
+                "$set": {
+                    "user_id": user_id,
+                    "challenge_id": data.challenge_id,
+                    "type": data.challenge_type,
+                    filter_key: date_key,
+                    "progress": data.progress,
+                    "completed": completed,
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        # Award points if just completed
+        points_awarded = 0
+        if completed:
+            existing = await db.challenge_completions.find_one({
+                "user_id": user_id,
+                "challenge_id": data.challenge_id,
+                filter_key: date_key
+            })
+            
+            if not existing:
+                await db.challenge_completions.insert_one({
+                    "user_id": user_id,
+                    "challenge_id": data.challenge_id,
+                    "type": data.challenge_type,
+                    filter_key: date_key,
+                    "points": challenge["points"],
+                    "completed_at": datetime.utcnow().isoformat()
+                })
+                points_awarded = challenge["points"]
+        
+        return {
+            "success": True,
+            "completed": completed,
+            "points_awarded": points_awarded,
+            "progress": data.progress,
+            "target": challenge["target"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating challenge progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/challenges/stats/{user_id}")
+async def get_challenge_stats(user_id: str):
+    """Get user's challenge completion stats"""
+    try:
+        # Count completed challenges
+        daily_completed = await db.challenge_completions.count_documents({
+            "user_id": user_id,
+            "type": "daily"
+        })
+        
+        weekly_completed = await db.challenge_completions.count_documents({
+            "user_id": user_id,
+            "type": "weekly"
+        })
+        
+        # Calculate total points from challenges
+        challenge_points = await db.challenge_completions.aggregate([
+            {"$match": {"user_id": user_id}},
+            {"$group": {"_id": None, "total": {"$sum": "$points"}}}
+        ]).to_list(1)
+        
+        total_challenge_points = challenge_points[0]["total"] if challenge_points else 0
+        
+        # Get current streak (consecutive days with at least one challenge completed)
+        today = datetime.utcnow().date()
+        streak = 0
+        check_date = today
+        
+        while True:
+            date_str = check_date.isoformat()
+            completed = await db.challenge_completions.find_one({
+                "user_id": user_id,
+                "type": "daily",
+                "date": date_str
+            })
+            if completed:
+                streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                break
+        
+        return {
+            "daily_challenges_completed": daily_completed,
+            "weekly_challenges_completed": weekly_completed,
+            "total_challenge_points": total_challenge_points,
+            "current_streak": streak
+        }
+    except Exception as e:
+        logger.error(f"Error getting challenge stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/gamification/summary/{user_id}")
+async def get_gamification_summary(user_id: str):
+    """Get complete gamification summary for user"""
+    try:
+        # Get badges
+        user_badges = await db.user_badges.find({"user_id": user_id}).to_list(100)
+        earned_badge_ids = [b["badge_id"] for b in user_badges]
+        badge_points = sum(b["points"] for b in BADGES if b["id"] in earned_badge_ids)
+        
+        # Get challenge stats
+        challenge_points_result = await db.challenge_completions.aggregate([
+            {"$match": {"user_id": user_id}},
+            {"$group": {"_id": None, "total": {"$sum": "$points"}}}
+        ]).to_list(1)
+        challenge_points = challenge_points_result[0]["total"] if challenge_points_result else 0
+        
+        # Calculate level based on total points
+        total_points = badge_points + challenge_points
+        level = 1
+        points_for_next = 100
+        
+        if total_points >= 2000:
+            level = 10
+            points_for_next = 0
+        elif total_points >= 1500:
+            level = 9
+            points_for_next = 2000
+        elif total_points >= 1100:
+            level = 8
+            points_for_next = 1500
+        elif total_points >= 800:
+            level = 7
+            points_for_next = 1100
+        elif total_points >= 550:
+            level = 6
+            points_for_next = 800
+        elif total_points >= 350:
+            level = 5
+            points_for_next = 550
+        elif total_points >= 200:
+            level = 4
+            points_for_next = 350
+        elif total_points >= 100:
+            level = 3
+            points_for_next = 200
+        elif total_points >= 50:
+            level = 2
+            points_for_next = 100
+        
+        level_names = {
+            1: "Beginner",
+            2: "Novice", 
+            3: "Active",
+            4: "Dedicated",
+            5: "Committed",
+            6: "Strong",
+            7: "Elite",
+            8: "Champion",
+            9: "Master",
+            10: "Legend"
+        }
+        
+        return {
+            "user_id": user_id,
+            "total_points": total_points,
+            "badge_points": badge_points,
+            "challenge_points": challenge_points,
+            "badges_earned": len(earned_badge_ids),
+            "badges_total": len(BADGES),
+            "level": level,
+            "level_name": level_names.get(level, "Unknown"),
+            "points_for_next_level": points_for_next,
+            "progress_to_next": min(100, (total_points / points_for_next * 100)) if points_for_next > 0 else 100
+        }
+    except Exception as e:
+        logger.error(f"Error getting gamification summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # HEALTH SYNC ENDPOINTS (Apple Health / Google Health Connect)
 # ============================================================================
 
