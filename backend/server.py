@@ -3228,6 +3228,8 @@ async def check_and_award_badges(user_id: str):
         meals = await db.meals.find({"user_id": user_id}).to_list(1000)
         water = await db.water_intake.find({"user_id": user_id}).to_list(1000)
         runs = await db.runs.find({"user_id": user_id}).to_list(100)
+        weight_sessions = await db.weight_logs.find({"user_id": user_id}).to_list(500)
+        profile = await db.user_profiles.find_one({"user_id": user_id})
         
         existing_badges = await db.user_badges.find({"user_id": user_id}).to_list(100)
         existing_ids = [b["badge_id"] for b in existing_badges]
@@ -3242,31 +3244,105 @@ async def check_and_award_badges(user_id: str):
                         "earned_at": datetime.utcnow().isoformat()
                     })
                     awarded.append(badge)
+                    existing_ids.append(badge_id)
         
-        # Check badges
+        # ===== STARTER BADGES =====
         if len(workouts) >= 1:
             await award_badge("first_workout")
         
+        if len(meals) >= 1:
+            await award_badge("first_meal")
+            
+        if len(runs) >= 1:
+            await award_badge("first_run")
+            
+        if profile and profile.get("name") and profile.get("weight"):
+            await award_badge("profile_complete")
+        
+        # ===== WORKOUT BADGES =====
+        if len(workouts) >= 10:
+            await award_badge("workout_10")
+        if len(workouts) >= 50:
+            await award_badge("workout_50")
+        if len(workouts) >= 100:
+            await award_badge("workout_100")
+        
+        # ===== NUTRITION BADGES =====
         if len(meals) >= 50:
             await award_badge("meal_master")
+        if len(meals) >= 200:
+            await award_badge("meal_expert")
         
-        # Check for 5K and 10K runs
+        # ===== RUNNING BADGES =====
+        total_run_distance = sum(r.get("distance", 0) for r in runs)
+        
         for run in runs:
-            if run.get("distance", 0) >= 5:
+            distance = run.get("distance", 0)
+            # Distance is in miles
+            if distance >= 3.1:  # 5K
                 await award_badge("run_5k")
-            if run.get("distance", 0) >= 10:
+            if distance >= 6.2:  # 10K
                 await award_badge("run_10k")
+            if distance >= 13.1:  # Half marathon
+                await award_badge("run_half_marathon")
+            if distance >= 26.2:  # Marathon
+                await award_badge("run_marathon")
         
-        # Check total calories burned
+        if total_run_distance >= 50:
+            await award_badge("run_50_miles")
+        if total_run_distance >= 100:
+            await award_badge("run_100_miles")
+        
+        # ===== CALORIE BADGES =====
         total_calories = sum(w.get("calories_burned", 0) for w in workouts)
         total_calories += sum(r.get("calories_burned", 0) for r in runs)
+        
         if total_calories >= 10000:
             await award_badge("calorie_crusher")
+        if total_calories >= 50000:
+            await award_badge("calorie_inferno")
+        
+        # ===== WEIGHT TRAINING BADGES =====
+        if len(weight_sessions) >= 1:
+            await award_badge("first_lift")
+        if len(weight_sessions) >= 10:
+            await award_badge("lift_10_sessions")
+        
+        # Calculate total volume
+        total_volume = 0
+        for session in weight_sessions:
+            for exercise in session.get("exercises", []):
+                for set_data in exercise.get("sets", []):
+                    total_volume += set_data.get("weight", 0) * set_data.get("reps", 0)
+        
+        if total_volume >= 100000:
+            await award_badge("volume_king")
+        
+        # Count PRs
+        pr_count = await db.personal_records.count_documents({"user_id": user_id})
+        if pr_count >= 5:
+            await award_badge("pr_breaker")
+        
+        # ===== TIME-BASED BADGES =====
+        early_workouts = [w for w in workouts if w.get("timestamp") and 
+                         datetime.fromisoformat(w["timestamp"].replace('Z', '+00:00')).hour < 7]
+        if len(early_workouts) >= 10:
+            await award_badge("early_bird")
+        
+        late_workouts = [w for w in workouts if w.get("timestamp") and 
+                        datetime.fromisoformat(w["timestamp"].replace('Z', '+00:00')).hour >= 20]
+        if len(late_workouts) >= 10:
+            await award_badge("night_owl")
+        
+        weekend_workouts = [w for w in workouts if w.get("timestamp") and 
+                           datetime.fromisoformat(w["timestamp"].replace('Z', '+00:00')).weekday() >= 5]
+        if len(weekend_workouts) >= 20:
+            await award_badge("weekend_warrior")
         
         return {
             "user_id": user_id,
             "new_badges_awarded": awarded,
-            "total_badges": len(existing_ids) + len(awarded)
+            "total_badges": len(existing_ids)
         }
     except Exception as e:
         logger.error(f"Error checking badges: {str(e)}")
