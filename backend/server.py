@@ -3115,16 +3115,73 @@ async def get_goals_progress(user_id: str):
 
 # Badge definitions
 BADGES = [
-    {"id": "first_workout", "name": "First Step", "description": "Complete your first workout", "icon": "🏃", "points": 10},
-    {"id": "week_streak", "name": "Week Warrior", "description": "7-day workout streak", "icon": "🔥", "points": 50},
-    {"id": "month_streak", "name": "Monthly Champion", "description": "30-day workout streak", "icon": "🏆", "points": 200},
-    {"id": "calorie_crusher", "name": "Calorie Crusher", "description": "Burn 10,000 calories total", "icon": "💪", "points": 100},
-    {"id": "hydration_hero", "name": "Hydration Hero", "description": "Log water for 7 consecutive days", "icon": "💧", "points": 30},
-    {"id": "meal_master", "name": "Meal Master", "description": "Log 50 meals", "icon": "🍽️", "points": 75},
-    {"id": "run_5k", "name": "5K Runner", "description": "Complete a 5km run", "icon": "🏅", "points": 50},
-    {"id": "run_10k", "name": "10K Champion", "description": "Complete a 10km run", "icon": "🥇", "points": 100},
-    {"id": "early_bird", "name": "Early Bird", "description": "Complete 10 workouts before 7am", "icon": "🌅", "points": 40},
-    {"id": "night_owl", "name": "Night Owl", "description": "Complete 10 workouts after 8pm", "icon": "🦉", "points": 40},
+    # Getting Started
+    {"id": "first_workout", "name": "First Step", "description": "Complete your first workout", "icon": "🏃", "points": 10, "category": "starter"},
+    {"id": "first_meal", "name": "Nutrition Novice", "description": "Log your first meal", "icon": "🍎", "points": 10, "category": "starter"},
+    {"id": "first_run", "name": "Running Start", "description": "Complete your first run", "icon": "👟", "points": 10, "category": "starter"},
+    {"id": "profile_complete", "name": "All Set Up", "description": "Complete your profile", "icon": "✅", "points": 15, "category": "starter"},
+    
+    # Streaks
+    {"id": "week_streak", "name": "Week Warrior", "description": "7-day workout streak", "icon": "🔥", "points": 50, "category": "streak"},
+    {"id": "two_week_streak", "name": "Unstoppable", "description": "14-day workout streak", "icon": "⚡", "points": 100, "category": "streak"},
+    {"id": "month_streak", "name": "Monthly Champion", "description": "30-day workout streak", "icon": "🏆", "points": 200, "category": "streak"},
+    {"id": "hydration_streak", "name": "Hydration Hero", "description": "Log water for 7 consecutive days", "icon": "💧", "points": 30, "category": "streak"},
+    
+    # Running Achievements
+    {"id": "run_5k", "name": "5K Runner", "description": "Complete a 5K (3.1 mi) run", "icon": "🏅", "points": 50, "category": "running"},
+    {"id": "run_10k", "name": "10K Champion", "description": "Complete a 10K (6.2 mi) run", "icon": "🥇", "points": 100, "category": "running"},
+    {"id": "run_half_marathon", "name": "Half Marathon Hero", "description": "Complete a half marathon (13.1 mi)", "icon": "🎖️", "points": 250, "category": "running"},
+    {"id": "run_marathon", "name": "Marathon Master", "description": "Complete a marathon (26.2 mi)", "icon": "👑", "points": 500, "category": "running"},
+    {"id": "run_50_miles", "name": "50 Mile Club", "description": "Run 50 miles total", "icon": "🚀", "points": 75, "category": "running"},
+    {"id": "run_100_miles", "name": "Century Runner", "description": "Run 100 miles total", "icon": "💯", "points": 150, "category": "running"},
+    
+    # Workout Achievements
+    {"id": "calorie_crusher", "name": "Calorie Crusher", "description": "Burn 10,000 calories total", "icon": "💪", "points": 100, "category": "fitness"},
+    {"id": "calorie_inferno", "name": "Calorie Inferno", "description": "Burn 50,000 calories total", "icon": "🔥", "points": 300, "category": "fitness"},
+    {"id": "workout_10", "name": "Getting Serious", "description": "Complete 10 workouts", "icon": "💪", "points": 25, "category": "fitness"},
+    {"id": "workout_50", "name": "Dedicated", "description": "Complete 50 workouts", "icon": "🎯", "points": 75, "category": "fitness"},
+    {"id": "workout_100", "name": "Centurion", "description": "Complete 100 workouts", "icon": "⭐", "points": 150, "category": "fitness"},
+    
+    # Nutrition Achievements
+    {"id": "meal_master", "name": "Meal Master", "description": "Log 50 meals", "icon": "🍽️", "points": 75, "category": "nutrition"},
+    {"id": "meal_expert", "name": "Nutrition Expert", "description": "Log 200 meals", "icon": "🥗", "points": 150, "category": "nutrition"},
+    {"id": "protein_pro", "name": "Protein Pro", "description": "Hit protein goal 7 days in a row", "icon": "🥩", "points": 50, "category": "nutrition"},
+    
+    # Weight Training
+    {"id": "first_lift", "name": "Iron Rookie", "description": "Log your first weight training session", "icon": "🏋️", "points": 10, "category": "weights"},
+    {"id": "lift_10_sessions", "name": "Gym Regular", "description": "Complete 10 weight training sessions", "icon": "💪", "points": 40, "category": "weights"},
+    {"id": "pr_breaker", "name": "PR Breaker", "description": "Set 5 personal records", "icon": "📈", "points": 50, "category": "weights"},
+    {"id": "volume_king", "name": "Volume King", "description": "Lift 100,000 lbs total volume", "icon": "👑", "points": 100, "category": "weights"},
+    
+    # Time-based
+    {"id": "early_bird", "name": "Early Bird", "description": "Complete 10 workouts before 7am", "icon": "🌅", "points": 40, "category": "special"},
+    {"id": "night_owl", "name": "Night Owl", "description": "Complete 10 workouts after 8pm", "icon": "🦉", "points": 40, "category": "special"},
+    {"id": "weekend_warrior", "name": "Weekend Warrior", "description": "Complete 20 weekend workouts", "icon": "📅", "points": 60, "category": "special"},
+]
+
+# Daily Challenges (rotate daily)
+DAILY_CHALLENGES = [
+    {"id": "daily_steps_5000", "name": "Step It Up", "description": "Walk 5,000 steps today", "target": 5000, "type": "steps", "points": 15},
+    {"id": "daily_steps_10000", "name": "Step Master", "description": "Walk 10,000 steps today", "target": 10000, "type": "steps", "points": 25},
+    {"id": "daily_water_8", "name": "Hydrate", "description": "Drink 8 glasses of water", "target": 64, "type": "water", "points": 10},
+    {"id": "daily_workout", "name": "Move It", "description": "Complete any workout today", "target": 1, "type": "workout", "points": 20},
+    {"id": "daily_run_1mi", "name": "Quick Run", "description": "Run at least 1 mile", "target": 1, "type": "run_distance", "points": 15},
+    {"id": "daily_run_2mi", "name": "Solid Run", "description": "Run at least 2 miles", "target": 2, "type": "run_distance", "points": 25},
+    {"id": "daily_calories_300", "name": "Burn Baby Burn", "description": "Burn 300 calories", "target": 300, "type": "calories", "points": 20},
+    {"id": "daily_calories_500", "name": "Calorie Torch", "description": "Burn 500 calories", "target": 500, "type": "calories", "points": 35},
+    {"id": "daily_log_meals", "name": "Track Your Fuel", "description": "Log all 3 meals today", "target": 3, "type": "meals", "points": 15},
+    {"id": "daily_strength", "name": "Lift Heavy", "description": "Complete a strength workout", "target": 1, "type": "strength", "points": 20},
+]
+
+# Weekly Challenges
+WEEKLY_CHALLENGES = [
+    {"id": "weekly_workouts_5", "name": "Five for Five", "description": "Complete 5 workouts this week", "target": 5, "type": "workouts", "points": 50},
+    {"id": "weekly_run_10mi", "name": "10 Mile Week", "description": "Run 10 miles this week", "target": 10, "type": "run_distance", "points": 75},
+    {"id": "weekly_run_20mi", "name": "20 Mile Week", "description": "Run 20 miles this week", "target": 20, "type": "run_distance", "points": 125},
+    {"id": "weekly_calories_3000", "name": "Burn 3K", "description": "Burn 3,000 calories this week", "target": 3000, "type": "calories", "points": 60},
+    {"id": "weekly_strength_3", "name": "Strength Week", "description": "Complete 3 strength sessions", "target": 3, "type": "strength", "points": 45},
+    {"id": "weekly_perfect_hydration", "name": "Hydration Week", "description": "Hit water goal every day", "target": 7, "type": "water_days", "points": 40},
+    {"id": "weekly_meal_tracking", "name": "Nutrition Week", "description": "Log meals every day this week", "target": 7, "type": "meal_days", "points": 50},
 ]
 
 @api_router.get("/gamification/badges")
