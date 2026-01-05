@@ -367,20 +367,6 @@ export default function DashboardScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/analytics')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#F5F3FF' }]}>
-              <Ionicons name="stats-chart" size={24} color="#8B5CF6" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Analytics & Insights</Text>
-              <Text style={styles.actionSubtitle}>Track your progress</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
             style={[styles.actionCard, { borderLeftColor: '#F59E0B', borderLeftWidth: 4 }]}
             onPress={() => router.push('/schedule')}
           >
@@ -390,6 +376,20 @@ export default function DashboardScreen() {
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Workout Schedule</Text>
               <Text style={styles.actionSubtitle}>Plan and track workouts</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/analytics')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#F5F3FF' }]}>
+              <Ionicons name="stats-chart" size={24} color="#8B5CF6" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Analytics & Insights</Text>
+              <Text style={styles.actionSubtitle}>Track your progress</Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
           </TouchableOpacity>
@@ -451,11 +451,11 @@ export default function DashboardScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#F59E0B', borderLeftWidth: 4 }]}
+            style={[styles.actionCard, { borderLeftColor: '#EF4444', borderLeftWidth: 4 }]}
             onPress={() => router.push('/badges')}
           >
-            <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
-              <Ionicons name="trophy" size={24} color="#F59E0B" />
+            <View style={[styles.actionIcon, { backgroundColor: '#FEE2E2' }]}>
+              <Ionicons name="trophy" size={24} color="#EF4444" />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Rewards & Challenges</Text>
