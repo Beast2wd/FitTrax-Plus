@@ -382,6 +382,20 @@ export default function DashboardScreen() {
 
           <TouchableOpacity 
             style={[styles.actionCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/body-scan')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#F5F3FF' }]}>
+              <Ionicons name="body" size={24} color="#8B5CF6" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Body Scan</Text>
+              <Text style={styles.actionSubtitle}>AI workout from your body</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#3B82F6', borderLeftWidth: 4 }]}
             onPress={() => router.push('/analytics')}
           >
             <View style={[styles.actionIcon, { backgroundColor: '#F5F3FF' }]}>
