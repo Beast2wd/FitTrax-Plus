@@ -1,0 +1,1575 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  RefreshControl,
+  Modal,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { Colors } from '../constants/Colors';
+import { useUserStore } from '../stores/userStore';
+import axios from 'axios';
+
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const { width } = Dimensions.get('window');
+
+type TabType = 'calculator' | 'log' | 'protocols' | 'progress' | 'ai';
+
+interface Peptide {
+  name: string;
+  category: string;
+  description: string;
+  common_doses: number[];
+  dose_unit: string;
+  frequency: string;
+  typical_duration: string;
+  half_life: string;
+  storage: string;
+  common_uses: string[];
+  notes: string;
+}
+
+interface InjectionSite {
+  id: string;
+  name: string;
+  description: string;
+  recent_count: number;
+}
+
+export default function PeptideCalculatorScreen() {
+  const { userId } = useUserStore();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('calculator');
+  
+  // Data
+  const [peptideDatabase, setPeptideDatabase] = useState<Record<string, Peptide>>({});
+  const [categories, setCategories] = useState<Record<string, string>>({});
+  const [injectionHistory, setInjectionHistory] = useState<any[]>([]);
+  const [protocols, setProtocols] = useState<any[]>([]);
+  const [missedDoses, setMissedDoses] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [siteRotation, setSiteRotation] = useState<InjectionSite[]>([]);
+  const [recommendedSite, setRecommendedSite] = useState('');
+  
+  // Calculator state
+  const [selectedPeptide, setSelectedPeptide] = useState<string>('');
+  const [peptideAmount, setPeptideAmount] = useState('5');
+  const [waterAmount, setWaterAmount] = useState('2');
+  const [desiredDose, setDesiredDose] = useState('250');
+  const [syringeUnits, setSyringeUnits] = useState('100');
+  const [calcResult, setCalcResult] = useState<any>(null);
+  
+  // Injection log state
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [logPeptide, setLogPeptide] = useState('');
+  const [logDose, setLogDose] = useState('');
+  const [logSite, setLogSite] = useState('');
+  const [logNotes, setLogNotes] = useState('');
+  const [logSideEffects, setLogSideEffects] = useState('');
+  
+  // AI state
+  const [aiQuestion, setAiQuestion] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  
+  // Peptide info modal
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [selectedPeptideInfo, setSelectedPeptideInfo] = useState<Peptide | null>(null);
+  
+  // Peptide selector modal
+  const [selectorVisible, setSelectorVisible] = useState(false);
+  const [selectorCallback, setSelectorCallback] = useState<((id: string) => void) | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      const [dbRes, historyRes, protocolsRes, missedRes, statsRes, siteRes] = await Promise.all([
+        axios.get(`${API_URL}/api/peptides/database`),
+        userId ? axios.get(`${API_URL}/api/peptides/injections/${userId}?limit=20`) : null,
+        userId ? axios.get(`${API_URL}/api/peptides/protocols/${userId}`) : null,
+        userId ? axios.get(`${API_URL}/api/peptides/missed-doses/${userId}`) : null,
+        userId ? axios.get(`${API_URL}/api/peptides/stats/${userId}`) : null,
+        userId ? axios.get(`${API_URL}/api/peptides/site-rotation/${userId}`) : null,
+      ]);
+      
+      setPeptideDatabase(dbRes.data.peptides);
+      setCategories(dbRes.data.categories);
+      
+      if (historyRes) setInjectionHistory(historyRes.data.injections || []);
+      if (protocolsRes) setProtocols(protocolsRes.data.protocols || []);
+      if (missedRes) setMissedDoses(missedRes.data.missed_doses || []);
+      if (statsRes) setStats(statsRes.data);
+      if (siteRes) {
+        setSiteRotation(siteRes.data.sites || []);
+        setRecommendedSite(siteRes.data.recommended_next || '');
+      }
+    } catch (error) {
+      console.error('Error loading peptide data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  const calculateReconstitution = async () => {
+    try {
+      const response = await axios.post(`${API_URL}/api/peptides/calculate-reconstitution`, {
+        peptide_amount_mg: parseFloat(peptideAmount),
+        water_amount_ml: parseFloat(waterAmount),
+        desired_dose_mcg: parseFloat(desiredDose),
+        syringe_units: parseInt(syringeUnits),
+      });
+      setCalcResult(response.data);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to calculate reconstitution');
+    }
+  };
+
+  const logInjection = async () => {
+    if (!logPeptide || !logDose || !logSite) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+    
+    try {
+      const peptideInfo = peptideDatabase[logPeptide];
+      await axios.post(`${API_URL}/api/peptides/log-injection`, {
+        user_id: userId,
+        peptide_id: logPeptide,
+        peptide_name: peptideInfo?.name || logPeptide,
+        dose_mcg: parseFloat(logDose),
+        injection_site: logSite,
+        injection_time: new Date().toISOString(),
+        notes: logNotes,
+        side_effects: logSideEffects,
+      });
+      
+      Alert.alert('Success', 'Injection logged successfully');
+      setLogModalVisible(false);
+      setLogPeptide('');
+      setLogDose('');
+      setLogSite('');
+      setLogNotes('');
+      setLogSideEffects('');
+      loadData();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to log injection');
+    }
+  };
+
+  const askAI = async () => {
+    if (!aiQuestion.trim()) return;
+    
+    setAiLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/peptides/ai-insights`, {
+        user_id: userId,
+        question: aiQuestion,
+        context: selectedPeptide || '',
+      });
+      setAiResponse(response.data.response);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get AI response');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const openPeptideSelector = (callback: (id: string) => void) => {
+    setSelectorCallback(() => callback);
+    setSelectorVisible(true);
+  };
+
+  const selectPeptide = (id: string) => {
+    if (selectorCallback) {
+      selectorCallback(id);
+    }
+    setSelectorVisible(false);
+  };
+
+  const showPeptideInfo = (peptideId: string) => {
+    const info = peptideDatabase[peptideId];
+    if (info) {
+      setSelectedPeptideInfo(info);
+      setInfoModalVisible(true);
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      recovery: '#10B981',
+      glp1: '#8B5CF6',
+      gh_secretagogue: '#3B82F6',
+      igf: '#EC4899',
+      longevity: '#F59E0B',
+      sexual_health: '#EF4444',
+    };
+    return colors[category] || Colors.brand.primary;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={Colors.brand.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Peptide Calculator</Text>
+          <TouchableOpacity onPress={() => setLogModalVisible(true)} style={styles.addButton}>
+            <Ionicons name="add-circle" size={28} color={Colors.brand.primary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Tabs */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabsScroll}
+          contentContainerStyle={styles.tabsContainer}
+        >
+          {[
+            { id: 'calculator', label: 'Calculator', icon: 'calculator' },
+            { id: 'log', label: 'Log', icon: 'list' },
+            { id: 'protocols', label: 'Protocols', icon: 'calendar' },
+            { id: 'progress', label: 'Progress', icon: 'trending-up' },
+            { id: 'ai', label: 'AI Assistant', icon: 'bulb' },
+          ].map((tab) => (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+              onPress={() => setActiveTab(tab.id as TabType)}
+            >
+              <Ionicons 
+                name={tab.icon as any} 
+                size={18} 
+                color={activeTab === tab.id ? '#fff' : Colors.text.secondary} 
+              />
+              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* Calculator Tab */}
+          {activeTab === 'calculator' && (
+            <>
+              {/* Stats Summary */}
+              {stats && (
+                <View style={styles.statsRow}>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statValue}>{stats.total_injections}</Text>
+                    <Text style={styles.statLabel}>Total Logs</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statValue}>{stats.this_week_injections}</Text>
+                    <Text style={styles.statLabel}>This Week</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statValue}>{stats.current_streak}</Text>
+                    <Text style={styles.statLabel}>Day Streak</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Reconstitution Calculator */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Reconstitution Calculator</Text>
+                
+                <TouchableOpacity 
+                  style={styles.selectButton}
+                  onPress={() => openPeptideSelector((id) => {
+                    setSelectedPeptide(id);
+                    const p = peptideDatabase[id];
+                    if (p && p.common_doses.length > 0) {
+                      setDesiredDose(p.common_doses[0].toString());
+                    }
+                  })}
+                >
+                  <Text style={styles.selectButtonText}>
+                    {selectedPeptide ? peptideDatabase[selectedPeptide]?.name : 'Select Peptide (optional)'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color={Colors.text.secondary} />
+                </TouchableOpacity>
+
+                <View style={styles.inputRow}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Peptide Amount</Text>
+                    <View style={styles.inputWithUnit}>
+                      <TextInput
+                        style={styles.input}
+                        value={peptideAmount}
+                        onChangeText={setPeptideAmount}
+                        keyboardType="decimal-pad"
+                        placeholder="5"
+                      />
+                      <Text style={styles.inputUnit}>mg</Text>
+                    </View>
+                  </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>BAC Water</Text>
+                    <View style={styles.inputWithUnit}>
+                      <TextInput
+                        style={styles.input}
+                        value={waterAmount}
+                        onChangeText={setWaterAmount}
+                        keyboardType="decimal-pad"
+                        placeholder="2"
+                      />
+                      <Text style={styles.inputUnit}>mL</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.inputRow}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Desired Dose</Text>
+                    <View style={styles.inputWithUnit}>
+                      <TextInput
+                        style={styles.input}
+                        value={desiredDose}
+                        onChangeText={setDesiredDose}
+                        keyboardType="decimal-pad"
+                        placeholder="250"
+                      />
+                      <Text style={styles.inputUnit}>mcg</Text>
+                    </View>
+                  </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Syringe</Text>
+                    <View style={styles.inputWithUnit}>
+                      <TextInput
+                        style={styles.input}
+                        value={syringeUnits}
+                        onChangeText={setSyringeUnits}
+                        keyboardType="number-pad"
+                        placeholder="100"
+                      />
+                      <Text style={styles.inputUnit}>units</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <TouchableOpacity style={styles.calculateButton} onPress={calculateReconstitution}>
+                  <Ionicons name="calculator" size={20} color="#fff" />
+                  <Text style={styles.calculateButtonText}>Calculate</Text>
+                </TouchableOpacity>
+
+                {calcResult && (
+                  <View style={styles.resultCard}>
+                    <View style={styles.resultMain}>
+                      <Text style={styles.resultLabel}>Draw</Text>
+                      <Text style={styles.resultValue}>{calcResult.units_for_dose} units</Text>
+                      <Text style={styles.resultSubtext}>{calcResult.syringe_marking}</Text>
+                    </View>
+                    <View style={styles.resultDetails}>
+                      <View style={styles.resultRow}>
+                        <Text style={styles.resultDetailLabel}>Concentration</Text>
+                        <Text style={styles.resultDetailValue}>{calcResult.concentration_mcg_per_ml} mcg/mL</Text>
+                      </View>
+                      <View style={styles.resultRow}>
+                        <Text style={styles.resultDetailLabel}>Per Unit</Text>
+                        <Text style={styles.resultDetailValue}>{calcResult.mcg_per_unit} mcg</Text>
+                      </View>
+                      <View style={styles.resultRow}>
+                        <Text style={styles.resultDetailLabel}>Doses/Vial</Text>
+                        <Text style={styles.resultDetailValue}>{calcResult.doses_per_vial}</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Quick Peptide Reference */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Peptide Library</Text>
+                {Object.entries(categories).map(([catId, catName]) => {
+                  const peptides = Object.entries(peptideDatabase).filter(([_, p]) => p.category === catId);
+                  if (peptides.length === 0) return null;
+                  
+                  return (
+                    <View key={catId} style={styles.categorySection}>
+                      <Text style={[styles.categoryTitle, { color: getCategoryColor(catId) }]}>
+                        {catName}
+                      </Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <View style={styles.peptideChips}>
+                          {peptides.map(([id, peptide]) => (
+                            <TouchableOpacity
+                              key={id}
+                              style={[styles.peptideChip, { borderColor: getCategoryColor(catId) }]}
+                              onPress={() => showPeptideInfo(id)}
+                            >
+                              <Text style={styles.peptideChipText}>{peptide.name}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </ScrollView>
+                    </View>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          {/* Log Tab */}
+          {activeTab === 'log' && (
+            <>
+              {/* Missed Doses Alert */}
+              {missedDoses.length > 0 && (
+                <View style={styles.alertCard}>
+                  <Ionicons name="warning" size={24} color="#F59E0B" />
+                  <View style={styles.alertContent}>
+                    <Text style={styles.alertTitle}>Missed Doses Detected</Text>
+                    {missedDoses.slice(0, 2).map((dose, i) => (
+                      <Text key={i} style={styles.alertText}>
+                        {dose.peptide_name} on {dose.missed_date}
+                      </Text>
+                    ))}
+                    {missedDoses.length > 2 && (
+                      <Text style={styles.alertMore}>+{missedDoses.length - 2} more</Text>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Site Rotation */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Injection Site Rotation</Text>
+                <Text style={styles.recommendedSite}>
+                  Recommended: <Text style={styles.recommendedSiteValue}>
+                    {siteRotation.find(s => s.id === recommendedSite)?.name || 'Abdomen (Left)'}
+                  </Text>
+                </Text>
+                <View style={styles.siteGrid}>
+                  {siteRotation.map(site => (
+                    <TouchableOpacity
+                      key={site.id}
+                      style={[
+                        styles.siteCard,
+                        site.id === recommendedSite && styles.siteCardRecommended
+                      ]}
+                      onPress={() => {
+                        setLogSite(site.id);
+                        setLogModalVisible(true);
+                      }}
+                    >
+                      <Text style={styles.siteName}>{site.name}</Text>
+                      <Text style={styles.siteCount}>{site.recent_count} recent</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Recent Injections */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Recent Injections</Text>
+                {injectionHistory.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="medical" size={48} color={Colors.text.muted} />
+                    <Text style={styles.emptyText}>No injections logged yet</Text>
+                    <TouchableOpacity 
+                      style={styles.emptyButton}
+                      onPress={() => setLogModalVisible(true)}
+                    >
+                      <Text style={styles.emptyButtonText}>Log Your First Injection</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  injectionHistory.map((inj, i) => (
+                    <View key={i} style={styles.injectionCard}>
+                      <View style={styles.injectionHeader}>
+                        <Text style={styles.injectionPeptide}>{inj.peptide_name}</Text>
+                        <Text style={styles.injectionDose}>{inj.dose_mcg} mcg</Text>
+                      </View>
+                      <View style={styles.injectionDetails}>
+                        <View style={styles.injectionDetail}>
+                          <Ionicons name="location" size={14} color={Colors.text.secondary} />
+                          <Text style={styles.injectionDetailText}>
+                            {siteRotation.find(s => s.id === inj.injection_site)?.name || inj.injection_site}
+                          </Text>
+                        </View>
+                        <View style={styles.injectionDetail}>
+                          <Ionicons name="time" size={14} color={Colors.text.secondary} />
+                          <Text style={styles.injectionDetailText}>{formatDate(inj.injection_time)}</Text>
+                        </View>
+                      </View>
+                      {inj.notes && <Text style={styles.injectionNotes}>{inj.notes}</Text>}
+                    </View>
+                  ))
+                )}
+              </View>
+            </>
+          )}
+
+          {/* Protocols Tab */}
+          {activeTab === 'protocols' && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Active Protocols</Text>
+              {protocols.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="calendar" size={48} color={Colors.text.muted} />
+                  <Text style={styles.emptyText}>No active protocols</Text>
+                  <Text style={styles.emptySubtext}>Create a protocol to track your dosing schedule</Text>
+                </View>
+              ) : (
+                protocols.map((protocol, i) => (
+                  <View key={i} style={styles.protocolCard}>
+                    <View style={styles.protocolHeader}>
+                      <Text style={styles.protocolName}>{protocol.protocol_name}</Text>
+                      <View style={[styles.protocolStatus, protocol.active && styles.protocolStatusActive]}>
+                        <Text style={styles.protocolStatusText}>
+                          {protocol.active ? 'Active' : 'Inactive'}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.protocolPeptide}>{protocol.peptide_name}</Text>
+                    <View style={styles.protocolDetails}>
+                      <Text style={styles.protocolDetail}>
+                        {protocol.dose_mcg} mcg • {protocol.frequency}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          {/* Progress Tab */}
+          {activeTab === 'progress' && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Progress Tracking</Text>
+              <View style={styles.emptyState}>
+                <Ionicons name="trending-up" size={48} color={Colors.text.muted} />
+                <Text style={styles.emptyText}>Track your progress over time</Text>
+                <Text style={styles.emptySubtext}>
+                  Log weight, measurements, energy levels, and more
+                </Text>
+              </View>
+              
+              {stats?.by_peptide && stats.by_peptide.length > 0 && (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Usage Summary</Text>
+                  {stats.by_peptide.map((item: any, i: number) => (
+                    <View key={i} style={styles.usageRow}>
+                      <Text style={styles.usagePeptide}>{item.name}</Text>
+                      <View style={styles.usageStats}>
+                        <Text style={styles.usageCount}>{item.count} doses</Text>
+                        <Text style={styles.usageTotal}>
+                          {(item.total_dose_mcg / 1000).toFixed(1)} mg total
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* AI Assistant Tab */}
+          {activeTab === 'ai' && (
+            <View style={styles.section}>
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                style={styles.aiHeader}
+              >
+                <MaterialCommunityIcons name="robot" size={32} color="#fff" />
+                <Text style={styles.aiHeaderTitle}>Peptide Research Assistant</Text>
+                <Text style={styles.aiHeaderSubtitle}>
+                  Ask questions about peptides, protocols, and research
+                </Text>
+              </LinearGradient>
+
+              <View style={styles.aiInputContainer}>
+                <TextInput
+                  style={styles.aiInput}
+                  value={aiQuestion}
+                  onChangeText={setAiQuestion}
+                  placeholder="Ask about peptides, dosing, stacking..."
+                  placeholderTextColor={Colors.text.muted}
+                  multiline
+                />
+                <TouchableOpacity 
+                  style={styles.aiSendButton}
+                  onPress={askAI}
+                  disabled={aiLoading || !aiQuestion.trim()}
+                >
+                  {aiLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="send" size={20} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {aiResponse && (
+                <View style={styles.aiResponseCard}>
+                  <Text style={styles.aiResponseText}>{aiResponse}</Text>
+                  <View style={styles.aiDisclaimer}>
+                    <Ionicons name="information-circle" size={16} color={Colors.text.muted} />
+                    <Text style={styles.aiDisclaimerText}>
+                      For educational purposes only. Consult a healthcare provider.
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.aiSuggestions}>
+                <Text style={styles.aiSuggestionsTitle}>Common Questions</Text>
+                {[
+                  'What is the best way to stack BPC-157 and TB-500?',
+                  'How should I titrate Semaglutide for weight loss?',
+                  'What are the benefits of MOTS-c for metabolism?',
+                  'When is the best time to inject Ipamorelin?',
+                ].map((q, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={styles.aiSuggestion}
+                    onPress={() => setAiQuestion(q)}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={Colors.brand.primary} />
+                    <Text style={styles.aiSuggestionText}>{q}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+
+        {/* Log Injection Modal */}
+        <Modal
+          visible={logModalVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setLogModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Log Injection</Text>
+                <TouchableOpacity onPress={() => setLogModalVisible(false)}>
+                  <Ionicons name="close" size={24} color={Colors.text.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll}>
+                <TouchableOpacity 
+                  style={styles.selectButton}
+                  onPress={() => {
+                    setLogModalVisible(false);
+                    setTimeout(() => {
+                      openPeptideSelector((id) => {
+                        setLogPeptide(id);
+                        const p = peptideDatabase[id];
+                        if (p && p.common_doses.length > 0) {
+                          setLogDose(p.common_doses[0].toString());
+                        }
+                        setLogModalVisible(true);
+                      });
+                    }, 300);
+                  }}
+                >
+                  <Text style={styles.selectButtonText}>
+                    {logPeptide ? peptideDatabase[logPeptide]?.name : 'Select Peptide *'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color={Colors.text.secondary} />
+                </TouchableOpacity>
+
+                <Text style={styles.inputLabel}>Dose (mcg) *</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={logDose}
+                  onChangeText={setLogDose}
+                  keyboardType="decimal-pad"
+                  placeholder="250"
+                />
+
+                <Text style={styles.inputLabel}>Injection Site *</Text>
+                <View style={styles.siteOptions}>
+                  {siteRotation.slice(0, 6).map(site => (
+                    <TouchableOpacity
+                      key={site.id}
+                      style={[
+                        styles.siteOption,
+                        logSite === site.id && styles.siteOptionSelected
+                      ]}
+                      onPress={() => setLogSite(site.id)}
+                    >
+                      <Text style={[
+                        styles.siteOptionText,
+                        logSite === site.id && styles.siteOptionTextSelected
+                      ]}>
+                        {site.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.inputLabel}>Notes</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.textArea]}
+                  value={logNotes}
+                  onChangeText={setLogNotes}
+                  placeholder="Any notes..."
+                  multiline
+                />
+
+                <Text style={styles.inputLabel}>Side Effects</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.textArea]}
+                  value={logSideEffects}
+                  onChangeText={setLogSideEffects}
+                  placeholder="Any side effects..."
+                  multiline
+                />
+              </ScrollView>
+
+              <TouchableOpacity style={styles.modalButton} onPress={logInjection}>
+                <Text style={styles.modalButtonText}>Log Injection</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Peptide Selector Modal */}
+        <Modal
+          visible={selectorVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setSelectorVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Peptide</Text>
+                <TouchableOpacity onPress={() => setSelectorVisible(false)}>
+                  <Ionicons name="close" size={24} color={Colors.text.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView>
+                {Object.entries(categories).map(([catId, catName]) => {
+                  const peptides = Object.entries(peptideDatabase).filter(([_, p]) => p.category === catId);
+                  if (peptides.length === 0) return null;
+                  
+                  return (
+                    <View key={catId}>
+                      <Text style={[styles.selectorCategory, { color: getCategoryColor(catId) }]}>
+                        {catName}
+                      </Text>
+                      {peptides.map(([id, peptide]) => (
+                        <TouchableOpacity
+                          key={id}
+                          style={styles.selectorItem}
+                          onPress={() => selectPeptide(id)}
+                        >
+                          <Text style={styles.selectorItemText}>{peptide.name}</Text>
+                          <Text style={styles.selectorItemDose}>
+                            {peptide.common_doses[0]} {peptide.dose_unit}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Peptide Info Modal */}
+        <Modal
+          visible={infoModalVisible}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setInfoModalVisible(false)}
+        >
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setInfoModalVisible(false)}
+          >
+            <View style={styles.infoModalContent}>
+              {selectedPeptideInfo && (
+                <>
+                  <Text style={styles.infoTitle}>{selectedPeptideInfo.name}</Text>
+                  <Text style={styles.infoDescription}>{selectedPeptideInfo.description}</Text>
+                  
+                  <View style={styles.infoSection}>
+                    <Text style={styles.infoLabel}>Common Doses</Text>
+                    <Text style={styles.infoValue}>
+                      {selectedPeptideInfo.common_doses.join(', ')} {selectedPeptideInfo.dose_unit}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.infoSection}>
+                    <Text style={styles.infoLabel}>Frequency</Text>
+                    <Text style={styles.infoValue}>{selectedPeptideInfo.frequency}</Text>
+                  </View>
+                  
+                  <View style={styles.infoSection}>
+                    <Text style={styles.infoLabel}>Duration</Text>
+                    <Text style={styles.infoValue}>{selectedPeptideInfo.typical_duration}</Text>
+                  </View>
+                  
+                  <View style={styles.infoSection}>
+                    <Text style={styles.infoLabel}>Half-Life</Text>
+                    <Text style={styles.infoValue}>{selectedPeptideInfo.half_life}</Text>
+                  </View>
+                  
+                  <View style={styles.infoSection}>
+                    <Text style={styles.infoLabel}>Common Uses</Text>
+                    <View style={styles.usesTags}>
+                      {selectedPeptideInfo.common_uses.map((use, i) => (
+                        <View key={i} style={styles.useTag}>
+                          <Text style={styles.useTagText}>{use}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                  
+                  <View style={styles.infoNote}>
+                    <Ionicons name="information-circle" size={16} color={Colors.text.secondary} />
+                    <Text style={styles.infoNoteText}>{selectedPeptideInfo.notes}</Text>
+                  </View>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background.light,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  tabsScroll: {
+    maxHeight: 50,
+  },
+  tabsContainer: {
+    paddingHorizontal: 16,
+    gap: 8,
+    paddingBottom: 8,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    gap: 6,
+  },
+  tabActive: {
+    backgroundColor: Colors.brand.primary,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.text.secondary,
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+  scrollContent: {
+    padding: 16,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.background.card,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: Colors.brand.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginTop: 4,
+  },
+  card: {
+    backgroundColor: Colors.background.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginBottom: 16,
+  },
+  selectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+  },
+  selectButtonText: {
+    fontSize: 15,
+    color: Colors.text.secondary,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  inputGroup: {
+    flex: 1,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.text.secondary,
+    marginBottom: 6,
+  },
+  inputWithUnit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingRight: 12,
+  },
+  input: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    color: Colors.text.primary,
+  },
+  inputUnit: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    fontWeight: '500',
+  },
+  calculateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.brand.primary,
+    borderRadius: 12,
+    padding: 14,
+    gap: 8,
+    marginTop: 8,
+  },
+  calculateButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  resultCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+  },
+  resultMain: {
+    alignItems: 'center',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#DBEAFE',
+    marginBottom: 12,
+  },
+  resultLabel: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  resultValue: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: Colors.brand.primary,
+  },
+  resultSubtext: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginTop: 4,
+  },
+  resultDetails: {
+    gap: 8,
+  },
+  resultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  resultDetailLabel: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  resultDetailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  categorySection: {
+    marginBottom: 16,
+  },
+  categoryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  peptideChips: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  peptideChip: {
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  peptideChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.text.primary,
+  },
+  alertCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  alertContent: {
+    flex: 1,
+  },
+  alertTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#92400E',
+    marginBottom: 4,
+  },
+  alertText: {
+    fontSize: 13,
+    color: '#B45309',
+  },
+  alertMore: {
+    fontSize: 12,
+    color: '#D97706',
+    marginTop: 4,
+  },
+  recommendedSite: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  recommendedSiteValue: {
+    fontWeight: '600',
+    color: Colors.brand.primary,
+  },
+  siteGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  siteCard: {
+    width: (width - 64) / 2 - 4,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+  },
+  siteCardRecommended: {
+    backgroundColor: '#DBEAFE',
+    borderWidth: 2,
+    borderColor: Colors.brand.primary,
+  },
+  siteName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    textAlign: 'center',
+  },
+  siteCount: {
+    fontSize: 11,
+    color: Colors.text.secondary,
+    marginTop: 2,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+    backgroundColor: Colors.background.card,
+    borderRadius: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  emptyButton: {
+    backgroundColor: Colors.brand.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 16,
+  },
+  emptyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  injectionCard: {
+    backgroundColor: Colors.background.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  injectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  injectionPeptide: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  injectionDose: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.brand.primary,
+  },
+  injectionDetails: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  injectionDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  injectionDetailText: {
+    fontSize: 13,
+    color: Colors.text.secondary,
+  },
+  injectionNotes: {
+    fontSize: 13,
+    color: Colors.text.secondary,
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  protocolCard: {
+    backgroundColor: Colors.background.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  protocolHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  protocolName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  protocolStatus: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  protocolStatusActive: {
+    backgroundColor: '#D1FAE5',
+  },
+  protocolStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  protocolPeptide: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  protocolDetails: {
+    marginTop: 8,
+  },
+  protocolDetail: {
+    fontSize: 13,
+    color: Colors.text.muted,
+  },
+  usageRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  usagePeptide: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.text.primary,
+  },
+  usageStats: {
+    alignItems: 'flex-end',
+  },
+  usageCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.brand.primary,
+  },
+  usageTotal: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+  },
+  aiHeader: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  aiHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 12,
+  },
+  aiHeaderSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  aiInputContainer: {
+    flexDirection: 'row',
+    backgroundColor: Colors.background.card,
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 16,
+  },
+  aiInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 15,
+    color: Colors.text.primary,
+    maxHeight: 100,
+  },
+  aiSendButton: {
+    backgroundColor: Colors.brand.primary,
+    borderRadius: 12,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+  },
+  aiResponseCard: {
+    backgroundColor: Colors.background.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  aiResponseText: {
+    fontSize: 15,
+    color: Colors.text.primary,
+    lineHeight: 22,
+  },
+  aiDisclaimer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    gap: 6,
+  },
+  aiDisclaimerText: {
+    fontSize: 12,
+    color: Colors.text.muted,
+    flex: 1,
+  },
+  aiSuggestions: {
+    backgroundColor: Colors.background.card,
+    borderRadius: 16,
+    padding: 16,
+  },
+  aiSuggestionsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.secondary,
+    marginBottom: 12,
+  },
+  aiSuggestion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    gap: 10,
+  },
+  aiSuggestionText: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.text.primary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  modalScroll: {
+    maxHeight: 400,
+  },
+  modalInput: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.text.primary,
+    marginBottom: 16,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  siteOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  siteOption: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  siteOptionSelected: {
+    backgroundColor: Colors.brand.primary,
+  },
+  siteOptionText: {
+    fontSize: 13,
+    color: Colors.text.primary,
+  },
+  siteOptionTextSelected: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  modalButton: {
+    backgroundColor: Colors.brand.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  selectorCategory: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  selectorItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  selectorItemText: {
+    fontSize: 16,
+    color: Colors.text.primary,
+  },
+  selectorItemDose: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  infoModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    margin: 20,
+    maxHeight: '80%',
+  },
+  infoTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  infoDescription: {
+    fontSize: 15,
+    color: Colors.text.secondary,
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  infoSection: {
+    marginBottom: 16,
+  },
+  infoLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.text.muted,
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: Colors.text.primary,
+  },
+  usesTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  useTag: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  useTagText: {
+    fontSize: 13,
+    color: Colors.brand.primary,
+  },
+  infoNote: {
+    flexDirection: 'row',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 16,
+    gap: 8,
+  },
+  infoNoteText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.text.secondary,
+    lineHeight: 18,
+  },
+});
