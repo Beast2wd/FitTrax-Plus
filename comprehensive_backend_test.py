@@ -272,15 +272,16 @@ def test_fittrax_backend():
     
     # Log weight training
     weight_log_data = {
-        "log_id": f"wt_{TEST_USER_ID}_{int(datetime.now().timestamp())}",
+        "workout_id": f"wt_{TEST_USER_ID}_{int(datetime.now().timestamp())}",
         "user_id": TEST_USER_ID,
+        "workout_name": "Push Day",
         "exercises": [
             {
                 "exercise_name": "Bench Press",
                 "sets": [
-                    {"weight": 135, "reps": 10, "rest_seconds": 90},
-                    {"weight": 145, "reps": 8, "rest_seconds": 90},
-                    {"weight": 155, "reps": 6, "rest_seconds": 90}
+                    {"weight": 135, "reps": 10},
+                    {"weight": 145, "reps": 8},
+                    {"weight": 155, "reps": 6}
                 ]
             }
         ],
