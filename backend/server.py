@@ -3868,6 +3868,738 @@ async def get_health_connection_status(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# PEPTIDE CALCULATOR
+# ============================================================================
+
+# Comprehensive Peptide Database
+PEPTIDE_DATABASE = {
+    # Recovery Peptides
+    "bpc-157": {
+        "name": "BPC-157",
+        "category": "recovery",
+        "description": "Body Protection Compound-157, a gastric pentadecapeptide known for healing properties",
+        "common_doses": [250, 500, 750],
+        "dose_unit": "mcg",
+        "frequency": "1-2x daily",
+        "typical_duration": "4-8 weeks",
+        "half_life": "4 hours",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Injury recovery", "Gut healing", "Tendon repair", "Joint health"],
+        "notes": "Can be injected subcutaneously near injury site or systemically"
+    },
+    "tb-500": {
+        "name": "TB-500",
+        "category": "recovery",
+        "description": "Thymosin Beta-4, promotes healing, reduces inflammation, and improves flexibility",
+        "common_doses": [2000, 2500, 5000],
+        "dose_unit": "mcg",
+        "frequency": "2x weekly (loading), 1x weekly (maintenance)",
+        "typical_duration": "4-6 weeks loading, then maintenance",
+        "half_life": "Unknown, effects last days",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Muscle repair", "Wound healing", "Flexibility", "Hair growth"],
+        "notes": "Often stacked with BPC-157 for synergistic effects"
+    },
+    "ghk-cu": {
+        "name": "GHK-Cu",
+        "category": "recovery",
+        "description": "Copper peptide with regenerative and anti-aging properties",
+        "common_doses": [1000, 2000, 3000],
+        "dose_unit": "mcg",
+        "frequency": "Daily",
+        "typical_duration": "8-12 weeks",
+        "half_life": "Unknown",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Skin healing", "Collagen production", "Hair growth", "Anti-aging"],
+        "notes": "Also available in topical form for skin application"
+    },
+    
+    # GLP-1 Agonists
+    "semaglutide": {
+        "name": "Semaglutide",
+        "category": "glp1",
+        "description": "GLP-1 receptor agonist for weight management and blood sugar control",
+        "common_doses": [250, 500, 1000, 1700, 2400],
+        "dose_unit": "mcg",
+        "frequency": "Once weekly",
+        "typical_duration": "Ongoing",
+        "half_life": "7 days",
+        "storage": "Refrigerate",
+        "common_uses": ["Weight loss", "Appetite suppression", "Blood sugar control"],
+        "notes": "Start low and titrate up slowly over weeks. Dose in mcg (1000mcg = 1mg)"
+    },
+    "tirzepatide": {
+        "name": "Tirzepatide",
+        "category": "glp1",
+        "description": "Dual GIP/GLP-1 receptor agonist for enhanced weight loss",
+        "common_doses": [2500, 5000, 7500, 10000, 12500, 15000],
+        "dose_unit": "mcg",
+        "frequency": "Once weekly",
+        "typical_duration": "Ongoing",
+        "half_life": "5 days",
+        "storage": "Refrigerate",
+        "common_uses": ["Weight loss", "Blood sugar control", "Appetite control"],
+        "notes": "More potent than semaglutide. Titrate slowly."
+    },
+    
+    # Growth Hormone Peptides
+    "ipamorelin": {
+        "name": "Ipamorelin",
+        "category": "gh_secretagogue",
+        "description": "Selective growth hormone secretagogue with minimal side effects",
+        "common_doses": [100, 200, 300],
+        "dose_unit": "mcg",
+        "frequency": "2-3x daily",
+        "typical_duration": "8-12 weeks",
+        "half_life": "2 hours",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Muscle growth", "Fat loss", "Recovery", "Sleep quality", "Anti-aging"],
+        "notes": "Often combined with CJC-1295 for synergistic effects"
+    },
+    "cjc-1295": {
+        "name": "CJC-1295 (with DAC)",
+        "category": "gh_secretagogue",
+        "description": "Growth hormone releasing hormone analog with extended half-life",
+        "common_doses": [1000, 2000],
+        "dose_unit": "mcg",
+        "frequency": "2x weekly",
+        "typical_duration": "8-12 weeks",
+        "half_life": "6-8 days",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Sustained GH release", "Muscle growth", "Fat loss", "Recovery"],
+        "notes": "DAC version has longer half-life. No-DAC version dosed 2-3x daily"
+    },
+    "cjc-1295-no-dac": {
+        "name": "CJC-1295 (no DAC) / Mod GRF 1-29",
+        "category": "gh_secretagogue",
+        "description": "Short-acting GHRH analog, mimics natural GH pulsatile release",
+        "common_doses": [100, 200],
+        "dose_unit": "mcg",
+        "frequency": "2-3x daily",
+        "typical_duration": "8-12 weeks",
+        "half_life": "30 minutes",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Natural GH pulse", "Muscle growth", "Fat loss", "Recovery"],
+        "notes": "Best combined with Ipamorelin. Inject on empty stomach."
+    },
+    "tesamorelin": {
+        "name": "Tesamorelin",
+        "category": "gh_secretagogue",
+        "description": "GHRH analog FDA-approved for reducing visceral fat",
+        "common_doses": [1000, 2000],
+        "dose_unit": "mcg",
+        "frequency": "Daily",
+        "typical_duration": "12-26 weeks",
+        "half_life": "26-38 minutes",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Visceral fat reduction", "Body composition", "Cognitive function"],
+        "notes": "FDA-approved for lipodystrophy. Strong evidence for fat reduction."
+    },
+    
+    # IGF
+    "igf-lr3": {
+        "name": "IGF-1 LR3",
+        "category": "igf",
+        "description": "Long-acting Insulin-like Growth Factor 1 variant",
+        "common_doses": [20, 40, 60, 80, 100],
+        "dose_unit": "mcg",
+        "frequency": "Daily (cycle on/off)",
+        "typical_duration": "4 weeks on, 4 weeks off",
+        "half_life": "20-30 hours",
+        "storage": "Refrigerate, use within 1 month",
+        "common_uses": ["Muscle growth", "Hyperplasia", "Fat loss", "Recovery"],
+        "notes": "Very potent. Can cause hypoglycemia. Best post-workout."
+    },
+    
+    # Mitochondrial / Longevity
+    "mots-c": {
+        "name": "MOTS-c",
+        "category": "longevity",
+        "description": "Mitochondrial-derived peptide that regulates metabolism",
+        "common_doses": [5000, 10000],
+        "dose_unit": "mcg",
+        "frequency": "3-5x weekly",
+        "typical_duration": "8-12 weeks",
+        "half_life": "Unknown",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Metabolic health", "Exercise performance", "Insulin sensitivity", "Longevity"],
+        "notes": "Mimics effects of exercise on metabolism"
+    },
+    "ss-31": {
+        "name": "SS-31 (Elamipretide)",
+        "category": "longevity",
+        "description": "Mitochondria-targeted peptide that improves cellular energy",
+        "common_doses": [5000, 10000, 20000],
+        "dose_unit": "mcg",
+        "frequency": "Daily",
+        "typical_duration": "4-8 weeks",
+        "half_life": "Unknown",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Mitochondrial function", "Energy", "Aging", "Cardiac health"],
+        "notes": "Targets cardiolipin in mitochondrial membrane"
+    },
+    "nad": {
+        "name": "NAD+ (Injection)",
+        "category": "longevity",
+        "description": "Nicotinamide Adenine Dinucleotide, essential coenzyme for cellular energy",
+        "common_doses": [50000, 100000, 200000, 500000],
+        "dose_unit": "mcg",
+        "frequency": "2-3x weekly or as loading protocol",
+        "typical_duration": "Ongoing or periodic loading",
+        "half_life": "2-4 hours",
+        "storage": "Refrigerate",
+        "common_uses": ["Energy", "Anti-aging", "Cognitive function", "DNA repair", "Addiction recovery"],
+        "notes": "Can cause flushing. Start low. Often given as IV but SubQ works. Doses in mcg (100000mcg = 100mg)"
+    },
+    
+    # Sexual Health
+    "pt-141": {
+        "name": "PT-141 (Bremelanotide)",
+        "category": "sexual_health",
+        "description": "Melanocortin receptor agonist for sexual dysfunction",
+        "common_doses": [500, 1000, 1750, 2000],
+        "dose_unit": "mcg",
+        "frequency": "As needed (45 min before activity)",
+        "typical_duration": "As needed",
+        "half_life": "2.7 hours",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Sexual dysfunction", "Libido enhancement", "Erectile function"],
+        "notes": "May cause nausea. Do not use more than 8 times per month."
+    },
+    "kisspeptin": {
+        "name": "Kisspeptin-10",
+        "category": "sexual_health",
+        "description": "Hormone that stimulates GnRH release, affects reproductive hormones",
+        "common_doses": [100, 200, 500],
+        "dose_unit": "mcg",
+        "frequency": "Daily or as needed",
+        "typical_duration": "Variable",
+        "half_life": "28 minutes",
+        "storage": "Refrigerate after reconstitution",
+        "common_uses": ["Testosterone support", "Libido", "Reproductive health", "LH/FSH release"],
+        "notes": "Stimulates natural hormone production through hypothalamus"
+    },
+}
+
+# Pydantic Models for Peptide Calculator
+class PeptideReconstitution(BaseModel):
+    peptide_amount_mg: float
+    water_amount_ml: float
+    desired_dose_mcg: float
+    syringe_units: int = 100  # Standard insulin syringe
+
+class InjectionLog(BaseModel):
+    user_id: str
+    peptide_id: str
+    peptide_name: str
+    dose_mcg: float
+    injection_site: str
+    injection_time: str
+    notes: Optional[str] = ""
+    side_effects: Optional[str] = ""
+
+class PeptideProtocol(BaseModel):
+    user_id: str
+    protocol_name: str
+    peptide_id: str
+    peptide_name: str
+    dose_mcg: float
+    frequency: str  # "daily", "twice_daily", "weekly", "twice_weekly", etc.
+    start_date: str
+    end_date: Optional[str] = None
+    injection_times: List[str] = []  # e.g., ["08:00", "20:00"]
+    notes: Optional[str] = ""
+    active: bool = True
+
+class PeptideProgressEntry(BaseModel):
+    user_id: str
+    date: str
+    weight: Optional[float] = None
+    body_fat_percentage: Optional[float] = None
+    measurements: Optional[dict] = None  # waist, arms, etc.
+    energy_level: Optional[int] = None  # 1-10
+    sleep_quality: Optional[int] = None  # 1-10
+    mood: Optional[int] = None  # 1-10
+    notes: Optional[str] = ""
+    photos: Optional[List[str]] = []  # base64 encoded
+
+class PeptideAIQuery(BaseModel):
+    user_id: str
+    question: str
+    context: Optional[str] = ""  # Current peptides being used
+
+# Reconstitution Calculator
+@api_router.post("/peptides/calculate-reconstitution")
+async def calculate_reconstitution(data: PeptideReconstitution):
+    """Calculate reconstitution and dosing for peptides"""
+    try:
+        # Convert mg to mcg
+        total_mcg = data.peptide_amount_mg * 1000
+        
+        # Concentration per mL
+        concentration_per_ml = total_mcg / data.water_amount_ml
+        
+        # Units per mL on insulin syringe
+        units_per_ml = data.syringe_units
+        
+        # mcg per unit
+        mcg_per_unit = concentration_per_ml / units_per_ml
+        
+        # Units needed for desired dose
+        units_for_dose = data.desired_dose_mcg / mcg_per_unit
+        
+        # Number of doses per vial
+        doses_per_vial = total_mcg / data.desired_dose_mcg
+        
+        return {
+            "total_peptide_mcg": total_mcg,
+            "concentration_mcg_per_ml": round(concentration_per_ml, 2),
+            "mcg_per_unit": round(mcg_per_unit, 4),
+            "units_for_dose": round(units_for_dose, 1),
+            "ml_for_dose": round(units_for_dose / units_per_ml, 3),
+            "doses_per_vial": round(doses_per_vial, 1),
+            "syringe_marking": f"{round(units_for_dose)} units on {data.syringe_units}U syringe"
+        }
+    except Exception as e:
+        logger.error(f"Error calculating reconstitution: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get all peptides in database
+@api_router.get("/peptides/database")
+async def get_peptide_database():
+    """Get the complete peptide database"""
+    return {
+        "peptides": PEPTIDE_DATABASE,
+        "categories": {
+            "recovery": "Recovery & Healing",
+            "glp1": "GLP-1 Agonists (Weight Management)",
+            "gh_secretagogue": "Growth Hormone Secretagogues",
+            "igf": "IGF Peptides",
+            "longevity": "Longevity & Mitochondrial",
+            "sexual_health": "Sexual Health"
+        }
+    }
+
+# Get specific peptide info
+@api_router.get("/peptides/info/{peptide_id}")
+async def get_peptide_info(peptide_id: str):
+    """Get detailed info about a specific peptide"""
+    peptide = PEPTIDE_DATABASE.get(peptide_id.lower())
+    if not peptide:
+        raise HTTPException(status_code=404, detail="Peptide not found")
+    return {"peptide_id": peptide_id, **peptide}
+
+# Log an injection
+@api_router.post("/peptides/log-injection")
+async def log_injection(data: InjectionLog):
+    """Log a peptide injection"""
+    try:
+        log_entry = {
+            "user_id": data.user_id,
+            "peptide_id": data.peptide_id,
+            "peptide_name": data.peptide_name,
+            "dose_mcg": data.dose_mcg,
+            "injection_site": data.injection_site,
+            "injection_time": data.injection_time,
+            "notes": data.notes,
+            "side_effects": data.side_effects,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        result = await db.peptide_injections.insert_one(log_entry)
+        
+        return {
+            "success": True,
+            "injection_id": str(result.inserted_id),
+            "message": "Injection logged successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error logging injection: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get injection history
+@api_router.get("/peptides/injections/{user_id}")
+async def get_injection_history(user_id: str, limit: int = 50, peptide_id: Optional[str] = None):
+    """Get user's injection history"""
+    try:
+        query = {"user_id": user_id}
+        if peptide_id:
+            query["peptide_id"] = peptide_id
+            
+        injections = await db.peptide_injections.find(query).sort("injection_time", -1).to_list(limit)
+        
+        # Convert ObjectId to string
+        for inj in injections:
+            inj["_id"] = str(inj["_id"])
+            
+        return {"injections": injections, "count": len(injections)}
+    except Exception as e:
+        logger.error(f"Error getting injection history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Create/Update protocol
+@api_router.post("/peptides/protocol")
+async def create_protocol(data: PeptideProtocol):
+    """Create or update a peptide protocol"""
+    try:
+        protocol = {
+            "user_id": data.user_id,
+            "protocol_name": data.protocol_name,
+            "peptide_id": data.peptide_id,
+            "peptide_name": data.peptide_name,
+            "dose_mcg": data.dose_mcg,
+            "frequency": data.frequency,
+            "start_date": data.start_date,
+            "end_date": data.end_date,
+            "injection_times": data.injection_times,
+            "notes": data.notes,
+            "active": data.active,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        result = await db.peptide_protocols.insert_one(protocol)
+        
+        return {
+            "success": True,
+            "protocol_id": str(result.inserted_id),
+            "message": "Protocol created successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error creating protocol: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get user protocols
+@api_router.get("/peptides/protocols/{user_id}")
+async def get_user_protocols(user_id: str, active_only: bool = True):
+    """Get user's peptide protocols"""
+    try:
+        query = {"user_id": user_id}
+        if active_only:
+            query["active"] = True
+            
+        protocols = await db.peptide_protocols.find(query).to_list(100)
+        
+        for protocol in protocols:
+            protocol["_id"] = str(protocol["_id"])
+            
+        return {"protocols": protocols}
+    except Exception as e:
+        logger.error(f"Error getting protocols: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Check for missed doses
+@api_router.get("/peptides/missed-doses/{user_id}")
+async def check_missed_doses(user_id: str):
+    """Check for missed doses based on active protocols"""
+    try:
+        # Get active protocols
+        protocols = await db.peptide_protocols.find({
+            "user_id": user_id,
+            "active": True
+        }).to_list(100)
+        
+        missed_doses = []
+        today = datetime.utcnow().date()
+        
+        for protocol in protocols:
+            protocol_start = datetime.fromisoformat(protocol["start_date"]).date()
+            
+            # Calculate expected doses based on frequency
+            frequency = protocol.get("frequency", "daily")
+            
+            # Get actual injections for this protocol
+            injections = await db.peptide_injections.find({
+                "user_id": user_id,
+                "peptide_id": protocol["peptide_id"],
+                "injection_time": {"$gte": protocol["start_date"]}
+            }).to_list(1000)
+            
+            injection_dates = set()
+            for inj in injections:
+                try:
+                    inj_date = datetime.fromisoformat(inj["injection_time"].replace('Z', '+00:00')).date()
+                    injection_dates.add(inj_date)
+                except:
+                    pass
+            
+            # Check last 7 days for missed doses
+            for i in range(7):
+                check_date = today - timedelta(days=i)
+                if check_date < protocol_start:
+                    continue
+                    
+                should_have_dose = False
+                
+                if frequency == "daily":
+                    should_have_dose = True
+                elif frequency == "twice_daily":
+                    should_have_dose = True
+                elif frequency == "weekly":
+                    # Check if this is the scheduled day
+                    days_since_start = (check_date - protocol_start).days
+                    should_have_dose = days_since_start % 7 == 0
+                elif frequency == "twice_weekly":
+                    days_since_start = (check_date - protocol_start).days
+                    should_have_dose = days_since_start % 3 in [0, 3]
+                elif frequency == "three_weekly":
+                    days_since_start = (check_date - protocol_start).days
+                    should_have_dose = days_since_start % 2 == 0
+                
+                if should_have_dose and check_date not in injection_dates and check_date < today:
+                    missed_doses.append({
+                        "protocol_name": protocol["protocol_name"],
+                        "peptide_name": protocol["peptide_name"],
+                        "missed_date": check_date.isoformat(),
+                        "scheduled_dose_mcg": protocol["dose_mcg"],
+                        "recommendation": get_missed_dose_recommendation(frequency, (today - check_date).days)
+                    })
+        
+        return {
+            "missed_doses": missed_doses,
+            "has_missed_doses": len(missed_doses) > 0
+        }
+    except Exception as e:
+        logger.error(f"Error checking missed doses: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def get_missed_dose_recommendation(frequency: str, days_missed: int) -> str:
+    """Get recommendation for missed dose"""
+    if days_missed == 1:
+        if frequency in ["daily", "twice_daily"]:
+            return "Take your regular dose as soon as possible, then continue your normal schedule."
+        else:
+            return "Take your dose today if you remember, otherwise skip and continue with next scheduled dose."
+    elif days_missed <= 3:
+        return "Do not double up. Resume your regular schedule with your next planned dose."
+    else:
+        return "Multiple doses missed. Resume normal schedule. Do not try to make up missed doses."
+
+# Log progress entry
+@api_router.post("/peptides/progress")
+async def log_progress(data: PeptideProgressEntry):
+    """Log progress/measurements for peptide tracking"""
+    try:
+        entry = {
+            "user_id": data.user_id,
+            "date": data.date,
+            "weight": data.weight,
+            "body_fat_percentage": data.body_fat_percentage,
+            "measurements": data.measurements,
+            "energy_level": data.energy_level,
+            "sleep_quality": data.sleep_quality,
+            "mood": data.mood,
+            "notes": data.notes,
+            "photos": data.photos,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # Upsert based on user_id and date
+        await db.peptide_progress.update_one(
+            {"user_id": data.user_id, "date": data.date},
+            {"$set": entry},
+            upsert=True
+        )
+        
+        return {"success": True, "message": "Progress logged successfully"}
+    except Exception as e:
+        logger.error(f"Error logging progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get progress history
+@api_router.get("/peptides/progress/{user_id}")
+async def get_progress_history(user_id: str, days: int = 30):
+    """Get user's progress history"""
+    try:
+        cutoff_date = (datetime.utcnow() - timedelta(days=days)).date().isoformat()
+        
+        entries = await db.peptide_progress.find({
+            "user_id": user_id,
+            "date": {"$gte": cutoff_date}
+        }).sort("date", 1).to_list(100)
+        
+        for entry in entries:
+            entry["_id"] = str(entry["_id"])
+            # Don't send photos in list view to save bandwidth
+            if "photos" in entry:
+                entry["has_photos"] = len(entry.get("photos", [])) > 0
+                del entry["photos"]
+                
+        return {"progress": entries, "count": len(entries)}
+    except Exception as e:
+        logger.error(f"Error getting progress history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# AI Research Insights
+@api_router.post("/peptides/ai-insights")
+async def get_ai_peptide_insights(data: PeptideAIQuery):
+    """Get AI-powered insights about peptides"""
+    try:
+        emergent_key = os.getenv("EMERGENT_API_KEY") or os.getenv("EMERGENT_LLM_KEY")
+        if not emergent_key:
+            raise HTTPException(status_code=500, detail="AI service not configured")
+        
+        # Build context about the peptide database
+        peptide_info = ""
+        if data.context:
+            # Get info about peptides user is asking about
+            for pid in data.context.split(","):
+                pid = pid.strip().lower()
+                if pid in PEPTIDE_DATABASE:
+                    p = PEPTIDE_DATABASE[pid]
+                    peptide_info += f"\n{p['name']}: {p['description']}. Common doses: {p['common_doses']} {p['dose_unit']}. Frequency: {p['frequency']}. Uses: {', '.join(p['common_uses'])}."
+        
+        system_prompt = """You are a knowledgeable peptide research assistant for a fitness tracking app. 
+You provide research-based, educational information about peptides including BPC-157, TB-500, Semaglutide, Tirzepatide, 
+Ipamorelin, CJC-1295, IGF-1 LR3, MOTS-c, SS-31, NAD+, PT-141, Kisspeptin, and others.
+
+Important guidelines:
+1. Always emphasize that peptides should only be used under medical supervision
+2. Provide research-based information with appropriate caveats
+3. Never recommend specific dosing without mentioning to consult healthcare providers
+4. Discuss potential side effects and contraindications when relevant
+5. Be helpful but responsible - this is educational information only
+6. If asked about stacking or combinations, discuss what research suggests but emphasize individual variation
+7. Keep responses concise but informative
+
+Current context about user's peptides:""" + peptide_info
+        
+        chat = LlmChat(
+            api_key=emergent_key,
+            model="gpt-4o",
+            system_message=system_prompt
+        )
+        
+        response = await chat.send_message_async(
+            UserMessage(text=data.question)
+        )
+        
+        return {
+            "question": data.question,
+            "response": response.text,
+            "disclaimer": "This information is for educational purposes only. Always consult with a healthcare provider before using any peptides."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting AI insights: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get injection site rotation suggestions
+@api_router.get("/peptides/site-rotation/{user_id}")
+async def get_site_rotation(user_id: str):
+    """Get injection site rotation recommendations based on history"""
+    try:
+        # Get last 14 days of injections
+        cutoff = (datetime.utcnow() - timedelta(days=14)).isoformat()
+        
+        injections = await db.peptide_injections.find({
+            "user_id": user_id,
+            "injection_time": {"$gte": cutoff}
+        }).to_list(100)
+        
+        # Count by site
+        site_counts = {}
+        for inj in injections:
+            site = inj.get("injection_site", "unknown")
+            site_counts[site] = site_counts.get(site, 0) + 1
+        
+        # All possible sites
+        all_sites = [
+            {"id": "abdomen_left", "name": "Abdomen (Left)", "description": "Left side of belly button"},
+            {"id": "abdomen_right", "name": "Abdomen (Right)", "description": "Right side of belly button"},
+            {"id": "thigh_left", "name": "Thigh (Left)", "description": "Front of left thigh"},
+            {"id": "thigh_right", "name": "Thigh (Right)", "description": "Front of right thigh"},
+            {"id": "arm_left", "name": "Upper Arm (Left)", "description": "Back of left upper arm"},
+            {"id": "arm_right", "name": "Upper Arm (Right)", "description": "Back of right upper arm"},
+            {"id": "glute_left", "name": "Glute (Left)", "description": "Upper outer left glute"},
+            {"id": "glute_right", "name": "Glute (Right)", "description": "Upper outer right glute"},
+        ]
+        
+        # Add counts and recommendations
+        for site in all_sites:
+            site["recent_count"] = site_counts.get(site["id"], 0)
+        
+        # Sort by least used
+        all_sites.sort(key=lambda x: x["recent_count"])
+        
+        recommended = all_sites[0]["id"] if all_sites else "abdomen_left"
+        
+        return {
+            "sites": all_sites,
+            "recommended_next": recommended,
+            "tip": "Rotate injection sites to prevent lipodystrophy and ensure consistent absorption."
+        }
+    except Exception as e:
+        logger.error(f"Error getting site rotation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get peptide stats/summary
+@api_router.get("/peptides/stats/{user_id}")
+async def get_peptide_stats(user_id: str):
+    """Get summary statistics for user's peptide usage"""
+    try:
+        # Total injections
+        total_injections = await db.peptide_injections.count_documents({"user_id": user_id})
+        
+        # Injections by peptide
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {"$group": {
+                "_id": "$peptide_id",
+                "name": {"$first": "$peptide_name"},
+                "count": {"$sum": 1},
+                "total_dose_mcg": {"$sum": "$dose_mcg"}
+            }},
+            {"$sort": {"count": -1}}
+        ]
+        by_peptide = await db.peptide_injections.aggregate(pipeline).to_list(20)
+        
+        # Active protocols
+        active_protocols = await db.peptide_protocols.count_documents({
+            "user_id": user_id,
+            "active": True
+        })
+        
+        # This week's injections
+        week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat()
+        this_week = await db.peptide_injections.count_documents({
+            "user_id": user_id,
+            "injection_time": {"$gte": week_ago}
+        })
+        
+        # Streak (consecutive days with injections)
+        today = datetime.utcnow().date()
+        streak = 0
+        check_date = today
+        
+        while True:
+            date_str = check_date.isoformat()
+            next_date_str = (check_date + timedelta(days=1)).isoformat()
+            
+            has_injection = await db.peptide_injections.find_one({
+                "user_id": user_id,
+                "injection_time": {"$gte": date_str, "$lt": next_date_str}
+            })
+            
+            if has_injection:
+                streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                break
+        
+        return {
+            "total_injections": total_injections,
+            "active_protocols": active_protocols,
+            "this_week_injections": this_week,
+            "current_streak": streak,
+            "by_peptide": by_peptide
+        }
+    except Exception as e:
+        logger.error(f"Error getting peptide stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
