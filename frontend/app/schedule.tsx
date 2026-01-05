@@ -215,11 +215,17 @@ export default function ScheduleScreen() {
   };
 
   const formatDateLabel = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00');
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
-    if (isYesterday(date)) return 'Yesterday';
-    return format(date, 'EEE, MMM d');
+    if (!dateString) return 'Select date';
+    try {
+      const date = new Date(dateString + 'T12:00:00');
+      if (isNaN(date.getTime())) return dateString;
+      if (isToday(date)) return 'Today';
+      if (isTomorrow(date)) return 'Tomorrow';
+      if (isYesterday(date)) return 'Yesterday';
+      return format(date, 'EEE, MMM d');
+    } catch {
+      return dateString;
+    }
   };
 
   const quickDateOptions = [
