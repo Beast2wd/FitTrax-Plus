@@ -435,6 +435,34 @@ export default function DashboardScreen() {
             </View>
             <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#6366F1', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/peptides')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#E0E7FF' }]}>
+              <Ionicons name="flask" size={24} color="#6366F1" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Peptide Calculator</Text>
+              <Text style={styles.actionSubtitle}>Reconstitution, logging & AI insights</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { borderLeftColor: '#F59E0B', borderLeftWidth: 4 }]}
+            onPress={() => router.push('/badges')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
+              <Ionicons name="trophy" size={24} color="#F59E0B" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Rewards & Challenges</Text>
+              <Text style={styles.actionSubtitle}>Earn badges, complete challenges</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
+          </TouchableOpacity>
         </View>
 
         {/* Premium Section */}
