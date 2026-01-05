@@ -398,8 +398,8 @@ export default function DashboardScreen() {
             style={[styles.actionCard, { borderLeftColor: '#3B82F6', borderLeftWidth: 4 }]}
             onPress={() => router.push('/analytics')}
           >
-            <View style={[styles.actionIcon, { backgroundColor: '#F5F3FF' }]}>
-              <Ionicons name="stats-chart" size={24} color="#8B5CF6" />
+            <View style={[styles.actionIcon, { backgroundColor: '#DBEAFE' }]}>
+              <Ionicons name="stats-chart" size={24} color="#3B82F6" />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Analytics & Insights</Text>
