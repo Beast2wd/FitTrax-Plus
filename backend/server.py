@@ -4616,6 +4616,492 @@ async def get_peptide_stats(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# BODY SCAN & WORKOUT GENERATOR
+# ============================================================================
+
+class BodyMeasurements(BaseModel):
+    chest: Optional[float] = None  # inches
+    waist: Optional[float] = None
+    hips: Optional[float] = None
+    left_arm: Optional[float] = None
+    right_arm: Optional[float] = None
+    left_thigh: Optional[float] = None
+    right_thigh: Optional[float] = None
+    left_calf: Optional[float] = None
+    right_calf: Optional[float] = None
+    neck: Optional[float] = None
+    shoulders: Optional[float] = None
+
+class BodyScanRequest(BaseModel):
+    user_id: str
+    measurements: Optional[BodyMeasurements] = None
+    photos: Optional[List[str]] = None  # base64 encoded images (front, side, back)
+    height_inches: Optional[float] = None
+    weight_lbs: Optional[float] = None
+    body_fat_percentage: Optional[float] = None
+    fitness_goal: str = "general_fitness"  # general_fitness, muscle_gain, fat_loss, strength, athletic
+    workout_location: str = "both"  # gym, home, both
+    experience_level: str = "intermediate"  # beginner, intermediate, advanced
+
+class BodyAnalysisResult(BaseModel):
+    body_type: str
+    body_fat_estimate: Optional[float]
+    muscle_imbalances: List[str]
+    strong_areas: List[str]
+    areas_to_improve: List[str]
+    posture_notes: List[str]
+    recommendations: List[str]
+
+async def analyze_body_photos_with_ai(photos: List[str], measurements: dict, user_info: dict) -> dict:
+    """Analyze body photos using GPT-4o vision"""
+    try:
+        api_key = os.getenv('EMERGENT_LLM_KEY')
+        if not api_key:
+            raise Exception("EMERGENT_LLM_KEY not configured")
+        
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"body_analysis_{datetime.now().timestamp()}",
+            system_message="""You are an expert fitness coach and body composition analyst. 
+Analyze body photos to provide fitness assessments. Be encouraging and constructive.
+Focus on identifying body type, muscle development, posture, and areas that could benefit from training."""
+        ).with_model("openai", "gpt-4o")
+        
+        # Build context from measurements
+        measurements_text = ""
+        if measurements:
+            measurements_text = f"""
+User measurements (inches):
+- Chest: {measurements.get('chest', 'N/A')}
+- Waist: {measurements.get('waist', 'N/A')}
+- Hips: {measurements.get('hips', 'N/A')}
+- Arms: L:{measurements.get('left_arm', 'N/A')} R:{measurements.get('right_arm', 'N/A')}
+- Thighs: L:{measurements.get('left_thigh', 'N/A')} R:{measurements.get('right_thigh', 'N/A')}
+- Neck: {measurements.get('neck', 'N/A')}
+- Shoulders: {measurements.get('shoulders', 'N/A')}
+"""
+        
+        user_text = f"""
+User Info:
+- Height: {user_info.get('height_inches', 'N/A')} inches
+- Weight: {user_info.get('weight_lbs', 'N/A')} lbs
+- Goal: {user_info.get('fitness_goal', 'general fitness')}
+- Experience: {user_info.get('experience_level', 'intermediate')}
+{measurements_text}
+"""
+        
+        prompt = f"""Analyze these body photos and provide a comprehensive fitness assessment.
+
+{user_text}
+
+Return your analysis as a JSON object with these fields:
+{{
+  "body_type": "ectomorph" or "mesomorph" or "endomorph" or "ecto-mesomorph" or "endo-mesomorph",
+  "body_fat_estimate": estimated body fat percentage as number or null if can't determine,
+  "muscle_imbalances": ["list of any visible imbalances like 'right arm larger than left'"],
+  "strong_areas": ["list of well-developed muscle groups"],
+  "areas_to_improve": ["list of underdeveloped areas that would benefit from focus"],
+  "posture_notes": ["any posture observations like 'slight forward head posture'"],
+  "recommendations": ["top 3-5 training recommendations based on analysis"]
+}}
+
+Be specific but encouraging. Focus on actionable insights."""
+        
+        # Add photos as image content
+        image_contents = [ImageContent(image_base64=photo) for photo in photos[:3]]  # Max 3 photos
+        
+        user_message = UserMessage(
+            text=prompt,
+            file_contents=image_contents
+        )
+        
+        response = await chat.send_message(user_message)
+        
+        # Parse JSON response
+        response_text = response.strip()
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+        
+        import json
+        return json.loads(response_text)
+        
+    except Exception as e:
+        logger.error(f"Error analyzing body photos: {str(e)}")
+        # Return default analysis if AI fails
+        return {
+            "body_type": "mesomorph",
+            "body_fat_estimate": None,
+            "muscle_imbalances": [],
+            "strong_areas": ["Unable to analyze from photos"],
+            "areas_to_improve": ["Full body training recommended"],
+            "posture_notes": [],
+            "recommendations": ["Focus on compound movements", "Include both strength and cardio", "Maintain consistent training schedule"]
+        }
+
+def analyze_measurements_only(measurements: dict, user_info: dict) -> dict:
+    """Analyze body based on measurements only (no photos)"""
+    analysis = {
+        "body_type": "mesomorph",
+        "body_fat_estimate": None,
+        "muscle_imbalances": [],
+        "strong_areas": [],
+        "areas_to_improve": [],
+        "posture_notes": [],
+        "recommendations": []
+    }
+    
+    # Calculate waist-to-hip ratio if available
+    waist = measurements.get('waist')
+    hips = measurements.get('hips')
+    if waist and hips:
+        whr = waist / hips
+        if whr > 0.9:  # For men
+            analysis["areas_to_improve"].append("Core/midsection - elevated waist-to-hip ratio")
+            analysis["recommendations"].append("Include dedicated core training and cardio")
+        else:
+            analysis["strong_areas"].append("Good waist-to-hip ratio")
+    
+    # Check arm symmetry
+    left_arm = measurements.get('left_arm')
+    right_arm = measurements.get('right_arm')
+    if left_arm and right_arm:
+        diff = abs(left_arm - right_arm)
+        if diff > 0.5:
+            larger = "right" if right_arm > left_arm else "left"
+            analysis["muscle_imbalances"].append(f"{larger.capitalize()} arm is larger - consider unilateral exercises")
+    
+    # Check leg symmetry
+    left_thigh = measurements.get('left_thigh')
+    right_thigh = measurements.get('right_thigh')
+    if left_thigh and right_thigh:
+        diff = abs(left_thigh - right_thigh)
+        if diff > 0.5:
+            larger = "right" if right_thigh > left_thigh else "left"
+            analysis["muscle_imbalances"].append(f"{larger.capitalize()} thigh is larger - include single-leg exercises")
+    
+    # Estimate body type from proportions
+    shoulders = measurements.get('shoulders')
+    if waist and shoulders:
+        ratio = shoulders / waist
+        if ratio > 1.4:
+            analysis["body_type"] = "mesomorph"
+            analysis["strong_areas"].append("Good shoulder-to-waist ratio (V-taper)")
+        elif ratio < 1.2:
+            analysis["body_type"] = "endomorph"
+            analysis["areas_to_improve"].append("Shoulder development")
+    
+    # Body fat estimation from measurements (Navy method approximation)
+    neck = measurements.get('neck')
+    height = user_info.get('height_inches')
+    if waist and neck and height:
+        # Simplified estimation
+        bf_estimate = 86.010 * (waist - neck) / height - 70.041
+        if 5 < bf_estimate < 45:
+            analysis["body_fat_estimate"] = round(bf_estimate, 1)
+    
+    # Goal-based recommendations
+    goal = user_info.get('fitness_goal', 'general_fitness')
+    if goal == 'muscle_gain':
+        analysis["recommendations"].extend([
+            "Focus on progressive overload with compound movements",
+            "Prioritize protein intake (1g per lb bodyweight)",
+            "Include both heavy and hypertrophy rep ranges"
+        ])
+    elif goal == 'fat_loss':
+        analysis["recommendations"].extend([
+            "Combine strength training with cardio",
+            "Focus on high-intensity interval training",
+            "Maintain muscle mass with adequate protein"
+        ])
+    elif goal == 'strength':
+        analysis["recommendations"].extend([
+            "Prioritize compound lifts (squat, deadlift, bench, OHP)",
+            "Use lower rep ranges (3-6 reps)",
+            "Focus on progressive overload weekly"
+        ])
+    else:
+        analysis["recommendations"].extend([
+            "Include mix of strength and cardio training",
+            "Focus on compound movements for efficiency",
+            "Maintain consistent training schedule"
+        ])
+    
+    return analysis
+
+def generate_workout_from_analysis(analysis: dict, user_info: dict) -> dict:
+    """Generate a personalized workout plan based on body analysis"""
+    
+    workout_location = user_info.get('workout_location', 'both')
+    experience = user_info.get('experience_level', 'intermediate')
+    goal = user_info.get('fitness_goal', 'general_fitness')
+    areas_to_improve = analysis.get('areas_to_improve', [])
+    
+    # Base workout templates
+    gym_exercises = {
+        "chest": ["Bench Press", "Incline Dumbbell Press", "Cable Flyes", "Dips"],
+        "back": ["Pull-ups", "Barbell Rows", "Lat Pulldown", "Cable Rows", "Deadlifts"],
+        "shoulders": ["Overhead Press", "Lateral Raises", "Face Pulls", "Arnold Press"],
+        "arms": ["Barbell Curls", "Tricep Pushdowns", "Hammer Curls", "Skull Crushers"],
+        "legs": ["Squats", "Leg Press", "Romanian Deadlifts", "Leg Curls", "Calf Raises"],
+        "core": ["Cable Crunches", "Hanging Leg Raises", "Planks", "Ab Wheel Rollouts"]
+    }
+    
+    home_exercises = {
+        "chest": ["Push-ups", "Diamond Push-ups", "Wide Push-ups", "Pike Push-ups"],
+        "back": ["Pull-ups", "Inverted Rows", "Superman Holds", "Resistance Band Rows"],
+        "shoulders": ["Pike Push-ups", "Lateral Raises (bands)", "Front Raises", "YTW Raises"],
+        "arms": ["Chin-ups", "Diamond Push-ups", "Resistance Band Curls", "Tricep Dips"],
+        "legs": ["Squats", "Lunges", "Bulgarian Split Squats", "Glute Bridges", "Calf Raises"],
+        "core": ["Planks", "Mountain Climbers", "Bicycle Crunches", "Leg Raises", "Dead Bug"]
+    }
+    
+    # Determine sets/reps based on goal
+    if goal == 'strength':
+        sets_reps = "4-5 sets x 3-6 reps"
+        rest = "2-3 minutes"
+    elif goal == 'muscle_gain':
+        sets_reps = "3-4 sets x 8-12 reps"
+        rest = "60-90 seconds"
+    elif goal == 'fat_loss':
+        sets_reps = "3-4 sets x 12-15 reps"
+        rest = "30-60 seconds"
+    else:
+        sets_reps = "3 sets x 10-12 reps"
+        rest = "60-90 seconds"
+    
+    # Build workout days
+    workout_days = []
+    
+    # Determine split based on experience
+    if experience == 'beginner':
+        # Full body 3x per week
+        exercises = gym_exercises if workout_location in ['gym', 'both'] else home_exercises
+        workout_days = [
+            {
+                "day": 1,
+                "name": "Full Body A",
+                "focus": ["Full Body"],
+                "exercises": [
+                    {"name": exercises["legs"][0], "sets_reps": sets_reps, "notes": "Compound leg movement"},
+                    {"name": exercises["chest"][0], "sets_reps": sets_reps, "notes": "Primary chest"},
+                    {"name": exercises["back"][0], "sets_reps": sets_reps, "notes": "Primary back"},
+                    {"name": exercises["shoulders"][0], "sets_reps": "3 sets x 10 reps", "notes": "Shoulder press"},
+                    {"name": exercises["core"][0], "sets_reps": "3 sets x 30-60 sec", "notes": "Core stability"},
+                ]
+            },
+            {
+                "day": 2,
+                "name": "Full Body B",
+                "focus": ["Full Body"],
+                "exercises": [
+                    {"name": exercises["legs"][3] if len(exercises["legs"]) > 3 else exercises["legs"][1], "sets_reps": sets_reps, "notes": "Hamstring focus"},
+                    {"name": exercises["chest"][1] if len(exercises["chest"]) > 1 else exercises["chest"][0], "sets_reps": sets_reps, "notes": "Secondary chest"},
+                    {"name": exercises["back"][1] if len(exercises["back"]) > 1 else exercises["back"][0], "sets_reps": sets_reps, "notes": "Row movement"},
+                    {"name": exercises["arms"][0], "sets_reps": "3 sets x 12 reps", "notes": "Bicep focus"},
+                    {"name": exercises["core"][1] if len(exercises["core"]) > 1 else exercises["core"][0], "sets_reps": "3 sets x 15 reps", "notes": "Core movement"},
+                ]
+            }
+        ]
+    else:
+        # Upper/Lower or Push/Pull/Legs split
+        exercises = gym_exercises if workout_location in ['gym', 'both'] else home_exercises
+        
+        # Check areas to improve and prioritize
+        prioritize_upper = any('shoulder' in a.lower() or 'arm' in a.lower() or 'chest' in a.lower() or 'back' in a.lower() for a in areas_to_improve)
+        prioritize_lower = any('leg' in a.lower() or 'glute' in a.lower() or 'thigh' in a.lower() for a in areas_to_improve)
+        prioritize_core = any('core' in a.lower() or 'waist' in a.lower() or 'midsection' in a.lower() for a in areas_to_improve)
+        
+        workout_days = [
+            {
+                "day": 1,
+                "name": "Push (Chest, Shoulders, Triceps)",
+                "focus": ["Chest", "Shoulders", "Triceps"],
+                "exercises": [
+                    {"name": exercises["chest"][0], "sets_reps": sets_reps, "notes": "Primary chest compound"},
+                    {"name": exercises["chest"][1] if len(exercises["chest"]) > 1 else exercises["chest"][0], "sets_reps": sets_reps, "notes": "Secondary chest"},
+                    {"name": exercises["shoulders"][0], "sets_reps": sets_reps, "notes": "Overhead pressing"},
+                    {"name": exercises["shoulders"][1] if len(exercises["shoulders"]) > 1 else exercises["shoulders"][0], "sets_reps": "3 sets x 15 reps", "notes": "Lateral deltoid"},
+                    {"name": exercises["arms"][1] if len(exercises["arms"]) > 1 else "Tricep Exercise", "sets_reps": "3 sets x 12 reps", "notes": "Tricep isolation"},
+                ]
+            },
+            {
+                "day": 2,
+                "name": "Pull (Back, Biceps)",
+                "focus": ["Back", "Biceps"],
+                "exercises": [
+                    {"name": exercises["back"][0], "sets_reps": sets_reps, "notes": "Vertical pull"},
+                    {"name": exercises["back"][1] if len(exercises["back"]) > 1 else exercises["back"][0], "sets_reps": sets_reps, "notes": "Horizontal row"},
+                    {"name": exercises["back"][2] if len(exercises["back"]) > 2 else exercises["back"][0], "sets_reps": sets_reps, "notes": "Secondary back"},
+                    {"name": exercises["shoulders"][2] if len(exercises["shoulders"]) > 2 else "Face Pulls", "sets_reps": "3 sets x 15 reps", "notes": "Rear delts"},
+                    {"name": exercises["arms"][0], "sets_reps": "3 sets x 12 reps", "notes": "Bicep work"},
+                ]
+            },
+            {
+                "day": 3,
+                "name": "Legs & Core",
+                "focus": ["Quads", "Hamstrings", "Glutes", "Core"],
+                "exercises": [
+                    {"name": exercises["legs"][0], "sets_reps": sets_reps, "notes": "Primary quad compound"},
+                    {"name": exercises["legs"][2] if len(exercises["legs"]) > 2 else exercises["legs"][1], "sets_reps": sets_reps, "notes": "Hamstring focus"},
+                    {"name": exercises["legs"][1] if len(exercises["legs"]) > 1 else exercises["legs"][0], "sets_reps": sets_reps, "notes": "Secondary leg"},
+                    {"name": exercises["legs"][4] if len(exercises["legs"]) > 4 else "Calf Raises", "sets_reps": "4 sets x 15 reps", "notes": "Calf development"},
+                    {"name": exercises["core"][0], "sets_reps": "3 sets x 45 sec", "notes": "Core stability"},
+                    {"name": exercises["core"][1] if len(exercises["core"]) > 1 else exercises["core"][0], "sets_reps": "3 sets x 15 reps", "notes": "Core movement"},
+                ]
+            }
+        ]
+        
+        # Add extra focus day if needed
+        if prioritize_core:
+            workout_days.append({
+                "day": 4,
+                "name": "Core & Conditioning",
+                "focus": ["Core", "Cardio"],
+                "exercises": [
+                    {"name": exercises["core"][0], "sets_reps": "4 sets x 60 sec", "notes": "Plank variations"},
+                    {"name": exercises["core"][1] if len(exercises["core"]) > 1 else "Crunches", "sets_reps": "3 sets x 20 reps", "notes": "Ab movement"},
+                    {"name": "Mountain Climbers", "sets_reps": "3 sets x 30 sec", "notes": "Cardio core"},
+                    {"name": "Russian Twists", "sets_reps": "3 sets x 20 reps", "notes": "Obliques"},
+                    {"name": "HIIT Cardio", "sets_reps": "15-20 minutes", "notes": "Fat burning"},
+                ]
+            })
+    
+    return {
+        "plan_name": f"Personalized {goal.replace('_', ' ').title()} Plan",
+        "duration_weeks": 8,
+        "days_per_week": len(workout_days),
+        "sets_reps_scheme": sets_reps,
+        "rest_between_sets": rest,
+        "workout_days": workout_days,
+        "notes": [
+            "Warm up for 5-10 minutes before each workout",
+            "Focus on proper form over heavy weight",
+            "Progressive overload: increase weight/reps weekly",
+            "Stay hydrated and get adequate sleep for recovery"
+        ],
+        "cardio_recommendation": "2-3 sessions per week, 20-30 minutes" if goal in ['fat_loss', 'general_fitness'] else "1-2 sessions per week for cardiovascular health"
+    }
+
+@api_router.post("/body-scan/analyze")
+async def analyze_body_scan(data: BodyScanRequest):
+    """Analyze body from photos and/or measurements and generate workout"""
+    try:
+        user_info = {
+            "height_inches": data.height_inches,
+            "weight_lbs": data.weight_lbs,
+            "body_fat_percentage": data.body_fat_percentage,
+            "fitness_goal": data.fitness_goal,
+            "workout_location": data.workout_location,
+            "experience_level": data.experience_level
+        }
+        
+        measurements_dict = data.measurements.dict() if data.measurements else {}
+        
+        # Analyze based on available data
+        if data.photos and len(data.photos) > 0:
+            # Use AI vision for photo analysis
+            analysis = await analyze_body_photos_with_ai(data.photos, measurements_dict, user_info)
+        else:
+            # Use measurements only
+            analysis = analyze_measurements_only(measurements_dict, user_info)
+        
+        # Generate personalized workout
+        workout_plan = generate_workout_from_analysis(analysis, user_info)
+        
+        # Save scan to database
+        scan_record = {
+            "scan_id": f"scan_{datetime.now().timestamp()}",
+            "user_id": data.user_id,
+            "measurements": measurements_dict,
+            "analysis": analysis,
+            "workout_plan": workout_plan,
+            "user_info": user_info,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        await db.body_scans.insert_one(scan_record)
+        
+        return {
+            "scan_id": scan_record["scan_id"],
+            "analysis": analysis,
+            "workout_plan": workout_plan,
+            "message": "Body scan analysis complete"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing body scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/body-scan/history/{user_id}")
+async def get_body_scan_history(user_id: str, limit: int = 10):
+    """Get user's body scan history"""
+    try:
+        scans = await db.body_scans.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).to_list(limit)
+        
+        # Don't include full workout plans in list view
+        for scan in scans:
+            scan["_id"] = str(scan["_id"])
+            if "workout_plan" in scan:
+                scan["has_workout_plan"] = True
+                del scan["workout_plan"]
+        
+        return {"scans": scans, "count": len(scans)}
+    except Exception as e:
+        logger.error(f"Error getting body scan history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/body-scan/{scan_id}")
+async def get_body_scan(scan_id: str):
+    """Get a specific body scan with full details"""
+    try:
+        scan = await db.body_scans.find_one({"scan_id": scan_id})
+        if not scan:
+            raise HTTPException(status_code=404, detail="Scan not found")
+        
+        scan["_id"] = str(scan["_id"])
+        return scan
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting body scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/body-scan/progress/{user_id}")
+async def get_body_scan_progress(user_id: str):
+    """Get measurement progress over time"""
+    try:
+        scans = await db.body_scans.find(
+            {"user_id": user_id}
+        ).sort("created_at", 1).to_list(100)
+        
+        if not scans:
+            return {"has_data": False, "measurements": []}
+        
+        # Extract measurements over time
+        progress_data = []
+        for scan in scans:
+            if scan.get("measurements"):
+                progress_data.append({
+                    "date": scan["created_at"][:10],
+                    "measurements": scan["measurements"],
+                    "weight": scan.get("user_info", {}).get("weight_lbs"),
+                    "body_fat": scan.get("analysis", {}).get("body_fat_estimate")
+                })
+        
+        return {
+            "has_data": len(progress_data) > 0,
+            "progress": progress_data,
+            "total_scans": len(scans)
+        }
+    except Exception as e:
+        logger.error(f"Error getting body scan progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
