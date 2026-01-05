@@ -16,7 +16,7 @@ import { Colors } from '../../constants/Colors';
 import { useUserStore } from '../../stores/userStore';
 import { dashboardAPI, waterAPI, workoutAPI } from '../../services/api';
 import { router } from 'expo-router';
-import FitTraxxLogo from '../../components/FitTraxxLogo';
+import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
@@ -70,7 +70,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <Text style={styles.title}>Welcome to FitTraxx! 🏃‍♀️</Text>
+          <Text style={styles.title}>Welcome to FitTrax! 🏃‍♀️</Text>
           <Text style={styles.subtitle}>
             Let's set up your profile to get started with your fitness journey.
           </Text>
@@ -142,7 +142,7 @@ export default function DashboardScreen() {
         {/* Enhanced Header with Gradient */}
         <View style={styles.headerCard}>
           <View style={styles.logoContainer}>
-            <FitTraxxLogo size="small" showText={false} />
+            <FitTraxLogo size="small" showText={false} />
           </View>
           <View style={styles.greetingContainer}>
             <Text style={styles.greeting}>
@@ -495,7 +495,7 @@ export default function DashboardScreen() {
               <View style={styles.premiumContent}>
                 <Ionicons name="diamond" size={32} color="#fff" />
                 <View style={styles.premiumText}>
-                  <Text style={styles.premiumTitle}>FitTraxx Premium</Text>
+                  <Text style={styles.premiumTitle}>FitTrax Premium</Text>
                   <Text style={styles.premiumSubtitle}>
                     AI Workouts • Badges • Meal Planning
                   </Text>

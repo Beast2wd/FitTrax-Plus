@@ -23,7 +23,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
 # Create the main app without a prefix
-app = FastAPI(title="FitTraxx API", version="1.0")
+app = FastAPI(title="FitTrax API", version="1.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -1555,7 +1555,7 @@ async def get_pricing():
     """Get membership pricing information"""
     return {
         "plan": "annual",
-        "name": "FitTraxx Premium",
+        "name": "FitTrax Premium",
         "price": 25.00,
         "currency": "USD",
         "interval": "year",

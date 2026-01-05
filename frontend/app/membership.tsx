@@ -150,7 +150,7 @@ export default function MembershipScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>FitTraxx Premium</Text>
+          <Text style={styles.title}>FitTrax Premium</Text>
           <Text style={styles.subtitle}>Unlock your full potential</Text>
         </View>
 
