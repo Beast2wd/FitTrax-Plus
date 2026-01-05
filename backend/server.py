@@ -927,6 +927,22 @@ async def delete_scheduled_workout(scheduled_id: str):
     
     return {"message": "Scheduled workout deleted successfully"}
 
+class RescheduleWorkout(BaseModel):
+    new_date: str
+
+@api_router.put("/scheduled-workouts/{scheduled_id}/reschedule")
+async def reschedule_workout(scheduled_id: str, data: RescheduleWorkout):
+    """Reschedule a workout to a new date"""
+    result = await db.scheduled_workouts.update_one(
+        {"scheduled_id": scheduled_id},
+        {"$set": {"scheduled_date": data.new_date, "updated_at": datetime.utcnow().isoformat()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Scheduled workout not found")
+    
+    return {"message": "Workout rescheduled successfully", "new_date": data.new_date}
+
 @api_router.get("/scheduled-workouts/reminders/{user_id}")
 async def get_upcoming_reminders(user_id: str):
     """Get upcoming workout reminders (next 24 hours)"""
