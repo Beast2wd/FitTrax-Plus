@@ -207,6 +207,41 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* Streak Card */}
+        {streakData && (
+          <TouchableOpacity 
+            style={styles.streakCard} 
+            onPress={() => router.push('/badges')}
+          >
+            <LinearGradient
+              colors={streakData.current_streak >= 7 ? ['#EF4444', '#EC4899'] : ['#F59E0B', '#EF4444']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.streakGradient}
+            >
+              <View style={styles.streakContent}>
+                <View style={styles.streakIconContainer}>
+                  <Text style={styles.streakIcon}>🔥</Text>
+                </View>
+                <View style={styles.streakInfo}>
+                  <Text style={styles.streakNumber}>{streakData.current_streak}</Text>
+                  <Text style={styles.streakLabel}>Day Streak</Text>
+                </View>
+                <View style={styles.streakDivider} />
+                <View style={styles.streakInfo}>
+                  <Text style={styles.streakNumber}>{streakData.longest_streak}</Text>
+                  <Text style={styles.streakLabel}>Best Streak</Text>
+                </View>
+              </View>
+              {streakData.current_streak > 0 && (
+                <Text style={styles.streakMessage}>
+                  {streakData.streak_active_today ? "Keep it going today!" : "Don't break the chain! 💪"}
+                </Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+
         {/* Enhanced Calorie Goal Card with Gradient */}
         <View style={styles.calorieCardWrapper}>
           <LinearGradient
