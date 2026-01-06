@@ -36,6 +36,10 @@ export const foodAPI = {
     const response = await api.delete(`/meals/${mealId}`);
     return response.data;
   },
+  updateMeal: async (mealId: string, data: { calories: number; protein: number; carbs: number; fat: number }) => {
+    const response = await api.put(`/meals/${mealId}`, data);
+    return response.data;
+  },
 };
 
 // Workout APIs
