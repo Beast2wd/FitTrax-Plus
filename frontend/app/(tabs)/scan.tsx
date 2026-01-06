@@ -164,7 +164,21 @@ export default function ScanScreen() {
   };
 
   const handleSaveEdits = async () => {
-    if (!savedMealId) return;
+    if (!savedMealId) {
+      // If meal wasn't saved yet, just update local state
+      setResult((prev: any) => ({
+        ...prev,
+        analysis: {
+          ...prev.analysis,
+          calories: parseFloat(editedNutrition.calories) || 0,
+          protein: parseFloat(editedNutrition.protein) || 0,
+          carbs: parseFloat(editedNutrition.carbs) || 0,
+          fat: parseFloat(editedNutrition.fat) || 0,
+        },
+      }));
+      setEditModalVisible(false);
+      return;
+    }
 
     try {
       // Update the meal with edited values
@@ -188,9 +202,21 @@ export default function ScanScreen() {
       }));
 
       setEditModalVisible(false);
-      Alert.alert('Updated', 'Nutrition values have been updated');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update values');
+    } catch (error: any) {
+      console.error('Update error:', error);
+      // Still close modal and update local state even if API fails
+      setResult((prev: any) => ({
+        ...prev,
+        analysis: {
+          ...prev.analysis,
+          calories: parseFloat(editedNutrition.calories) || 0,
+          protein: parseFloat(editedNutrition.protein) || 0,
+          carbs: parseFloat(editedNutrition.carbs) || 0,
+          fat: parseFloat(editedNutrition.fat) || 0,
+        },
+      }));
+      setEditModalVisible(false);
+      Alert.alert('Note', 'Values updated locally. Sync may have failed.');
     }
   };
 
