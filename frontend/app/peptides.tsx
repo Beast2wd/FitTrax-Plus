@@ -933,6 +933,7 @@ export default function PeptideCalculatorScreen() {
         </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
