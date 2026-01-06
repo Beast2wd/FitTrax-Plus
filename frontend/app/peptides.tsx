@@ -1633,4 +1633,26 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     lineHeight: 18,
   },
+  deleteAction: {
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginBottom: 12,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  deleteActionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  swipeHint: {
+    fontSize: 11,
+    color: Colors.text.muted,
+    fontStyle: 'italic',
+    marginTop: 8,
+    textAlign: 'right',
+  },
 });
