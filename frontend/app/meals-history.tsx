@@ -120,9 +120,6 @@ export default function MealsHistoryScreen() {
       // Values already updated locally, just log the error
     }
   };
-      Alert.alert('Error', 'Failed to update meal');
-    }
-  };
 
   const handleRefresh = () => {
     setRefreshing(true);
