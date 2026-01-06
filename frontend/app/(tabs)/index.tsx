@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
 import { useUserStore } from '../../stores/userStore';
-import { dashboardAPI, waterAPI, workoutAPI } from '../../services/api';
+import { useThemeStore } from '../../stores/themeStore';
+import { dashboardAPI, waterAPI } from '../../services/api';
 import { router } from 'expo-router';
 import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +26,7 @@ const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const { userId, profile } = useUserStore();
+  const { theme } = useThemeStore();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -33,17 +34,17 @@ export default function DashboardScreen() {
   const [achievementModal, setAchievementModal] = useState<any>({ visible: false, achievement: null });
   const [pendingAchievements, setPendingAchievements] = useState<any[]>([]);
 
+  const colors = theme.colors;
+  const accent = theme.accentColors;
+
   const loadDashboard = async () => {
     try {
       if (!userId) return;
       const data = await dashboardAPI.getDashboard(userId);
       setDashboardData(data);
-      
-      // Also sync gamification progress
       await syncGamification();
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
-      Alert.alert('Error', 'Failed to load dashboard data');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -52,16 +53,11 @@ export default function DashboardScreen() {
 
   const syncGamification = useCallback(async () => {
     if (!userId) return;
-    
     try {
-      // Get streak data
       const streakResponse = await axios.get(`${API_URL}/api/gamification/streak/${userId}`);
       setStreakData(streakResponse.data);
       
-      // Sync progress and check for new achievements
       const syncResponse = await axios.post(`${API_URL}/api/gamification/sync-progress/${userId}`);
-      
-      // If there are new badges, queue them for display
       if (syncResponse.data.new_badges && syncResponse.data.new_badges.length > 0) {
         const newAchievements = syncResponse.data.new_badges.map((badge: any) => ({
           type: 'badge',
@@ -77,7 +73,6 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
-  // Show pending achievements one by one
   useEffect(() => {
     if (pendingAchievements.length > 0 && !achievementModal.visible) {
       const nextAchievement = pendingAchievements[0];
@@ -95,42 +90,21 @@ export default function DashboardScreen() {
 
   const getMotivationalMessage = () => {
     if (streakData?.current_streak >= 7) {
-      return `${streakData.current_streak} day streak! 🔥 Incredible!`;
+      return `${streakData.current_streak} day streak! 🔥`;
     } else if (streakData?.current_streak >= 3) {
-      return `${streakData.current_streak} day streak! Keep it up! 💪`;
+      return `${streakData.current_streak} day streak! 💪`;
     }
-    const messages = [
-      "You're crushing it today! 💪",
-      "Every step counts! 🚀",
-      "Stay strong and focused! ⚡",
-      "Your progress is inspiring! 🌟",
-      "Keep pushing forward! 🏆",
-    ];
+    const messages = ["Let's crush it today! 💪", "Every rep counts! 🚀", "Stay focused! ⚡"];
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
   useEffect(() => {
     if (userId) {
       loadDashboard();
+    } else {
+      setLoading(false);
     }
   }, [userId]);
-
-  // If no profile exists, show onboarding message without navigation
-  if (!userId || !profile) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <Text style={styles.title}>Welcome to FitTrax! 🏃‍♀️</Text>
-          <Text style={styles.subtitle}>
-            Let's set up your profile to get started with your fitness journey.
-          </Text>
-          <Text style={styles.subtitle}>
-            Please go to the Profile tab to create your account.
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -151,78 +125,88 @@ export default function DashboardScreen() {
     }
   };
 
-  if (loading) {
+  // Onboarding view
+  if (!userId || !profile) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.brand.primary} />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!dashboardData) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>No data available</Text>
-          <TouchableOpacity style={styles.button} onPress={loadDashboard}>
-            <Text style={styles.buttonText}>Retry</Text>
+          <FitTraxLogo size="xlarge" showText={true} />
+          <Text style={[styles.welcomeText, { color: colors.text.primary }]}>
+            Welcome to FitTrax
+          </Text>
+          <Text style={[styles.welcomeSubtext, { color: colors.text.secondary }]}>
+            Create your profile to start your fitness journey
+          </Text>
+          <TouchableOpacity 
+            style={[styles.ctaButton, { backgroundColor: accent.primary }]}
+            onPress={() => router.push('/profile')}
+          >
+            <Text style={styles.ctaButtonText}>Get Started</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  const today = dashboardData.today || {};
-  const caloriesRemaining = today.calories_goal - today.net_calories;
-  const progressPercentage = Math.min(
-    (today.net_calories / today.calories_goal) * 100,
-    100
-  );
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={accent.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const today = dashboardData?.today || {};
+  const caloriesRemaining = (today.calories_goal || 2000) - (today.net_calories || 0);
+  const progressPercentage = Math.min(((today.net_calories || 0) / (today.calories_goal || 2000)) * 100, 100);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={handleRefresh}
+            tintColor={accent.primary}
+          />
         }
       >
-        {/* Enhanced Header with Gradient */}
-        <View style={styles.headerCard}>
-          <View style={styles.logoContainer}>
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.background.secondary }]}>
+          <View style={styles.headerLeft}>
             <FitTraxLogo size="small" showText={false} />
           </View>
-          <View style={styles.greetingContainer}>
-            <Text style={styles.greeting}>
-              {getGreeting()}, {profile?.name || 'User'}! 👋
+          <View style={styles.headerCenter}>
+            <Text style={[styles.greeting, { color: colors.text.primary }]}>
+              {getGreeting()}, {profile?.name?.split(' ')[0]}
             </Text>
-            <Text style={styles.motivationText}>{getMotivationalMessage()}</Text>
-            <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric' 
-            })}</Text>
+            <Text style={[styles.motivation, { color: accent.primary }]}>
+              {getMotivationalMessage()}
+            </Text>
           </View>
+          <TouchableOpacity 
+            style={[styles.headerRight, { backgroundColor: colors.background.card }]}
+            onPress={() => router.push('/profile')}
+          >
+            <Ionicons name="person" size={20} color={accent.primary} />
+          </TouchableOpacity>
         </View>
 
         {/* Streak Card */}
-        {streakData && (
-          <TouchableOpacity 
-            style={styles.streakCard} 
-            onPress={() => router.push('/badges')}
-          >
+        {streakData && streakData.current_streak > 0 && (
+          <TouchableOpacity onPress={() => router.push('/badges')}>
             <LinearGradient
-              colors={streakData.current_streak >= 7 ? ['#EF4444', '#EC4899'] : ['#F59E0B', '#EF4444']}
+              colors={accent.gradient as [string, string]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.streakGradient}
+              style={styles.streakCard}
             >
               <View style={styles.streakContent}>
-                <View style={styles.streakIconContainer}>
-                  <Text style={styles.streakIcon}>🔥</Text>
-                </View>
+                <Text style={styles.streakIcon}>🔥</Text>
                 <View style={styles.streakInfo}>
                   <Text style={styles.streakNumber}>{streakData.current_streak}</Text>
                   <Text style={styles.streakLabel}>Day Streak</Text>
@@ -230,432 +214,192 @@ export default function DashboardScreen() {
                 <View style={styles.streakDivider} />
                 <View style={styles.streakInfo}>
                   <Text style={styles.streakNumber}>{streakData.longest_streak}</Text>
-                  <Text style={styles.streakLabel}>Best Streak</Text>
+                  <Text style={styles.streakLabel}>Best</Text>
                 </View>
               </View>
-              {streakData.current_streak > 0 && (
-                <Text style={styles.streakMessage}>
-                  {streakData.streak_active_today ? "Keep it going today!" : "Don't break the chain! 💪"}
-                </Text>
-              )}
             </LinearGradient>
           </TouchableOpacity>
         )}
 
-        {/* Enhanced Calorie Goal Card with Gradient */}
-        <View style={styles.calorieCardWrapper}>
-          <LinearGradient
-            colors={['#667eea', '#764ba2']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.calorieGradient}
-          >
-            <View style={styles.calorieHeader}>
-              <Ionicons name="flame" size={28} color="#fff" />
-              <Text style={styles.calorieTitle}>Today's Calorie Goal</Text>
-            </View>
-            
-            <View style={styles.calorieStatsRow}>
-              <View style={styles.calorieStatItem}>
-                <Text style={styles.calorieStatValue}>
-                  {Math.round(today.calories_consumed || 0)}
-                </Text>
-                <Text style={styles.calorieStatLabel}>Consumed</Text>
-              </View>
-              <View style={styles.calorieDivider} />
-              <View style={styles.calorieStatItem}>
-                <Text style={styles.calorieStatValue}>
-                  {Math.round(today.calories_burned || 0)}
-                </Text>
-                <Text style={styles.calorieStatLabel}>Burned</Text>
-              </View>
-              <View style={styles.calorieDivider} />
-              <View style={styles.calorieStatItem}>
-                <Text style={[styles.calorieStatValue, caloriesRemaining < 0 && styles.calorieOver]}>
-                  {Math.round(Math.abs(caloriesRemaining))}
-                </Text>
-                <Text style={styles.calorieStatLabel}>
-                  {caloriesRemaining >= 0 ? 'Remaining' : 'Over'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${progressPercentage}%` },
-                    progressPercentage > 100 && { backgroundColor: '#ef4444' }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.progressText}>
-                {Math.round(progressPercentage)}% of goal
+        {/* Calorie Progress */}
+        <View style={[styles.calorieCard, { backgroundColor: colors.background.card }]}>
+          <View style={styles.calorieHeader}>
+            <View style={styles.calorieHeaderLeft}>
+              <Ionicons name="flame" size={24} color={accent.primary} />
+              <Text style={[styles.calorieTitle, { color: colors.text.primary }]}>
+                Today's Calories
               </Text>
             </View>
-          </LinearGradient>
-        </View>
-
-        {/* Today's Stats Grid with Colors */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Today's Progress</Text>
-          <View style={styles.statsGrid}>
-            <TouchableOpacity 
-              style={[styles.statCard, { backgroundColor: '#EFF6FF' }]}
-              onPress={() => router.push('/meals-history')}
-            >
-              <View style={[styles.statIconCircle, { backgroundColor: '#3B82F6' }]}>
-                <Ionicons name="fast-food" size={24} color="#fff" />
-              </View>
-              <Text style={[styles.statValue, { color: '#3B82F6' }]}>
-                {today.meals_count || 0}
+            <Text style={[styles.calorieGoal, { color: colors.text.muted }]}>
+              Goal: {today.calories_goal || 2000}
+            </Text>
+          </View>
+          
+          <View style={styles.calorieStats}>
+            <View style={styles.calorieStat}>
+              <Text style={[styles.calorieStatValue, { color: colors.text.primary }]}>
+                {Math.round(today.calories_consumed || 0)}
               </Text>
-              <Text style={styles.statLabel}>Meals</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.statCard, { backgroundColor: '#F0FDF4' }]}
-              onPress={() => router.push('/plans')}
-            >
-              <View style={[styles.statIconCircle, { backgroundColor: '#10B981' }]}>
-                <MaterialIcons name="fitness-center" size={24} color="#fff" />
-              </View>
-              <Text style={[styles.statValue, { color: '#10B981' }]}>
-                {today.workouts_count || 0}
+              <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>Eaten</Text>
+            </View>
+            <View style={[styles.calorieStatDivider, { backgroundColor: colors.border.primary }]} />
+            <View style={styles.calorieStat}>
+              <Text style={[styles.calorieStatValue, { color: '#22C55E' }]}>
+                {Math.round(today.calories_burned || 0)}
               </Text>
-              <Text style={styles.statLabel}>Workouts</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.statCard, { backgroundColor: '#ECFDF5' }]}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.statIconCircle, { backgroundColor: '#0EA5E9' }]}>
-                <Ionicons name="water" size={24} color="#fff" />
-              </View>
-              <Text style={[styles.statValue, { color: '#0EA5E9' }]}>
-                {Math.round(today.water_intake || 0)}
+              <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>Burned</Text>
+            </View>
+            <View style={[styles.calorieStatDivider, { backgroundColor: colors.border.primary }]} />
+            <View style={styles.calorieStat}>
+              <Text style={[
+                styles.calorieStatValue, 
+                { color: caloriesRemaining >= 0 ? accent.primary : '#EF4444' }
+              ]}>
+                {Math.abs(Math.round(caloriesRemaining))}
               </Text>
-              <Text style={styles.statLabel}>oz Water</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.statCard, { backgroundColor: '#FEF2F2' }]}
-              onPress={() => router.push('/heart-rate')}
-            >
-              <View style={[styles.statIconCircle, { backgroundColor: '#EF4444' }]}>
-                <MaterialIcons name="favorite" size={24} color="#fff" />
-              </View>
-              <Text style={[styles.statValue, { color: '#EF4444' }]}>
-                {Math.round(today.avg_heart_rate || 0)}
+              <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>
+                {caloriesRemaining >= 0 ? 'Left' : 'Over'}
               </Text>
-              <Text style={styles.statLabel}>Avg BPM</Text>
-            </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={[styles.progressBar, { backgroundColor: colors.background.elevated }]}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { 
+                  width: `${progressPercentage}%`,
+                  backgroundColor: progressPercentage > 100 ? '#EF4444' : accent.primary
+                }
+              ]} 
+            />
           </View>
         </View>
 
-        {/* Water Tracking Section */}
-        <View style={styles.waterSection}>
+        {/* Quick Stats Grid */}
+        <View style={styles.statsGrid}>
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            onPress={() => router.push('/meals-history')}
+          >
+            <View style={[styles.statIcon, { backgroundColor: `${accent.primary}20` }]}>
+              <Ionicons name="restaurant" size={22} color={accent.primary} />
+            </View>
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>
+              {today.meals_count || 0}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Meals</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            onPress={() => router.push('/weight-training')}
+          >
+            <View style={[styles.statIcon, { backgroundColor: '#22C55E20' }]}>
+              <MaterialIcons name="fitness-center" size={22} color="#22C55E" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>
+              {today.workouts_count || 0}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Workouts</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.statIcon, { backgroundColor: '#06B6D420' }]}>
+              <Ionicons name="water" size={22} color="#06B6D4" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>
+              {Math.round(today.water_intake || 0)}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>oz</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            onPress={() => router.push('/heart-rate')}
+          >
+            <View style={[styles.statIcon, { backgroundColor: '#EF444420' }]}>
+              <MaterialIcons name="favorite" size={22} color="#EF4444" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>
+              {Math.round(today.avg_heart_rate || 0)}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>BPM</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Water Quick Add */}
+        <View style={[styles.waterSection, { backgroundColor: colors.background.card }]}>
           <View style={styles.waterHeader}>
-            <Ionicons name="water" size={24} color="#0EA5E9" />
-            <Text style={styles.waterTitle}>Quick Log Water</Text>
+            <Ionicons name="water" size={20} color="#06B6D4" />
+            <Text style={[styles.waterTitle, { color: colors.text.primary }]}>Log Water</Text>
           </View>
           <View style={styles.waterButtons}>
             {[8, 16, 24, 32].map((amount) => (
               <TouchableOpacity
                 key={amount}
-                style={styles.waterButton}
+                style={[styles.waterButton, { backgroundColor: colors.background.elevated }]}
                 onPress={() => addWater(amount)}
               >
-                <Ionicons name="water" size={20} color="#0EA5E9" />
-                <Text style={styles.waterButtonText}>{amount} oz</Text>
+                <Text style={[styles.waterButtonText, { color: '#06B6D4' }]}>+{amount}oz</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Macros Section */}
-        {today.meals_count > 0 && (
-          <View style={styles.macrosSection}>
-            <Text style={styles.sectionTitle}>Today's Nutrition</Text>
-            <View style={styles.macrosCard}>
-              <View style={styles.macroItem}>
-                <View style={[styles.macroCircle, { backgroundColor: '#3B82F6' }]}>
-                  <MaterialIcons name="fitness-center" size={20} color="#fff" />
-                </View>
-                <Text style={styles.macroValue}>{Math.round(today.protein || 0)}g</Text>
-                <Text style={styles.macroLabel}>Protein</Text>
-              </View>
-              <View style={styles.macroItem}>
-                <View style={[styles.macroCircle, { backgroundColor: '#F59E0B' }]}>
-                  <Ionicons name="pizza" size={20} color="#fff" />
-                </View>
-                <Text style={styles.macroValue}>{Math.round(today.carbs || 0)}g</Text>
-                <Text style={styles.macroLabel}>Carbs</Text>
-              </View>
-              <View style={styles.macroItem}>
-                <View style={[styles.macroCircle, { backgroundColor: '#8B5CF6' }]}>
-                  <Ionicons name="nutrition" size={20} color="#fff" />
-                </View>
-                <Text style={styles.macroValue}>{Math.round(today.fat || 0)}g</Text>
-                <Text style={styles.macroLabel}>Fat</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
         {/* Quick Actions */}
-        <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#3B82F6', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/scan')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#EFF6FF' }]}>
-              <Ionicons name="camera" size={24} color="#3B82F6" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Scan Food</Text>
-              <Text style={styles.actionSubtitle}>AI-powered nutrition analysis</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#10B981', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/plans')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#F0FDF4' }]}>
-              <MaterialIcons name="fitness-center" size={24} color="#10B981" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Browse Workout Plans</Text>
-              <Text style={styles.actionSubtitle}>Find your perfect program</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#EF4444', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/heart-rate')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#FEF2F2' }]}>
-              <MaterialIcons name="favorite" size={24} color="#EF4444" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Heart Rate Tracking</Text>
-              <Text style={styles.actionSubtitle}>Monitor your heart health</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#F59E0B', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/schedule')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#FFFBEB' }]}>
-              <Ionicons name="calendar" size={24} color="#F59E0B" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Workout Schedule</Text>
-              <Text style={styles.actionSubtitle}>Plan and track workouts</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/body-scan')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#F5F3FF' }]}>
-              <Ionicons name="body" size={24} color="#8B5CF6" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Body Scan</Text>
-              <Text style={styles.actionSubtitle}>AI workout from your body</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#3B82F6', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/analytics')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#DBEAFE' }]}>
-              <Ionicons name="stats-chart" size={24} color="#3B82F6" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Analytics & Insights</Text>
-              <Text style={styles.actionSubtitle}>Track your progress</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#EC4899', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/running')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#FCE7F3' }]}>
-              <Ionicons name="footsteps" size={24} color="#EC4899" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Running Tracker</Text>
-              <Text style={styles.actionSubtitle}>Track distance with GPS</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#7C3AED', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/weight-training')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#EDE9FE' }]}>
-              <Ionicons name="barbell" size={24} color="#7C3AED" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Weight Training</Text>
-              <Text style={styles.actionSubtitle}>Log sets, reps & track PRs</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#10B981', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/wearables')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#D1FAE5' }]}>
-              <Ionicons name="watch" size={24} color="#10B981" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Health & Wearables</Text>
-              <Text style={styles.actionSubtitle}>Sync Apple Health & Google Fit</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#6366F1', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/peptides')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#E0E7FF' }]}>
-              <Ionicons name="flask" size={24} color="#6366F1" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Peptide Calculator</Text>
-              <Text style={styles.actionSubtitle}>Reconstitution, logging & AI insights</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { borderLeftColor: '#EF4444', borderLeftWidth: 4 }]}
-            onPress={() => router.push('/badges')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#FEE2E2' }]}>
-              <Ionicons name="trophy" size={24} color="#EF4444" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Rewards & Challenges</Text>
-              <Text style={styles.actionSubtitle}>Earn badges, complete challenges</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={Colors.text.muted} />
-          </TouchableOpacity>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Quick Actions</Text>
+        <View style={styles.actionsGrid}>
+          {[
+            { icon: 'camera', label: 'Scan Food', color: accent.primary, route: '/scan' },
+            { icon: 'calendar', label: 'Schedule', color: '#F59E0B', route: '/schedule' },
+            { icon: 'barbell', label: 'Workout', color: '#8B5CF6', route: '/weight-training' },
+            { icon: 'footsteps', label: 'Run', color: '#EC4899', route: '/running' },
+            { icon: 'body', label: 'Body Scan', color: '#10B981', route: '/body-scan' },
+            { icon: 'flask', label: 'Peptides', color: '#6366F1', route: '/peptides' },
+            { icon: 'trophy', label: 'Rewards', color: '#EF4444', route: '/badges' },
+            { icon: 'stats-chart', label: 'Analytics', color: '#0EA5E9', route: '/analytics' },
+          ].map((action, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.actionCard, { backgroundColor: colors.background.card }]}
+              onPress={() => router.push(action.route as any)}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: `${action.color}20` }]}>
+                <Ionicons name={action.icon as any} size={24} color={action.color} />
+              </View>
+              <Text style={[styles.actionLabel, { color: colors.text.primary }]}>
+                {action.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Premium Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Premium Features</Text>
-          
-          <TouchableOpacity 
-            onPress={() => router.push('/membership')}
+        {/* Premium Banner */}
+        <TouchableOpacity onPress={() => router.push('/membership')}>
+          <LinearGradient
+            colors={accent.gradient as [string, string]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.premiumBanner}
           >
-            <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.premiumBanner}
-            >
-              <View style={styles.premiumContent}>
-                <Ionicons name="diamond" size={32} color="#fff" />
-                <View style={styles.premiumText}>
-                  <Text style={styles.premiumTitle}>FitTrax Premium</Text>
-                  <Text style={styles.premiumSubtitle}>
-                    AI Workouts • Peptides • Body Scan
-                  </Text>
-                </View>
+            <View style={styles.premiumContent}>
+              <Ionicons name="diamond" size={28} color="#fff" />
+              <View style={styles.premiumText}>
+                <Text style={styles.premiumTitle}>FitTrax Premium</Text>
+                <Text style={styles.premiumSubtitle}>AI Workouts • Body Scan • Peptides</Text>
               </View>
-              <View style={styles.premiumBadge}>
-                <Text style={styles.premiumBadgeText}>3-Day Free Trial</Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
 
-          <View style={styles.premiumFeatures}>
-            <TouchableOpacity 
-              style={styles.premiumFeatureCard}
-              onPress={() => router.push('/peptides')}
-            >
-              <View style={[styles.premiumFeatureIcon, { backgroundColor: '#E0E7FF' }]}>
-                <Ionicons name="flask" size={28} color="#6366F1" />
-              </View>
-              <Text style={styles.premiumFeatureTitle}>Peptides</Text>
-              <Text style={styles.premiumFeatureSubtitle}>Calculator</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.premiumFeatureCard}
-              onPress={() => router.push('/body-scan')}
-            >
-              <View style={[styles.premiumFeatureIcon, { backgroundColor: '#F5F3FF' }]}>
-                <Ionicons name="body" size={28} color="#8B5CF6" />
-              </View>
-              <Text style={styles.premiumFeatureTitle}>Body Scan</Text>
-              <Text style={styles.premiumFeatureSubtitle}>AI Analysis</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.premiumFeatureCard}
-              onPress={() => router.push('/ai-workouts')}
-            >
-              <View style={[styles.premiumFeatureIcon, { backgroundColor: '#DBEAFE' }]}>
-                <Ionicons name="barbell" size={28} color="#3B82F6" />
-              </View>
-              <Text style={styles.premiumFeatureTitle}>AI Workouts</Text>
-              <Text style={styles.premiumFeatureSubtitle}>Personalized</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Progress Section */}
-        <View style={styles.section}>
-          <TouchableOpacity onPress={() => router.push('/progress')}>
-            <LinearGradient
-              colors={['#10B981', '#059669']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.progressBanner}
-            >
-              <View style={styles.progressContent}>
-                <Ionicons name="analytics" size={32} color="#fff" />
-                <View style={styles.progressText}>
-                  <Text style={styles.progressTitle}>View Progress</Text>
-                  <Text style={styles.progressSubtitle}>
-                    Charts • Goals • Body Measurements
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#fff" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-        {/* Bottom Spacer */}
-        <View style={{ height: 40 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Achievement Notification Modal */}
       <AchievementModal
         visible={achievementModal.visible}
         achievement={achievementModal.achievement}
@@ -668,92 +412,89 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 32,
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100,
   },
-  
-  // Enhanced Header Styles
-  headerCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginTop: 32,
+    textAlign: 'center',
+  },
+  welcomeSubtext: {
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 30,
+    gap: 8,
   },
-  logoContainer: {
-    marginRight: 16,
+  ctaButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
   },
-  greetingContainer: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  headerLeft: {
+    marginRight: 12,
+  },
+  headerCenter: {
     flex: 1,
   },
+  headerRight: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   greeting: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 4,
   },
-  motivationText: {
+  motivation: {
     fontSize: 14,
-    color: '#6366f1',
     fontWeight: '600',
-    marginBottom: 4,
+    marginTop: 2,
   },
-  date: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-
-  // Streak Card Styles
   streakCard: {
-    marginBottom: 20,
     borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  streakGradient: {
     padding: 16,
+    marginBottom: 16,
   },
   streakContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  streakIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
   streakIcon: {
-    fontSize: 28,
+    fontSize: 32,
+    marginRight: 16,
   },
   streakInfo: {
     alignItems: 'center',
   },
   streakNumber: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: '#fff',
   },
@@ -761,7 +502,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
     fontWeight: '600',
-    marginTop: 2,
   },
   streakDivider: {
     width: 1,
@@ -769,233 +509,132 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
     marginHorizontal: 24,
   },
-  streakMessage: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.95)',
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: 12,
-  },
-
-  // Enhanced Calorie Card Styles
-  calorieCardWrapper: {
-    marginBottom: 24,
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  calorieGradient: {
-    padding: 24,
+  calorieCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
   },
   calorieHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  calorieHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   calorieTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
-    marginLeft: 12,
   },
-  calorieStatsRow: {
+  calorieGoal: {
+    fontSize: 14,
+  },
+  calorieStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  calorieStatItem: {
+  calorieStat: {
     alignItems: 'center',
+    flex: 1,
   },
   calorieStatValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#fff',
-    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: '700',
   },
   calorieStatLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
     marginTop: 4,
-    fontWeight: '500',
   },
-  calorieDivider: {
+  calorieStatDivider: {
     width: 1,
     height: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  calorieOver: {
-    color: '#fef2f2',
-  },
-  progressBarContainer: {
-    alignItems: 'center',
   },
   progressBar: {
-    width: '100%',
     height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#fff',
     borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '600',
-  },
-
-  // Enhanced Stats Section
-  statsSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 16,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    marginBottom: 16,
   },
   statCard: {
-    flex: 1,
-    minWidth: '47%',
+    width: (width - 48 - 12) / 2,
+    padding: 16,
     borderRadius: 16,
-    padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  statIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  statIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   statValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: '700',
   },
   statLabel: {
     fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '600',
-    textAlign: 'center',
+    marginTop: 2,
   },
-
-  // Water Section
   waterSection: {
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 24,
   },
   waterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 12,
   },
   waterTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
   },
   waterButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   waterButton: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   waterButtonText: {
+    fontWeight: '600',
     fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginTop: 4,
   },
-
-  // Macros Section
-  macrosSection: {
-    marginBottom: 24,
-  },
-  macrosCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    justifyContent: 'space-around',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  macroItem: {
-    alignItems: 'center',
-  },
-  macroCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  macroValue: {
-    fontSize: 20,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 4,
+    marginBottom: 12,
   },
-  macroLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-
-  // Actions Section
-  actionsSection: {
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
     marginBottom: 24,
   },
   actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    width: (width - 48 - 12) / 2,
+    padding: 16,
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    alignItems: 'center',
   },
   actionIcon: {
     width: 48,
@@ -1003,160 +642,33 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginBottom: 8,
   },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 2,
-  },
-  actionSubtitle: {
+  actionLabel: {
     fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-
-  // Legacy styles for compatibility
-  button: {
-    backgroundColor: Colors.brand.primary,
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 16,
-  },
-  buttonText: {
-    color: Colors.text.white,
-    fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
   },
-  errorText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
-    paddingHorizontal: 24,
-  },
-  
-  // Premium Section Styles
   premiumBanner: {
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   premiumContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  premiumText: {
-    marginLeft: 16,
-  },
-  premiumTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  premiumSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  premiumBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignSelf: 'flex-start',
-  },
-  premiumBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  premiumFeatures: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 12,
   },
-  premiumFeatureCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  premiumFeatureIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  premiumFeatureTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 2,
-  },
-  premiumFeatureSubtitle: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  
-  // Progress Banner Styles
-  progressBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  progressContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  progressText: {},
-  progressTitle: {
+  premiumText: {},
+  premiumTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 4,
   },
-  progressSubtitle: {
-    fontSize: 14,
+  premiumSubtitle: {
+    fontSize: 13,
     color: 'rgba(255,255,255,0.9)',
+    marginTop: 2,
   },
 });
