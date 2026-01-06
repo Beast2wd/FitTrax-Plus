@@ -737,8 +737,16 @@ export default function PeptideCalculatorScreen() {
           transparent
           onRequestClose={() => setLogModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setLogModalVisible(false)}
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+              style={styles.modalContent}
+            >
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Log Injection</Text>
                 <TouchableOpacity onPress={() => setLogModalVisible(false)}>
