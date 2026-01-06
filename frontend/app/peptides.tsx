@@ -840,8 +840,16 @@ export default function PeptideCalculatorScreen() {
           transparent
           onRequestClose={() => setSelectorVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setSelectorVisible(false)}
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+              style={[styles.modalContent, { maxHeight: '80%' }]}
+            >
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Select Peptide</Text>
                 <TouchableOpacity onPress={() => setSelectorVisible(false)}>
@@ -875,8 +883,8 @@ export default function PeptideCalculatorScreen() {
                   );
                 })}
               </ScrollView>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
         {/* Peptide Info Modal */}
