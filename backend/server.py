@@ -3709,6 +3709,259 @@ async def get_gamification_summary(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# STREAK TRACKING & AUTO PROGRESS
+# ============================================================================
+
+@api_router.get("/gamification/streak/{user_id}")
+async def get_user_streak(user_id: str):
+    """Get user's current activity streak"""
+    try:
+        today = datetime.utcnow().date()
+        streak = 0
+        longest_streak = 0
+        current_streak = 0
+        check_date = today
+        
+        # Count backward to find current streak
+        for i in range(365):  # Check up to a year
+            date_str = check_date.isoformat()
+            
+            # Check for any activity on this date
+            workout_exists = await db.workouts.find_one({
+                "user_id": user_id,
+                "timestamp": {"$regex": f"^{date_str}"}
+            })
+            run_exists = await db.runs.find_one({
+                "user_id": user_id,
+                "timestamp": {"$regex": f"^{date_str}"}
+            })
+            weight_workout_exists = await db.weight_training_logs.find_one({
+                "user_id": user_id,
+                "date": date_str
+            })
+            challenge_done = await db.challenge_completions.find_one({
+                "user_id": user_id,
+                "type": "daily",
+                "date": date_str
+            })
+            
+            has_activity = workout_exists or run_exists or weight_workout_exists or challenge_done
+            
+            if has_activity:
+                current_streak += 1
+                if i == 0 or check_date == today:
+                    streak = current_streak
+            else:
+                if current_streak > longest_streak:
+                    longest_streak = current_streak
+                if i == 0:  # No activity today
+                    break
+                current_streak = 0
+                if streak > 0:
+                    break
+            
+            check_date -= timedelta(days=1)
+        
+        if current_streak > longest_streak:
+            longest_streak = current_streak
+        
+        return {
+            "current_streak": streak,
+            "longest_streak": longest_streak,
+            "streak_active_today": streak > 0
+        }
+    except Exception as e:
+        logger.error(f"Error getting user streak: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def auto_update_challenge_progress(user_id: str):
+    """Automatically update challenge progress based on user's daily activities"""
+    try:
+        today = datetime.utcnow()
+        today_str = today.date().isoformat()
+        today_start = today.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        
+        # Get today's challenges
+        daily_challenges = get_daily_challenges_for_date(today)
+        
+        # Count today's activities
+        workouts_today = await db.workouts.count_documents({
+            "user_id": user_id,
+            "timestamp": {"$gte": today_start}
+        })
+        
+        runs_today = await db.runs.count_documents({
+            "user_id": user_id,
+            "timestamp": {"$gte": today_start}
+        })
+        
+        meals_today = await db.meals.count_documents({
+            "user_id": user_id,
+            "timestamp": {"$gte": today_start}
+        })
+        
+        water_today_cursor = db.water_intake.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": today_start}
+        })
+        water_logs = await water_today_cursor.to_list(100)
+        water_oz_today = sum(w.get("amount", 0) for w in water_logs)
+        
+        weight_sessions_today = await db.weight_training_logs.count_documents({
+            "user_id": user_id,
+            "date": today_str
+        })
+        
+        # Update progress for each challenge
+        progress_updates = []
+        for challenge in daily_challenges:
+            progress = 0
+            
+            if "workout" in challenge["id"].lower() or "exercise" in challenge["id"].lower():
+                progress = workouts_today + runs_today + weight_sessions_today
+            elif "run" in challenge["id"].lower() or "cardio" in challenge["id"].lower():
+                progress = runs_today
+            elif "meal" in challenge["id"].lower() or "food" in challenge["id"].lower() or "log" in challenge["id"].lower():
+                progress = meals_today
+            elif "water" in challenge["id"].lower() or "hydrat" in challenge["id"].lower():
+                progress = water_oz_today
+            elif "lift" in challenge["id"].lower() or "weight" in challenge["id"].lower() or "strength" in challenge["id"].lower():
+                progress = weight_sessions_today
+            
+            if progress > 0:
+                completed = progress >= challenge["target"]
+                
+                await db.user_challenges.update_one(
+                    {
+                        "user_id": user_id,
+                        "challenge_id": challenge["id"],
+                        "date": today_str
+                    },
+                    {
+                        "$set": {
+                            "user_id": user_id,
+                            "challenge_id": challenge["id"],
+                            "type": "daily",
+                            "date": today_str,
+                            "progress": progress,
+                            "completed": completed,
+                            "updated_at": datetime.utcnow().isoformat()
+                        }
+                    },
+                    upsert=True
+                )
+                
+                # Award points if newly completed
+                if completed:
+                    existing_completion = await db.challenge_completions.find_one({
+                        "user_id": user_id,
+                        "challenge_id": challenge["id"],
+                        "date": today_str
+                    })
+                    
+                    if not existing_completion:
+                        await db.challenge_completions.insert_one({
+                            "user_id": user_id,
+                            "challenge_id": challenge["id"],
+                            "type": "daily",
+                            "date": today_str,
+                            "points": challenge["points"],
+                            "completed_at": datetime.utcnow().isoformat()
+                        })
+                
+                progress_updates.append({
+                    "challenge_id": challenge["id"],
+                    "progress": progress,
+                    "target": challenge["target"],
+                    "completed": completed
+                })
+        
+        return progress_updates
+    except Exception as e:
+        logger.error(f"Error auto-updating challenge progress: {str(e)}")
+        return []
+
+@api_router.post("/gamification/sync-progress/{user_id}")
+async def sync_gamification_progress(user_id: str):
+    """Sync all gamification progress for a user"""
+    try:
+        # Auto-update challenge progress
+        challenge_updates = await auto_update_challenge_progress(user_id)
+        
+        # Check for new badges
+        badge_result = await check_and_award_badges(user_id)
+        
+        # Get updated summary
+        summary = await get_gamification_summary(user_id)
+        
+        # Get streak info
+        streak = await get_user_streak(user_id)
+        
+        return {
+            "success": True,
+            "challenge_updates": challenge_updates,
+            "new_badges": badge_result.get("new_badges_awarded", []) if isinstance(badge_result, dict) else [],
+            "summary": summary,
+            "streak": streak
+        }
+    except Exception as e:
+        logger.error(f"Error syncing gamification progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/gamification/achievements/{user_id}")
+async def get_recent_achievements(user_id: str, limit: int = 10):
+    """Get user's recent achievements (badges + completed challenges)"""
+    try:
+        # Get recent badges
+        recent_badges = await db.user_badges.find(
+            {"user_id": user_id}
+        ).sort("earned_at", -1).limit(limit).to_list(limit)
+        
+        # Get recent challenge completions
+        recent_challenges = await db.challenge_completions.find(
+            {"user_id": user_id}
+        ).sort("completed_at", -1).limit(limit).to_list(limit)
+        
+        achievements = []
+        
+        for badge in recent_badges:
+            badge_info = next((b for b in BADGES if b["id"] == badge["badge_id"]), None)
+            if badge_info:
+                achievements.append({
+                    "type": "badge",
+                    "id": badge["badge_id"],
+                    "name": badge_info["name"],
+                    "description": badge_info["description"],
+                    "icon": badge_info["icon"],
+                    "points": badge_info["points"],
+                    "earned_at": badge["earned_at"]
+                })
+        
+        for challenge in recent_challenges:
+            challenge_info = next(
+                (c for c in DAILY_CHALLENGES + WEEKLY_CHALLENGES if c["id"] == challenge["challenge_id"]), 
+                None
+            )
+            if challenge_info:
+                achievements.append({
+                    "type": "challenge",
+                    "id": challenge["challenge_id"],
+                    "name": challenge_info["name"],
+                    "description": challenge_info.get("description", ""),
+                    "icon": "🎯",
+                    "points": challenge["points"],
+                    "earned_at": challenge["completed_at"]
+                })
+        
+        # Sort by earned_at descending
+        achievements.sort(key=lambda x: x.get("earned_at", ""), reverse=True)
+        
+        return {"achievements": achievements[:limit]}
+    except Exception as e:
+        logger.error(f"Error getting achievements: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # HEALTH SYNC ENDPOINTS (Apple Health / Google Health Connect)
 # ============================================================================
 
