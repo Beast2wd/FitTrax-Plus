@@ -654,6 +654,13 @@ export default function DashboardScreen() {
         {/* Bottom Spacer */}
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Achievement Notification Modal */}
+      <AchievementModal
+        visible={achievementModal.visible}
+        achievement={achievementModal.achievement}
+        onClose={() => setAchievementModal({ visible: false, achievement: null })}
+      />
     </SafeAreaView>
   );
 }
