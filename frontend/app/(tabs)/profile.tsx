@@ -679,4 +679,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  languageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+    minWidth: 120,
+  },
+  languageFlag: {
+    fontSize: 24,
+  },
+  languageName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
