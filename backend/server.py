@@ -465,6 +465,30 @@ async def delete_meal(meal_id: str):
     
     return {"message": "Meal deleted successfully"}
 
+class MealUpdate(BaseModel):
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+
+@api_router.put("/meals/{meal_id}")
+async def update_meal(meal_id: str, update: MealUpdate):
+    """Update meal nutrition values"""
+    result = await db.meals.update_one(
+        {"meal_id": meal_id},
+        {"$set": {
+            "calories": update.calories,
+            "protein": update.protein,
+            "carbs": update.carbs,
+            "fat": update.fat,
+            "updated_at": datetime.utcnow().isoformat(),
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    
+    return {"message": "Meal updated successfully"}
+
 # ============================================================================
 # WORKOUTS ENDPOINTS
 # ============================================================================
