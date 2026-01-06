@@ -7,18 +7,18 @@ import {
   Alert,
   ScrollView,
   Modal,
-  TextInput,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/Colors';
+import { useThemeStore } from '../stores/themeStore';
 import { useUserStore } from '../stores/userStore';
 import { plansAPI } from '../services/api';
 import * as Notifications from 'expo-notifications';
-import { format, addDays, subDays, isToday, isTomorrow, isYesterday } from 'date-fns';
+import { format, addDays, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -28,11 +28,35 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: false,
+    shouldSetBadge: true,
   }),
 });
 
+// Generate time options for picker
+const generateTimeOptions = () => {
+  const options = [];
+  for (let h = 5; h <= 22; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hour = h.toString().padStart(2, '0');
+      const minute = m.toString().padStart(2, '0');
+      const time = `${hour}:${minute}`;
+      const label = `${h > 12 ? h - 12 : h}:${minute} ${h >= 12 ? 'PM' : 'AM'}`;
+      options.push({ value: time, label });
+    }
+  }
+  return options;
+};
+
+const TIME_OPTIONS = generateTimeOptions();
+
+// Generate day options for picker
+const DAY_OPTIONS = Array.from({ length: 7 }, (_, i) => ({
+  value: (i + 1).toString(),
+  label: `Day ${i + 1}`,
+}));
+
 export default function ScheduleScreen() {
+  const { theme } = useThemeStore();
   const { userId } = useUserStore();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState(today);
@@ -48,6 +72,12 @@ export default function ScheduleScreen() {
   const [reminderMinutes, setReminderMinutes] = useState(30);
   const [workoutToReschedule, setWorkoutToReschedule] = useState<any>(null);
   const [newScheduleDate, setNewScheduleDate] = useState('');
+  
+  // Picker modal states
+  const [dayPickerVisible, setDayPickerVisible] = useState(false);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [tempDay, setTempDay] = useState('1');
+  const [tempTime, setTempTime] = useState('08:00');
 
   useEffect(() => {
     if (userId) {
@@ -57,8 +87,15 @@ export default function ScheduleScreen() {
   }, [userId]);
 
   const requestNotificationPermissions = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    
+    if (finalStatus !== 'granted') {
       console.log('Notification permissions not granted');
     }
   };
@@ -78,31 +115,40 @@ export default function ScheduleScreen() {
     }
   };
 
-  const scheduleNotification = async (date: string, time: string, minutesBefore: number, workoutName: string) => {
+  const scheduleNotification = async (date: string, timeStr: string, minutesBefore: number, workoutName: string) => {
     try {
-      const [hours, minutes] = time.split(':').map(Number);
-      const scheduledTime = new Date(date);
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const scheduledTime = new Date(date + 'T00:00:00');
       scheduledTime.setHours(hours, minutes, 0, 0);
       
       const notificationTime = new Date(scheduledTime.getTime() - minutesBefore * 60000);
+      const now = new Date();
 
-      if (notificationTime > new Date()) {
-        await Notifications.scheduleNotificationAsync({
+      if (notificationTime > now) {
+        const secondsFromNow = Math.floor((notificationTime.getTime() - now.getTime()) / 1000);
+        
+        const identifier = await Notifications.scheduleNotificationAsync({
           content: {
             title: 'Workout Reminder! 💪',
             body: `${workoutName} starts in ${minutesBefore} minutes`,
-            data: { date, time },
+            sound: true,
+            data: { date, time: timeStr },
           },
-          trigger: notificationTime,
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: secondsFromNow,
+          },
         });
+        console.log('Notification scheduled:', identifier, 'in', secondsFromNow, 'seconds');
+        return identifier;
       }
     } catch (error) {
       console.log('Could not schedule notification:', error);
     }
+    return null;
   };
 
   const openAddWorkoutModal = () => {
-    // Default to today's date
     setSelectedDate(today);
     setModalVisible(true);
   };
@@ -139,7 +185,7 @@ export default function ScheduleScreen() {
         if (reminderEnabled) {
           await scheduleNotification(selectedDate, time, reminderMinutes, planName);
         }
-        Alert.alert('Success', `Workout scheduled for ${formatDateLabel(selectedDate)}!`);
+        Alert.alert('Success', `Workout scheduled for ${formatDateLabel(selectedDate)} at ${formatTime(time)}!`);
         setModalVisible(false);
         loadData();
       }
@@ -228,6 +274,13 @@ export default function ScheduleScreen() {
     }
   };
 
+  const formatTime = (timeStr: string) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    const period = h >= 12 ? 'PM' : 'AM';
+    return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+  };
+
   const quickDateOptions = [
     { label: 'Today', date: format(new Date(), 'yyyy-MM-dd') },
     { label: 'Tomorrow', date: format(addDays(new Date(), 1), 'yyyy-MM-dd') },
@@ -242,16 +295,16 @@ export default function ScheduleScreen() {
       marked: true,
       dots: [
         ...(existingMark.dots || []),
-        { color: workout.completed ? Colors.status.success : Colors.brand.primary }
+        { color: workout.completed ? theme.colors.status.success : theme.accentColors.primary }
       ],
       selected: workout.scheduled_date === selectedDate,
-      selectedColor: Colors.brand.primary,
+      selectedColor: theme.accentColors.primary,
     };
     return acc;
   }, {
     [selectedDate]: {
       selected: true,
-      selectedColor: Colors.brand.primary,
+      selectedColor: theme.accentColors.primary,
     }
   });
 
@@ -264,17 +317,19 @@ export default function ScheduleScreen() {
     .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
     .slice(0, 5);
 
+  const styles = createStyles(theme);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Workout Schedule</Text>
           <TouchableOpacity onPress={openAddWorkoutModal} style={styles.addBtn}>
-            <Ionicons name="add" size={28} color={Colors.brand.primary} />
+            <Ionicons name="add" size={28} color={theme.accentColors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -295,7 +350,7 @@ export default function ScheduleScreen() {
                   <View style={styles.upcomingLeft}>
                     <View style={styles.upcomingDate}>
                       <Text style={styles.upcomingDateText}>{formatDateLabel(workout.scheduled_date)}</Text>
-                      <Text style={styles.upcomingTime}>{workout.scheduled_time}</Text>
+                      <Text style={styles.upcomingTime}>{formatTime(workout.scheduled_time)}</Text>
                     </View>
                     <View style={styles.upcomingInfo}>
                       <Text style={styles.upcomingPlan}>
@@ -309,7 +364,7 @@ export default function ScheduleScreen() {
                       style={styles.rescheduleBtn}
                       onPress={() => openRescheduleModal(workout)}
                     >
-                      <Ionicons name="calendar-outline" size={20} color={Colors.brand.primary} />
+                      <Ionicons name="calendar-outline" size={20} color={theme.accentColors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.completeBtn}
@@ -331,13 +386,17 @@ export default function ScheduleScreen() {
             markedDates={markedDates}
             markingType="multi-dot"
             theme={{
-              todayTextColor: Colors.brand.primary,
-              selectedDayBackgroundColor: Colors.brand.primary,
+              calendarBackground: theme.colors.background.card,
+              textSectionTitleColor: theme.colors.text.secondary,
+              dayTextColor: theme.colors.text.primary,
+              todayTextColor: theme.accentColors.primary,
+              selectedDayBackgroundColor: theme.accentColors.primary,
               selectedDayTextColor: '#ffffff',
-              arrowColor: Colors.brand.primary,
-              dotColor: Colors.brand.primary,
+              arrowColor: theme.accentColors.primary,
+              monthTextColor: theme.colors.text.primary,
               textDayFontWeight: '500',
               textMonthFontWeight: '700',
+              textDisabledColor: theme.colors.text.muted,
             }}
           />
         </View>
@@ -350,14 +409,14 @@ export default function ScheduleScreen() {
               style={styles.addForDateBtn}
               onPress={() => setModalVisible(true)}
             >
-              <Ionicons name="add" size={20} color={Colors.brand.primary} />
+              <Ionicons name="add" size={20} color={theme.accentColors.primary} />
               <Text style={styles.addForDateText}>Add</Text>
             </TouchableOpacity>
           </View>
           
           {workoutsForSelectedDate.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color={Colors.text.muted} />
+              <Ionicons name="calendar-outline" size={48} color={theme.colors.text.muted} />
               <Text style={styles.emptyText}>No workouts scheduled</Text>
               <TouchableOpacity 
                 style={styles.emptyButton}
@@ -379,9 +438,9 @@ export default function ScheduleScreen() {
                       <Ionicons 
                         name={workout.completed ? "checkmark-circle" : "time-outline"} 
                         size={20} 
-                        color={workout.completed ? Colors.status.success : Colors.brand.primary} 
+                        color={workout.completed ? theme.colors.status.success : theme.accentColors.primary} 
                       />
-                      <Text style={styles.workoutTime}>{workout.scheduled_time}</Text>
+                      <Text style={styles.workoutTime}>{formatTime(workout.scheduled_time)}</Text>
                     </View>
                     {!workout.completed && (
                       <View style={styles.workoutActions}>
@@ -389,13 +448,13 @@ export default function ScheduleScreen() {
                           onPress={() => openRescheduleModal(workout)}
                           style={styles.workoutActionBtn}
                         >
-                          <Ionicons name="swap-horizontal" size={18} color={Colors.text.secondary} />
+                          <Ionicons name="swap-horizontal" size={18} color={theme.colors.text.secondary} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => handleDeleteWorkout(workout.scheduled_id)}
                           style={styles.workoutActionBtn}
                         >
-                          <Ionicons name="trash-outline" size={18} color={Colors.status.error} />
+                          <Ionicons name="trash-outline" size={18} color={theme.colors.status.error} />
                         </TouchableOpacity>
                       </View>
                     )}
@@ -414,7 +473,7 @@ export default function ScheduleScreen() {
                   )}
                   {workout.completed && (
                     <View style={styles.completedBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.status.success} />
+                      <Ionicons name="checkmark-circle" size={16} color={theme.colors.status.success} />
                       <Text style={styles.completedText}>Completed</Text>
                     </View>
                   )}
@@ -432,12 +491,20 @@ export default function ScheduleScreen() {
         transparent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setModalVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={styles.modalContent}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Schedule Workout</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={Colors.text.primary} />
+                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -482,13 +549,15 @@ export default function ScheduleScreen() {
                     selectedValue={selectedPlan}
                     onValueChange={(value) => setSelectedPlan(value)}
                     style={styles.picker}
+                    itemStyle={{ color: theme.colors.text.primary }}
                   >
-                    <Picker.Item label="Choose a plan..." value="" />
+                    <Picker.Item label="Choose a plan..." value="" color={theme.colors.text.muted} />
                     {userPlans.map((plan) => (
                       <Picker.Item
                         key={plan.user_plan_id}
                         label={plan.plan_details?.name || 'Workout Plan'}
                         value={plan.plan_id}
+                        color={theme.colors.text.primary}
                       />
                     ))}
                   </Picker>
@@ -496,23 +565,28 @@ export default function ScheduleScreen() {
               )}
 
               <Text style={styles.label}>Workout Day</Text>
-              <TextInput
-                style={styles.input}
-                value={selectedDay}
-                onChangeText={setSelectedDay}
-                placeholder="Enter day number (1, 2, 3...)"
-                keyboardType="numeric"
-                placeholderTextColor={Colors.text.muted}
-              />
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => {
+                  setTempDay(selectedDay);
+                  setDayPickerVisible(true);
+                }}
+              >
+                <Text style={styles.pickerButtonText}>Day {selectedDay}</Text>
+                <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
+              </TouchableOpacity>
 
               <Text style={styles.label}>Time</Text>
-              <TextInput
-                style={styles.input}
-                value={time}
-                onChangeText={setTime}
-                placeholder="HH:MM (e.g., 08:00)"
-                placeholderTextColor={Colors.text.muted}
-              />
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => {
+                  setTempTime(time);
+                  setTimePickerVisible(true);
+                }}
+              >
+                <Text style={styles.pickerButtonText}>{formatTime(time)}</Text>
+                <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
+              </TouchableOpacity>
 
               <View style={styles.switchRow}>
                 <View>
@@ -559,8 +633,94 @@ export default function ScheduleScreen() {
             >
               <Text style={styles.scheduleButtonText}>Schedule for {formatDateLabel(selectedDate)}</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Day Picker Modal */}
+      <Modal
+        visible={dayPickerVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setDayPickerVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setDayPickerVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={styles.pickerModalContent}
+          >
+            <View style={styles.pickerModalHeader}>
+              <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
+                <Text style={styles.pickerCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.pickerModalTitle}>Workout Day</Text>
+              <TouchableOpacity onPress={() => {
+                setSelectedDay(tempDay);
+                setDayPickerVisible(false);
+              }}>
+                <Text style={styles.pickerDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <Picker
+              selectedValue={tempDay}
+              onValueChange={(value) => setTempDay(value)}
+              style={styles.wheelPicker}
+              itemStyle={{ color: theme.colors.text.primary, fontSize: 20 }}
+            >
+              {DAY_OPTIONS.map((option) => (
+                <Picker.Item key={option.value} label={option.label} value={option.value} />
+              ))}
+            </Picker>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Time Picker Modal */}
+      <Modal
+        visible={timePickerVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setTimePickerVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setTimePickerVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={styles.pickerModalContent}
+          >
+            <View style={styles.pickerModalHeader}>
+              <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
+                <Text style={styles.pickerCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.pickerModalTitle}>Workout Time</Text>
+              <TouchableOpacity onPress={() => {
+                setTime(tempTime);
+                setTimePickerVisible(false);
+              }}>
+                <Text style={styles.pickerDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <Picker
+              selectedValue={tempTime}
+              onValueChange={(value) => setTempTime(value)}
+              style={styles.wheelPicker}
+              itemStyle={{ color: theme.colors.text.primary, fontSize: 20 }}
+            >
+              {TIME_OPTIONS.map((option) => (
+                <Picker.Item key={option.value} label={option.label} value={option.value} />
+              ))}
+            </Picker>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Reschedule Modal */}
@@ -570,12 +730,20 @@ export default function ScheduleScreen() {
         transparent
         onRequestClose={() => setRescheduleModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setRescheduleModalVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={styles.modalContent}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Move Workout</Text>
               <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
-                <Ionicons name="close" size={24} color={Colors.text.primary} />
+                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -611,14 +779,19 @@ export default function ScheduleScreen() {
                   markedDates={{
                     [newScheduleDate]: {
                       selected: true,
-                      selectedColor: Colors.brand.primary,
+                      selectedColor: theme.accentColors.primary,
                     }
                   }}
                   theme={{
-                    todayTextColor: Colors.brand.primary,
-                    selectedDayBackgroundColor: Colors.brand.primary,
+                    calendarBackground: theme.colors.background.secondary,
+                    textSectionTitleColor: theme.colors.text.secondary,
+                    dayTextColor: theme.colors.text.primary,
+                    todayTextColor: theme.accentColors.primary,
+                    selectedDayBackgroundColor: theme.accentColors.primary,
                     selectedDayTextColor: '#ffffff',
-                    arrowColor: Colors.brand.primary,
+                    arrowColor: theme.accentColors.primary,
+                    monthTextColor: theme.colors.text.primary,
+                    textDisabledColor: theme.colors.text.muted,
                   }}
                   style={styles.miniCalendar}
                 />
@@ -631,17 +804,17 @@ export default function ScheduleScreen() {
             >
               <Text style={styles.scheduleButtonText}>Move to {formatDateLabel(newScheduleDate)}</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.light,
+    backgroundColor: theme.colors.background.primary,
   },
   scrollContent: {
     padding: 16,
@@ -660,7 +833,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.text.primary,
+    color: theme.colors.text.primary,
   },
   addBtn: {
     width: 40,
@@ -672,7 +845,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.brand.primary,
+    backgroundColor: theme.accentColors.primary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
@@ -695,7 +868,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text.primary,
+    color: theme.colors.text.primary,
   },
   addForDateBtn: {
     flexDirection: 'row',
@@ -705,13 +878,13 @@ const styles = StyleSheet.create({
   addForDateText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.brand.primary,
+    color: theme.accentColors.primary,
   },
   upcomingCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.background.card,
+    backgroundColor: theme.colors.background.card,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -722,7 +895,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   upcomingDate: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: theme.accentColors.primary + '20',
     borderRadius: 10,
     padding: 10,
     alignItems: 'center',
@@ -732,11 +905,11 @@ const styles = StyleSheet.create({
   upcomingDateText: {
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.brand.primary,
+    color: theme.accentColors.primary,
   },
   upcomingTime: {
     fontSize: 11,
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
     marginTop: 2,
   },
   upcomingInfo: {
@@ -745,11 +918,11 @@ const styles = StyleSheet.create({
   upcomingPlan: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: theme.colors.text.primary,
   },
   upcomingDay: {
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
     marginTop: 2,
   },
   upcomingActions: {
@@ -760,7 +933,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: theme.accentColors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -768,12 +941,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.status.success,
+    backgroundColor: theme.colors.status.success,
     justifyContent: 'center',
     alignItems: 'center',
   },
   card: {
-    backgroundColor: Colors.background.card,
+    backgroundColor: theme.colors.background.card,
     borderRadius: 16,
     padding: 12,
     marginBottom: 20,
@@ -786,16 +959,16 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     padding: 32,
-    backgroundColor: Colors.background.card,
+    backgroundColor: theme.colors.background.card,
     borderRadius: 16,
   },
   emptyText: {
     fontSize: 16,
-    color: Colors.text.muted,
+    color: theme.colors.text.muted,
     marginTop: 12,
   },
   emptyButton: {
-    backgroundColor: Colors.brand.primary,
+    backgroundColor: theme.accentColors.primary,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -807,7 +980,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   workoutCard: {
-    backgroundColor: Colors.background.card,
+    backgroundColor: theme.colors.background.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -829,7 +1002,7 @@ const styles = StyleSheet.create({
   workoutTime: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.text.primary,
+    color: theme.colors.text.primary,
   },
   workoutActions: {
     flexDirection: 'row',
@@ -841,15 +1014,15 @@ const styles = StyleSheet.create({
   workoutPlan: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: theme.colors.text.primary,
     marginBottom: 4,
   },
   workoutDay: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
   },
   markCompleteBtn: {
-    backgroundColor: Colors.status.success,
+    backgroundColor: theme.colors.status.success,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
@@ -868,16 +1041,16 @@ const styles = StyleSheet.create({
   },
   completedText: {
     fontSize: 14,
-    color: Colors.status.success,
+    color: theme.colors.status.success,
     fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -892,7 +1065,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.text.primary,
+    color: theme.colors.text.primary,
   },
   modalScroll: {
     maxHeight: 450,
@@ -900,7 +1073,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
     marginBottom: 8,
     marginTop: 16,
   },
@@ -911,25 +1084,25 @@ const styles = StyleSheet.create({
   },
   quickDateBtn: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: theme.colors.background.secondary,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
   },
   quickDateBtnActive: {
-    backgroundColor: Colors.brand.primary,
+    backgroundColor: theme.accentColors.primary,
   },
   quickDateText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
   },
   quickDateTextActive: {
     color: '#fff',
   },
   selectedDateLabel: {
     fontSize: 14,
-    color: Colors.brand.primary,
+    color: theme.accentColors.primary,
     fontWeight: '500',
     textAlign: 'center',
     marginBottom: 8,
@@ -948,19 +1121,57 @@ const styles = StyleSheet.create({
     color: '#92400E',
   },
   pickerContainer: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: theme.colors.background.secondary,
     borderRadius: 12,
     overflow: 'hidden',
   },
   picker: {
     height: 50,
+    color: theme.colors.text.primary,
   },
-  input: {
-    backgroundColor: '#F3F4F6',
+  pickerButton: {
+    backgroundColor: theme.colors.background.secondary,
     borderRadius: 12,
     padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pickerButtonText: {
     fontSize: 16,
-    color: Colors.text.primary,
+    color: theme.colors.text.primary,
+    fontWeight: '500',
+  },
+  pickerModalContent: {
+    backgroundColor: theme.colors.background.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
+  },
+  pickerModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
+  },
+  pickerModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+  },
+  pickerCancelText: {
+    fontSize: 16,
+    color: theme.colors.text.secondary,
+  },
+  pickerDoneText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.accentColors.primary,
+  },
+  wheelPicker: {
+    height: 200,
   },
   switchRow: {
     flexDirection: 'row',
@@ -970,22 +1181,22 @@ const styles = StyleSheet.create({
   },
   switchSubtext: {
     fontSize: 12,
-    color: Colors.text.muted,
+    color: theme.colors.text.muted,
     marginTop: 2,
   },
   switch: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: theme.colors.background.secondary,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   switchActive: {
-    backgroundColor: Colors.status.success,
+    backgroundColor: theme.colors.status.success,
   },
   switchText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
   },
   switchTextActive: {
     color: '#fff',
@@ -997,24 +1208,24 @@ const styles = StyleSheet.create({
   },
   reminderOption: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: theme.colors.background.secondary,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
   },
   reminderOptionActive: {
-    backgroundColor: Colors.brand.primary,
+    backgroundColor: theme.accentColors.primary,
   },
   reminderOptionText: {
     fontSize: 13,
     fontWeight: '500',
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
   },
   reminderOptionTextActive: {
     color: '#fff',
   },
   scheduleButton: {
-    backgroundColor: Colors.brand.primary,
+    backgroundColor: theme.accentColors.primary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -1030,7 +1241,7 @@ const styles = StyleSheet.create({
   },
   rescheduleInfo: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -1038,7 +1249,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: theme.colors.background.secondary,
   },
   miniCalendar: {
     borderRadius: 12,
