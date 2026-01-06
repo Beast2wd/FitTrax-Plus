@@ -948,7 +948,7 @@ export default function PeptideCalculatorScreen() {
                   </View>
                 </>
               )}
-            </View>
+            </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
       </KeyboardAvoidingView>
