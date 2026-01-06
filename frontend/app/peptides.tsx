@@ -200,6 +200,40 @@ export default function PeptideCalculatorScreen() {
     }
   };
 
+  const deleteInjection = async (injectionId: string) => {
+    Alert.alert(
+      'Delete Injection',
+      'Are you sure you want to delete this injection log?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/peptides/injection/${injectionId}`);
+              setInjectionHistory(prev => prev.filter(inj => inj.injection_id !== injectionId));
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete injection');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderRightActions = (injectionId: string) => {
+    return (
+      <TouchableOpacity
+        style={styles.deleteAction}
+        onPress={() => deleteInjection(injectionId)}
+      >
+        <Ionicons name="trash" size={24} color="#fff" />
+        <Text style={styles.deleteActionText}>Delete</Text>
+      </TouchableOpacity>
+    );
+  };
+
   const openPeptideSelector = (callback: (id: string) => void) => {
     setSelectorCallback(() => callback);
     setSelectorVisible(true);
