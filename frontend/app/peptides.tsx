@@ -829,8 +829,8 @@ export default function PeptideCalculatorScreen() {
               <TouchableOpacity style={styles.modalButton} onPress={logInjection}>
                 <Text style={styles.modalButtonText}>Log Injection</Text>
               </TouchableOpacity>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
         {/* Peptide Selector Modal */}
