@@ -10,33 +10,151 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { useUserStore } from '../../stores/userStore';
 import { userAPI } from '../../services/api';
 import { storage } from '../../services/storage';
+
+// Generate arrays for picker options
+const AGE_OPTIONS = Array.from({ length: 83 }, (_, i) => i + 18); // 18-100
+const HEIGHT_FEET_OPTIONS = Array.from({ length: 5 }, (_, i) => i + 4); // 4-8 feet
+const HEIGHT_INCHES_OPTIONS = Array.from({ length: 12 }, (_, i) => i); // 0-11 inches
+const WEIGHT_OPTIONS = Array.from({ length: 351 }, (_, i) => i + 80); // 80-430 lbs
+
+const GENDER_OPTIONS = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+];
+
+const ACTIVITY_OPTIONS = [
+  { label: 'Sedentary (little or no exercise)', value: 'sedentary' },
+  { label: 'Light (exercise 1-3 days/week)', value: 'light' },
+  { label: 'Moderate (exercise 3-5 days/week)', value: 'moderate' },
+  { label: 'Active (exercise 6-7 days/week)', value: 'active' },
+  { label: 'Very Active (intense daily exercise)', value: 'very_active' },
+];
+
+// Custom Picker Modal Component
+interface PickerModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (value: string | number) => void;
+  title: string;
+  options: { label: string; value: string | number }[];
+  selectedValue: string | number;
+}
+
+const PickerModal: React.FC<PickerModalProps> = ({
+  visible,
+  onClose,
+  onSelect,
+  title,
+  options,
+  selectedValue,
+}) => {
+  const [tempValue, setTempValue] = useState(selectedValue);
+
+  useEffect(() => {
+    if (visible) {
+      setTempValue(selectedValue);
+    }
+  }, [visible, selectedValue]);
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={modalStyles.overlay}>
+        <View style={modalStyles.container}>
+          <View style={modalStyles.header}>
+            <TouchableOpacity onPress={onClose}>
+              <Text style={modalStyles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={modalStyles.title}>{title}</Text>
+            <TouchableOpacity onPress={() => {
+              onSelect(tempValue);
+              onClose();
+            }}>
+              <Text style={modalStyles.doneText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+          <Picker
+            selectedValue={tempValue}
+            onValueChange={(value) => setTempValue(value)}
+            style={modalStyles.picker}
+            itemStyle={modalStyles.pickerItem}
+          >
+            {options.map((option) => (
+              <Picker.Item
+                key={option.value.toString()}
+                label={option.label}
+                value={option.value}
+              />
+            ))}
+          </Picker>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// Selector Button Component
+interface SelectorButtonProps {
+  label: string;
+  value: string;
+  onPress: () => void;
+  placeholder?: string;
+}
+
+const SelectorButton: React.FC<SelectorButtonProps> = ({
+  label,
+  value,
+  onPress,
+  placeholder = 'Select',
+}) => (
+  <TouchableOpacity style={styles.selectorButton} onPress={onPress}>
+    <Text style={value ? styles.selectorValue : styles.selectorPlaceholder}>
+      {value || placeholder}
+    </Text>
+    <Ionicons name="chevron-down" size={20} color={Colors.text.secondary} />
+  </TouchableOpacity>
+);
 
 export default function ProfileScreen() {
   const { userId, profile, setUserId, setProfile } = useUserStore();
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(!profile);
 
+  // Modal visibility states
+  const [ageModalVisible, setAgeModalVisible] = useState(false);
+  const [genderModalVisible, setGenderModalVisible] = useState(false);
+  const [heightFeetModalVisible, setHeightFeetModalVisible] = useState(false);
+  const [heightInchesModalVisible, setHeightInchesModalVisible] = useState(false);
+  const [weightModalVisible, setWeightModalVisible] = useState(false);
+  const [goalWeightModalVisible, setGoalWeightModalVisible] = useState(false);
+  const [activityModalVisible, setActivityModalVisible] = useState(false);
+
   const [formData, setFormData] = useState({
     name: profile?.name || '',
-    age: profile?.age?.toString() || '',
+    age: profile?.age || 30,
     gender: profile?.gender || 'male',
-    height_feet: profile?.height_feet?.toString() || '',
-    height_inches: profile?.height_inches?.toString() || '',
-    weight: profile?.weight?.toString() || '',
-    goal_weight: profile?.goal_weight?.toString() || '',
+    height_feet: profile?.height_feet || 5,
+    height_inches: profile?.height_inches || 8,
+    weight: profile?.weight || 160,
+    goal_weight: profile?.goal_weight || 155,
     activity_level: profile?.activity_level || 'moderate',
   });
 
   useEffect(() => {
     if (!userId) {
-      // Generate a new user ID
       const newUserId = `user_${Date.now()}`;
       setUserId(newUserId);
       storage.saveUserId(newUserId);
@@ -44,10 +162,8 @@ export default function ProfileScreen() {
   }, [userId]);
 
   const handleSave = async () => {
-    // Validation
-    if (!formData.name || !formData.age || !formData.height_feet || 
-        !formData.height_inches || !formData.weight || !formData.goal_weight) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!formData.name) {
+      Alert.alert('Error', 'Please enter your name');
       return;
     }
 
@@ -56,12 +172,12 @@ export default function ProfileScreen() {
       const profileData = {
         user_id: userId!,
         name: formData.name,
-        age: parseInt(formData.age),
+        age: formData.age,
         gender: formData.gender,
-        height_feet: parseInt(formData.height_feet),
-        height_inches: parseInt(formData.height_inches),
-        weight: parseFloat(formData.weight),
-        goal_weight: parseFloat(formData.goal_weight),
+        height_feet: formData.height_feet,
+        height_inches: formData.height_inches,
+        weight: formData.weight,
+        goal_weight: formData.goal_weight,
         activity_level: formData.activity_level,
       };
 
@@ -79,8 +195,17 @@ export default function ProfileScreen() {
     }
   };
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
+  };
+
+  const getGenderLabel = (value: string) => {
+    return GENDER_OPTIONS.find(g => g.value === value)?.label || value;
+  };
+
+  const getActivityLabel = (value: string) => {
+    const option = ACTIVITY_OPTIONS.find(a => a.value === value);
+    return option ? option.label.split(' (')[0] : value;
   };
 
   if (!isEditing && profile) {
@@ -102,7 +227,7 @@ export default function ProfileScreen() {
             
             <View style={styles.infoRow}>
               <Text style={styles.label}>Gender:</Text>
-              <Text style={styles.value}>{profile.gender}</Text>
+              <Text style={styles.value}>{getGenderLabel(profile.gender)}</Text>
             </View>
             
             <View style={styles.infoRow}>
@@ -122,7 +247,7 @@ export default function ProfileScreen() {
             
             <View style={styles.infoRow}>
               <Text style={styles.label}>Activity Level:</Text>
-              <Text style={styles.value}>{profile.activity_level.replace('_', ' ')}</Text>
+              <Text style={styles.value}>{getActivityLabel(profile.activity_level)}</Text>
             </View>
             
             <View style={styles.goalCard}>
@@ -157,7 +282,8 @@ export default function ProfileScreen() {
               Help us personalize your fitness journey
             </Text>
 
-            <Text style={styles.label}>Name</Text>
+            {/* Name - Text Input */}
+            <Text style={styles.fieldLabel}>Name</Text>
             <TextInput
               style={styles.input}
               value={formData.name}
@@ -166,82 +292,64 @@ export default function ProfileScreen() {
               placeholderTextColor={Colors.text.muted}
             />
 
-            <Text style={styles.label}>Age</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.age}
-              onChangeText={(value) => updateField('age', value)}
-              placeholder="Enter your age"
-              keyboardType="numeric"
-              placeholderTextColor={Colors.text.muted}
+            {/* Age - Picker */}
+            <Text style={styles.fieldLabel}>Age</Text>
+            <SelectorButton
+              label="Age"
+              value={`${formData.age} years`}
+              onPress={() => setAgeModalVisible(true)}
             />
 
-            <Text style={styles.label}>Gender</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={formData.gender}
-                onValueChange={(value) => updateField('gender', value)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Male" value="male" />
-                <Picker.Item label="Female" value="female" />
-              </Picker>
-            </View>
+            {/* Gender - Picker */}
+            <Text style={styles.fieldLabel}>Gender</Text>
+            <SelectorButton
+              label="Gender"
+              value={getGenderLabel(formData.gender)}
+              onPress={() => setGenderModalVisible(true)}
+            />
 
-            <Text style={styles.label}>Height</Text>
+            {/* Height - Dual Picker */}
+            <Text style={styles.fieldLabel}>Height</Text>
             <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.halfInput]}
-                value={formData.height_feet}
-                onChangeText={(value) => updateField('height_feet', value)}
-                placeholder="Feet"
-                keyboardType="numeric"
-                placeholderTextColor={Colors.text.muted}
-              />
-              <TextInput
-                style={[styles.input, styles.halfInput]}
-                value={formData.height_inches}
-                onChangeText={(value) => updateField('height_inches', value)}
-                placeholder="Inches"
-                keyboardType="numeric"
-                placeholderTextColor={Colors.text.muted}
-              />
+              <View style={styles.halfInput}>
+                <SelectorButton
+                  label="Feet"
+                  value={`${formData.height_feet} ft`}
+                  onPress={() => setHeightFeetModalVisible(true)}
+                />
+              </View>
+              <View style={styles.halfInput}>
+                <SelectorButton
+                  label="Inches"
+                  value={`${formData.height_inches} in`}
+                  onPress={() => setHeightInchesModalVisible(true)}
+                />
+              </View>
             </View>
 
-            <Text style={styles.label}>Current Weight (lbs)</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.weight}
-              onChangeText={(value) => updateField('weight', value)}
-              placeholder="Enter weight"
-              keyboardType="numeric"
-              placeholderTextColor={Colors.text.muted}
+            {/* Current Weight - Picker */}
+            <Text style={styles.fieldLabel}>Current Weight</Text>
+            <SelectorButton
+              label="Weight"
+              value={`${formData.weight} lbs`}
+              onPress={() => setWeightModalVisible(true)}
             />
 
-            <Text style={styles.label}>Goal Weight (lbs)</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.goal_weight}
-              onChangeText={(value) => updateField('goal_weight', value)}
-              placeholder="Enter goal weight"
-              keyboardType="numeric"
-              placeholderTextColor={Colors.text.muted}
+            {/* Goal Weight - Picker */}
+            <Text style={styles.fieldLabel}>Goal Weight</Text>
+            <SelectorButton
+              label="Goal Weight"
+              value={`${formData.goal_weight} lbs`}
+              onPress={() => setGoalWeightModalVisible(true)}
             />
 
-            <Text style={styles.label}>Activity Level</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={formData.activity_level}
-                onValueChange={(value) => updateField('activity_level', value)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Sedentary" value="sedentary" />
-                <Picker.Item label="Light" value="light" />
-                <Picker.Item label="Moderate" value="moderate" />
-                <Picker.Item label="Active" value="active" />
-                <Picker.Item label="Very Active" value="very_active" />
-              </Picker>
-            </View>
+            {/* Activity Level - Picker */}
+            <Text style={styles.fieldLabel}>Activity Level</Text>
+            <SelectorButton
+              label="Activity Level"
+              value={getActivityLabel(formData.activity_level)}
+              onPress={() => setActivityModalVisible(true)}
+            />
 
             <TouchableOpacity 
               style={[styles.button, loading && styles.buttonDisabled]} 
@@ -266,9 +374,122 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Age Picker Modal */}
+      <PickerModal
+        visible={ageModalVisible}
+        onClose={() => setAgeModalVisible(false)}
+        onSelect={(value) => updateField('age', value)}
+        title="Select Age"
+        options={AGE_OPTIONS.map(age => ({ label: `${age} years`, value: age }))}
+        selectedValue={formData.age}
+      />
+
+      {/* Gender Picker Modal */}
+      <PickerModal
+        visible={genderModalVisible}
+        onClose={() => setGenderModalVisible(false)}
+        onSelect={(value) => updateField('gender', value)}
+        title="Select Gender"
+        options={GENDER_OPTIONS}
+        selectedValue={formData.gender}
+      />
+
+      {/* Height Feet Picker Modal */}
+      <PickerModal
+        visible={heightFeetModalVisible}
+        onClose={() => setHeightFeetModalVisible(false)}
+        onSelect={(value) => updateField('height_feet', value)}
+        title="Select Height (Feet)"
+        options={HEIGHT_FEET_OPTIONS.map(ft => ({ label: `${ft} feet`, value: ft }))}
+        selectedValue={formData.height_feet}
+      />
+
+      {/* Height Inches Picker Modal */}
+      <PickerModal
+        visible={heightInchesModalVisible}
+        onClose={() => setHeightInchesModalVisible(false)}
+        onSelect={(value) => updateField('height_inches', value)}
+        title="Select Height (Inches)"
+        options={HEIGHT_INCHES_OPTIONS.map(inch => ({ label: `${inch} inches`, value: inch }))}
+        selectedValue={formData.height_inches}
+      />
+
+      {/* Weight Picker Modal */}
+      <PickerModal
+        visible={weightModalVisible}
+        onClose={() => setWeightModalVisible(false)}
+        onSelect={(value) => updateField('weight', value)}
+        title="Select Current Weight"
+        options={WEIGHT_OPTIONS.map(w => ({ label: `${w} lbs`, value: w }))}
+        selectedValue={formData.weight}
+      />
+
+      {/* Goal Weight Picker Modal */}
+      <PickerModal
+        visible={goalWeightModalVisible}
+        onClose={() => setGoalWeightModalVisible(false)}
+        onSelect={(value) => updateField('goal_weight', value)}
+        title="Select Goal Weight"
+        options={WEIGHT_OPTIONS.map(w => ({ label: `${w} lbs`, value: w }))}
+        selectedValue={formData.goal_weight}
+      />
+
+      {/* Activity Level Picker Modal */}
+      <PickerModal
+        visible={activityModalVisible}
+        onClose={() => setActivityModalVisible(false)}
+        onSelect={(value) => updateField('activity_level', value)}
+        title="Select Activity Level"
+        options={ACTIVITY_OPTIONS}
+        selectedValue={formData.activity_level}
+      />
     </SafeAreaView>
   );
 }
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  container: {
+    backgroundColor: Colors.background.card,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  cancelText: {
+    fontSize: 17,
+    color: Colors.text.secondary,
+  },
+  doneText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: Colors.brand.primary,
+  },
+  picker: {
+    height: 216,
+  },
+  pickerItem: {
+    fontSize: 20,
+    color: Colors.text.primary,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -299,31 +520,44 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginBottom: 24,
   },
-  label: {
+  fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: Colors.text.primary,
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.secondary,
   },
   input: {
     backgroundColor: Colors.background.light,
     borderWidth: 1,
     borderColor: Colors.border.light,
-    borderRadius: 8,
-    padding: 14,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
     color: Colors.text.primary,
   },
-  pickerContainer: {
+  selectorButton: {
     backgroundColor: Colors.background.light,
     borderWidth: 1,
     borderColor: Colors.border.light,
-    borderRadius: 8,
-    overflow: 'hidden',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  picker: {
-    height: 50,
+  selectorValue: {
+    fontSize: 16,
+    color: Colors.text.primary,
+  },
+  selectorPlaceholder: {
+    fontSize: 16,
+    color: Colors.text.muted,
   },
   row: {
     flexDirection: 'row',
@@ -334,10 +568,10 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: Colors.brand.primary,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 32,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -351,7 +585,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: Colors.border.medium,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     marginTop: 12,
