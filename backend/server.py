@@ -4776,8 +4776,9 @@ async def get_injection_history(user_id: str, limit: int = 50, peptide_id: Optio
             
         injections = await db.peptide_injections.find(query).sort("injection_time", -1).to_list(limit)
         
-        # Convert ObjectId to string
+        # Convert ObjectId to string and add injection_id
         for inj in injections:
+            inj["injection_id"] = str(inj["_id"])
             inj["_id"] = str(inj["_id"])
             
         return {"injections": injections, "count": len(injections)}
