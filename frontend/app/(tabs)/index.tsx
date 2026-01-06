@@ -582,7 +582,7 @@ export default function DashboardScreen() {
                 <View style={styles.premiumText}>
                   <Text style={styles.premiumTitle}>FitTrax Premium</Text>
                   <Text style={styles.premiumSubtitle}>
-                    AI Workouts • Badges • Meal Planning
+                    AI Workouts • Peptides • Body Scan
                   </Text>
                 </View>
               </View>
@@ -595,13 +595,24 @@ export default function DashboardScreen() {
           <View style={styles.premiumFeatures}>
             <TouchableOpacity 
               style={styles.premiumFeatureCard}
-              onPress={() => router.push('/badges')}
+              onPress={() => router.push('/peptides')}
             >
-              <View style={[styles.premiumFeatureIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="trophy" size={28} color="#F59E0B" />
+              <View style={[styles.premiumFeatureIcon, { backgroundColor: '#E0E7FF' }]}>
+                <Ionicons name="flask" size={28} color="#6366F1" />
               </View>
-              <Text style={styles.premiumFeatureTitle}>Badges</Text>
-              <Text style={styles.premiumFeatureSubtitle}>Earn rewards</Text>
+              <Text style={styles.premiumFeatureTitle}>Peptides</Text>
+              <Text style={styles.premiumFeatureSubtitle}>Calculator</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.premiumFeatureCard}
+              onPress={() => router.push('/body-scan')}
+            >
+              <View style={[styles.premiumFeatureIcon, { backgroundColor: '#F5F3FF' }]}>
+                <Ionicons name="body" size={28} color="#8B5CF6" />
+              </View>
+              <Text style={styles.premiumFeatureTitle}>Body Scan</Text>
+              <Text style={styles.premiumFeatureSubtitle}>AI Analysis</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -613,17 +624,6 @@ export default function DashboardScreen() {
               </View>
               <Text style={styles.premiumFeatureTitle}>AI Workouts</Text>
               <Text style={styles.premiumFeatureSubtitle}>Personalized</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.premiumFeatureCard}
-              onPress={() => router.push('/membership')}
-            >
-              <View style={[styles.premiumFeatureIcon, { backgroundColor: '#D1FAE5' }]}>
-                <Ionicons name="nutrition" size={28} color="#10B981" />
-              </View>
-              <Text style={styles.premiumFeatureTitle}>Meal Plans</Text>
-              <Text style={styles.premiumFeatureSubtitle}>Nutrition AI</Text>
             </TouchableOpacity>
           </View>
         </View>
