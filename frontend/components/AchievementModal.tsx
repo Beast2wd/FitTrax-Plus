@@ -118,7 +118,11 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <TouchableOpacity 
+        style={styles.overlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
         <Animated.View
           style={[
             styles.container,
@@ -126,6 +130,8 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
               transform: [{ scale: scaleAnim }],
             },
           ]}
+          // Prevent tap from propagating to overlay
+          onStartShouldSetResponder={() => true}
         >
           <LinearGradient
             colors={getGradientColors()}
@@ -214,7 +220,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
             </TouchableOpacity>
           </LinearGradient>
         </Animated.View>
-      </View>
+      </TouchableOpacity>
     </Modal>
   );
 };

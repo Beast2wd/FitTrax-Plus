@@ -80,8 +80,16 @@ const PickerModal: React.FC<PickerModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={modalStyles.overlay}>
-        <View style={[modalStyles.container, { backgroundColor: theme.colors.background.card }]}>
+      <TouchableOpacity 
+        style={modalStyles.overlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <TouchableOpacity 
+          activeOpacity={1} 
+          onPress={(e) => e.stopPropagation()}
+          style={[modalStyles.container, { backgroundColor: theme.colors.background.card }]}
+        >
           <View style={[modalStyles.header, { borderBottomColor: theme.colors.border.primary }]}>
             <TouchableOpacity onPress={onClose}>
               <Text style={[modalStyles.cancelText, { color: theme.colors.text.secondary }]}>Cancel</Text>
@@ -101,8 +109,8 @@ const PickerModal: React.FC<PickerModalProps> = ({
               <Picker.Item key={option.value.toString()} label={option.label} value={option.value} />
             ))}
           </Picker>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 };
