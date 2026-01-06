@@ -376,7 +376,39 @@ export default function ProfileScreen() {
               </LinearGradient>
 
               <View style={[styles.previewButton, { backgroundColor: accentColors.primary }]}>
-                <Text style={styles.previewButtonText}>Sample Button</Text>
+                <Text style={styles.previewButtonText}>{t('profile.sampleButton')}</Text>
+              </View>
+
+              {/* Language Selection */}
+              <Text style={[styles.fieldLabel, { color: colors.text.secondary, marginTop: 24 }]}>
+                {t('profile.language')}
+              </Text>
+              <View style={styles.languageGrid}>
+                {LANGUAGES.map((lang) => (
+                  <TouchableOpacity
+                    key={lang.code}
+                    style={[
+                      styles.languageOption,
+                      { 
+                        backgroundColor: language === lang.code 
+                          ? accentColors.primary 
+                          : colors.background.input,
+                        borderColor: language === lang.code 
+                          ? accentColors.primary 
+                          : colors.border.primary,
+                      }
+                    ]}
+                    onPress={() => setLanguage(lang.code as 'en' | 'es' | 'de')}
+                  >
+                    <Text style={styles.languageFlag}>{lang.flag}</Text>
+                    <Text style={[
+                      styles.languageName,
+                      { color: language === lang.code ? '#fff' : colors.text.primary }
+                    ]}>
+                      {lang.nativeName}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
           )}
