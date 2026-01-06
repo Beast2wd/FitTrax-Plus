@@ -561,25 +561,32 @@ export default function PeptideCalculatorScreen() {
                   </View>
                 ) : (
                   injectionHistory.map((inj, i) => (
-                    <View key={i} style={styles.injectionCard}>
-                      <View style={styles.injectionHeader}>
-                        <Text style={styles.injectionPeptide}>{inj.peptide_name}</Text>
-                        <Text style={styles.injectionDose}>{inj.dose_mcg} mcg</Text>
-                      </View>
-                      <View style={styles.injectionDetails}>
-                        <View style={styles.injectionDetail}>
-                          <Ionicons name="location" size={14} color={Colors.text.secondary} />
-                          <Text style={styles.injectionDetailText}>
-                            {siteRotation.find(s => s.id === inj.injection_site)?.name || inj.injection_site}
-                          </Text>
+                    <Swipeable
+                      key={inj.injection_id || i}
+                      renderRightActions={() => renderRightActions(inj.injection_id)}
+                      overshootRight={false}
+                    >
+                      <View style={styles.injectionCard}>
+                        <View style={styles.injectionHeader}>
+                          <Text style={styles.injectionPeptide}>{inj.peptide_name}</Text>
+                          <Text style={styles.injectionDose}>{inj.dose_mcg} mcg</Text>
                         </View>
-                        <View style={styles.injectionDetail}>
-                          <Ionicons name="time" size={14} color={Colors.text.secondary} />
-                          <Text style={styles.injectionDetailText}>{formatDate(inj.injection_time)}</Text>
+                        <View style={styles.injectionDetails}>
+                          <View style={styles.injectionDetail}>
+                            <Ionicons name="location" size={14} color={Colors.text.secondary} />
+                            <Text style={styles.injectionDetailText}>
+                              {siteRotation.find(s => s.id === inj.injection_site)?.name || inj.injection_site}
+                            </Text>
+                          </View>
+                          <View style={styles.injectionDetail}>
+                            <Ionicons name="time" size={14} color={Colors.text.secondary} />
+                            <Text style={styles.injectionDetailText}>{formatDate(inj.injection_time)}</Text>
+                          </View>
                         </View>
+                        {inj.notes && <Text style={styles.injectionNotes}>{inj.notes}</Text>}
+                        <Text style={styles.swipeHint}>← Swipe left to delete</Text>
                       </View>
-                      {inj.notes && <Text style={styles.injectionNotes}>{inj.notes}</Text>}
-                    </View>
+                    </Swipeable>
                   ))
                 )}
               </View>
