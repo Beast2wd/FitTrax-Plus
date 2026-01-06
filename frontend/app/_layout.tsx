@@ -5,6 +5,7 @@ import { useUserStore } from '../stores/userStore';
 import { useThemeStore } from '../stores/themeStore';
 import { storage } from '../services/storage';
 import { CustomSplashScreen } from '../components/CustomSplashScreen';
+import '../services/i18n'; // Initialize i18n
 
 export default function RootLayout() {
   const { setUserId, setProfile } = useUserStore();
