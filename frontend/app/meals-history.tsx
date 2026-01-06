@@ -281,7 +281,16 @@ export default function MealsHistoryScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={[styles.editModalContainer, { backgroundColor: colors.background.card }]}>
+          <TouchableOpacity 
+            style={{ flex: 1 }} 
+            activeOpacity={1} 
+            onPress={() => setEditModalVisible(false)}
+          />
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.editModalContainer, { backgroundColor: colors.background.card }]}
+          >
             <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
               <TouchableOpacity onPress={() => setEditModalVisible(false)}>
                 <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
@@ -347,7 +356,7 @@ export default function MealsHistoryScreen() {
                 />
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
