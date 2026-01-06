@@ -83,10 +83,10 @@ export default function MealsHistoryScreen() {
   const handleEdit = (meal: any) => {
     setSelectedMeal(meal);
     setEditedNutrition({
-      calories: Math.round(meal.calories).toString(),
-      protein: Math.round(meal.protein).toString(),
-      carbs: Math.round(meal.carbs).toString(),
-      fat: Math.round(meal.fat).toString(),
+      calories: Math.round(meal.calories || 0).toString(),
+      protein: Math.round(meal.protein || 0).toString(),
+      carbs: Math.round(meal.carbs || 0).toString(),
+      fat: Math.round(meal.fat || 0).toString(),
     });
     setEditModalVisible(true);
   };
@@ -94,30 +94,32 @@ export default function MealsHistoryScreen() {
   const handleSaveEdit = async () => {
     if (!selectedMeal) return;
 
+    const updatedValues = {
+      calories: parseFloat(editedNutrition.calories) || 0,
+      protein: parseFloat(editedNutrition.protein) || 0,
+      carbs: parseFloat(editedNutrition.carbs) || 0,
+      fat: parseFloat(editedNutrition.fat) || 0,
+    };
+
+    // Update local state immediately
+    setMeals(meals.map(m => 
+      m.meal_id === selectedMeal.meal_id
+        ? { ...m, ...updatedValues }
+        : m
+    ));
+
+    // Close modal immediately
+    setEditModalVisible(false);
+    setSelectedMeal(null);
+
+    // Then try to sync with server
     try {
-      await foodAPI.updateMeal(selectedMeal.meal_id, {
-        calories: parseFloat(editedNutrition.calories) || 0,
-        protein: parseFloat(editedNutrition.protein) || 0,
-        carbs: parseFloat(editedNutrition.carbs) || 0,
-        fat: parseFloat(editedNutrition.fat) || 0,
-      });
-
-      // Update local state
-      setMeals(meals.map(m => 
-        m.meal_id === selectedMeal.meal_id
-          ? {
-              ...m,
-              calories: parseFloat(editedNutrition.calories) || 0,
-              protein: parseFloat(editedNutrition.protein) || 0,
-              carbs: parseFloat(editedNutrition.carbs) || 0,
-              fat: parseFloat(editedNutrition.fat) || 0,
-            }
-          : m
-      ));
-
-      setEditModalVisible(false);
-      setSelectedMeal(null);
-    } catch (error) {
+      await foodAPI.updateMeal(selectedMeal.meal_id, updatedValues);
+    } catch (error: any) {
+      console.error('Update error:', error);
+      // Values already updated locally, just log the error
+    }
+  };
       Alert.alert('Error', 'Failed to update meal');
     }
   };
