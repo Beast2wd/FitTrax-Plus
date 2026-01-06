@@ -1230,7 +1230,9 @@ PREMIUM_FEATURES = [
     "wearable_integration",
     "diverse_workouts",
     "accessibility_features",
-    "multi_language"
+    "multi_language",
+    "peptide_calculator",
+    "ai_body_scan"
 ]
 
 FREE_FEATURES = [
