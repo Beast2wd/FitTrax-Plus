@@ -7,23 +7,29 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
+import { useThemeStore } from '../stores/themeStore';
 import axios from 'axios';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
 export default function MembershipScreen() {
   const { userId, profile } = useUserStore();
+  const { theme } = useThemeStore();
   const [loading, setLoading] = useState(true);
   const [membershipStatus, setMembershipStatus] = useState<any>(null);
   const [pricing, setPricing] = useState<any>(null);
-  const [startingTrial, setStartingTrial] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+
+  const colors = theme.colors;
+  const accent = theme.accentColors;
 
   useEffect(() => {
     loadMembershipData();
@@ -46,85 +52,73 @@ export default function MembershipScreen() {
     }
   };
 
-  const handleStartTrial = async () => {
+  const handleSubscribe = async () => {
     if (!userId || !profile) {
-      Alert.alert('Profile Required', 'Please create a profile first to start your free trial.');
+      Alert.alert('Profile Required', 'Please create a profile first to subscribe.');
       router.push('/profile');
       return;
     }
 
-    setStartingTrial(true);
+    setProcessingPayment(true);
     try {
-      // First create/get customer
-      await axios.post(`${API_URL}/api/membership/create-customer`, {
+      // Create Stripe checkout session
+      const response = await axios.post(`${API_URL}/api/membership/create-checkout-session`, {
         user_id: userId,
-        email: `${userId}@fittraxx.app`,
-        name: profile.name
+        email: profile.email || `${profile.name?.replace(/\s/g, '').toLowerCase()}@fittrax.app`,
       });
 
-      // Start trial
-      const response = await axios.post(`${API_URL}/api/membership/start-trial`, {
-        user_id: userId
-      });
+      const { checkout_url, session_id } = response.data;
 
-      Alert.alert(
-        '🎉 Welcome to Premium!',
-        'Your 3-day free trial has started. Enjoy all premium features!',
-        [{ text: 'Explore Features', onPress: () => router.back() }]
-      );
-      
-      loadMembershipData();
-    } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.detail || 'Failed to start trial');
-    } finally {
-      setStartingTrial(false);
-    }
-  };
-
-  const handleSubscribe = async () => {
-    if (!userId) {
-      Alert.alert('Profile Required', 'Please create a profile first.');
-      return;
-    }
-
-    // In production, this would open Stripe payment sheet
-    Alert.alert(
-      'Subscribe to Premium',
-      'Annual subscription: $25/year\n\nStripe payment integration pending. In production, this would open the secure payment form.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Simulate Payment', 
-          onPress: async () => {
-            try {
-              await axios.post(`${API_URL}/api/membership/subscribe`, { user_id: userId });
-              Alert.alert('Success', 'Subscription activated!');
+      if (checkout_url) {
+        // Open Stripe checkout in browser
+        const result = await WebBrowser.openBrowserAsync(checkout_url);
+        
+        // After returning from browser, check payment status
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          // User closed browser - check if payment was completed
+          try {
+            const statusCheck = await axios.get(`${API_URL}/api/membership/checkout-status/${session_id}`);
+            if (statusCheck.data.payment_status === 'paid') {
+              Alert.alert(
+                '🎉 Welcome to Premium!',
+                'Your subscription is now active. Enjoy all premium features!',
+                [{ text: 'Explore Features', onPress: () => router.back() }]
+              );
               loadMembershipData();
-            } catch (error: any) {
-              Alert.alert('Error', error.response?.data?.detail || 'Failed to subscribe');
             }
+          } catch (e) {
+            // Status check failed, reload membership data anyway
+            loadMembershipData();
           }
         }
-      ]
-    );
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      Alert.alert(
+        'Payment Error', 
+        error.response?.data?.detail || 'Failed to start checkout. Please try again.'
+      );
+    } finally {
+      setProcessingPayment(false);
+    }
   };
 
   const handleCancelSubscription = async () => {
     Alert.alert(
       'Cancel Subscription',
-      'Are you sure you want to cancel your premium membership?',
+      'Are you sure you want to cancel your premium membership? You\'ll lose access to all premium features at the end of your billing period.',
       [
         { text: 'Keep Premium', style: 'cancel' },
         {
-          text: 'Cancel',
+          text: 'Cancel Subscription',
           style: 'destructive',
           onPress: async () => {
             try {
               await axios.post(`${API_URL}/api/membership/cancel/${userId}`);
-              Alert.alert('Canceled', 'Your subscription has been canceled.');
+              Alert.alert('Subscription Canceled', 'Your subscription has been canceled. You\'ll retain access until the end of your current billing period.');
               loadMembershipData();
             } catch (error: any) {
-              Alert.alert('Error', error.response?.data?.detail || 'Failed to cancel');
+              Alert.alert('Error', error.response?.data?.detail || 'Failed to cancel subscription');
             }
           }
         }
@@ -132,11 +126,20 @@ export default function MembershipScreen() {
     );
   };
 
+  const handleManageSubscription = () => {
+    // Open Stripe customer portal (would need to be implemented)
+    Alert.alert(
+      'Manage Subscription',
+      'Contact support to manage your subscription, update payment method, or view billing history.',
+      [{ text: 'OK' }]
+    );
+  };
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.brand.primary} />
+          <ActivityIndicator size="large" color={accent.primary} />
         </View>
       </SafeAreaView>
     );
@@ -144,133 +147,149 @@ export default function MembershipScreen() {
 
   const isPremium = membershipStatus?.is_premium;
   const isTrial = membershipStatus?.is_trial;
+  const trialDaysRemaining = membershipStatus?.trial_days_remaining || 0;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>FitTrax Premium</Text>
-          <Text style={styles.subtitle}>Unlock your full potential</Text>
+          <LinearGradient
+            colors={accent.gradient as [string, string]}
+            style={styles.headerGradient}
+          >
+            <Ionicons name="diamond" size={48} color="#fff" />
+            <Text style={styles.headerTitle}>FitTrax Premium</Text>
+            <Text style={styles.headerSubtitle}>Unlock your full potential</Text>
+          </LinearGradient>
         </View>
 
         {/* Current Status Card */}
         {isPremium && (
-          <LinearGradient
-            colors={isTrial ? ['#F59E0B', '#D97706'] : ['#10B981', '#059669']}
-            style={styles.statusCard}
-          >
-            <View style={styles.statusHeader}>
-              <Ionicons 
-                name={isTrial ? 'time' : 'checkmark-circle'} 
-                size={32} 
-                color="#fff" 
-              />
-              <Text style={styles.statusTitle}>
-                {isTrial ? 'Free Trial Active' : 'Premium Member'}
-              </Text>
-            </View>
-            {isTrial && (
-              <Text style={styles.trialDays}>
-                {membershipStatus.trial_days_remaining} days remaining
-              </Text>
-            )}
-            <Text style={styles.statusSubtext}>
-              {isTrial 
-                ? 'Subscribe now to keep your premium access!' 
-                : 'You have access to all premium features'}
-            </Text>
-          </LinearGradient>
-        )}
-
-        {/* Pricing Card */}
-        {!isPremium && pricing && (
-          <View style={styles.pricingCard}>
-            <View style={styles.priceHeader}>
-              <Text style={styles.priceName}>{pricing.name}</Text>
-              <View style={styles.priceTag}>
-                <Text style={styles.priceAmount}>${pricing.price}</Text>
-                <Text style={styles.priceInterval}>/{pricing.interval}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.trialBadge}>
-              <Ionicons name="gift" size={20} color="#F59E0B" />
-              <Text style={styles.trialBadgeText}>
-                {pricing.trial_days}-Day Free Trial
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.trialButton}
-              onPress={handleStartTrial}
-              disabled={startingTrial}
+          <View style={[styles.statusCard, { backgroundColor: colors.background.card }]}>
+            <LinearGradient
+              colors={isTrial ? ['#F59E0B', '#D97706'] : ['#10B981', '#059669']}
+              style={styles.statusBadge}
             >
-              {startingTrial ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="rocket" size={24} color="#fff" />
-                  <Text style={styles.trialButtonText}>Start Free Trial</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              <Ionicons name={isTrial ? 'time' : 'checkmark-circle'} size={20} color="#fff" />
+              <Text style={styles.statusBadgeText}>
+                {isTrial ? `Trial: ${trialDaysRemaining} days left` : 'Active Premium'}
+              </Text>
+            </LinearGradient>
+            
+            <Text style={[styles.statusTitle, { color: colors.text.primary }]}>
+              {isTrial ? 'Free Trial Active' : 'Premium Member'}
+            </Text>
+            <Text style={[styles.statusDescription, { color: colors.text.secondary }]}>
+              {isTrial 
+                ? `Your trial ends in ${trialDaysRemaining} days. Subscribe to keep premium access.`
+                : 'You have full access to all premium features.'
+              }
+            </Text>
+
+            {!isTrial && (
+              <TouchableOpacity 
+                style={[styles.manageButton, { borderColor: colors.border.secondary }]}
+                onPress={handleCancelSubscription}
+              >
+                <Text style={[styles.manageButtonText, { color: colors.text.secondary }]}>
+                  Cancel Subscription
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
-        {/* If on trial, show subscribe option */}
-        {isTrial && (
-          <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
+        {/* Pricing Card */}
+        {pricing && !isPremium && (
+          <View style={[styles.pricingCard, { backgroundColor: colors.background.card }]}>
+            <View style={styles.priceRow}>
+              <Text style={[styles.priceAmount, { color: colors.text.primary }]}>
+                ${pricing.price}
+              </Text>
+              <Text style={[styles.priceInterval, { color: colors.text.muted }]}>
+                /{pricing.interval}
+              </Text>
+            </View>
+            <View style={[styles.trialBadge, { backgroundColor: `${accent.primary}20` }]}>
+              <Text style={[styles.trialBadgeText, { color: accent.primary }]}>
+                {pricing.trial_days}-Day Free Trial
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Features List */}
+        <View style={[styles.featuresCard, { backgroundColor: colors.background.card }]}>
+          <Text style={[styles.featuresTitle, { color: colors.text.primary }]}>
+            Premium Features
+          </Text>
+          {pricing?.features?.map((feature: string, index: number) => (
+            <View key={index} style={styles.featureRow}>
+              <View style={[styles.featureIcon, { backgroundColor: `${getFeatureColor(index)}20` }]}>
+                <Ionicons name={getFeatureIcon(index) as any} size={20} color={getFeatureColor(index)} />
+              </View>
+              <Text style={[styles.featureText, { color: colors.text.primary }]}>
+                {feature}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Subscribe Button */}
+        {!isPremium && (
+          <TouchableOpacity 
+            style={styles.subscribeButton}
+            onPress={handleSubscribe}
+            disabled={processingPayment}
+          >
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
+              colors={accent.gradient as [string, string]}
               style={styles.subscribeGradient}
             >
-              <Text style={styles.subscribeButtonText}>
-                Subscribe Now - $25/year
-              </Text>
+              {processingPayment ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="card" size={24} color="#fff" />
+                  <Text style={styles.subscribeText}>
+                    Start {pricing?.trial_days}-Day Free Trial
+                  </Text>
+                </>
+              )}
             </LinearGradient>
           </TouchableOpacity>
         )}
 
-        {/* Premium Features */}
-        <View style={styles.featuresSection}>
-          <Text style={styles.sectionTitle}>Premium Features</Text>
-          
-          {pricing?.features.map((feature: string, index: number) => (
-            <View key={index} style={styles.featureItem}>
-              <View style={[styles.featureIcon, { backgroundColor: getFeatureColor(index) }]}>
-                <Ionicons name={getFeatureIcon(index)} size={20} color="#fff" />
-              </View>
-              <Text style={styles.featureText}>{feature}</Text>
-              {isPremium && (
-                <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-              )}
-            </View>
-          ))}
-        </View>
+        {!isPremium && (
+          <Text style={[styles.disclaimer, { color: colors.text.muted }]}>
+            Cancel anytime during your trial. After {pricing?.trial_days} days, you'll be charged ${pricing?.price}/year.
+            Secure payment powered by Stripe.
+          </Text>
+        )}
 
-        {/* Free Features */}
-        <View style={styles.featuresSection}>
-          <Text style={styles.sectionTitle}>Free Features</Text>
-          
-          {pricing?.free_features.map((feature: string, index: number) => (
-            <View key={index} style={styles.featureItem}>
-              <View style={[styles.featureIcon, { backgroundColor: '#9CA3AF' }]}>
-                <Ionicons name="checkmark" size={20} color="#fff" />
-              </View>
-              <Text style={styles.featureText}>{feature}</Text>
-              <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-            </View>
-          ))}
-        </View>
-
-        {/* Cancel option for premium users */}
-        {isPremium && !isTrial && (
+        {/* Upgrade prompt for trial users */}
+        {isTrial && (
           <TouchableOpacity 
-            style={styles.cancelButton}
-            onPress={handleCancelSubscription}
+            style={styles.subscribeButton}
+            onPress={handleSubscribe}
+            disabled={processingPayment}
           >
-            <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
+            <LinearGradient
+              colors={accent.gradient as [string, string]}
+              style={styles.subscribeGradient}
+            >
+              {processingPayment ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="card" size={24} color="#fff" />
+                  <Text style={styles.subscribeText}>
+                    Subscribe Now - ${pricing?.price}/year
+                  </Text>
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         )}
 
@@ -280,7 +299,7 @@ export default function MembershipScreen() {
   );
 }
 
-const getFeatureIcon = (index: number): any => {
+const getFeatureIcon = (index: number): string => {
   const icons = [
     'barbell', 'nutrition', 'trophy', 'analytics', 
     'watch', 'fitness', 'flask', 'body', 'globe', 'accessibility'
@@ -299,7 +318,6 @@ const getFeatureColor = (index: number): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.light,
   },
   centered: {
     flex: 1,
@@ -310,142 +328,107 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
+    marginBottom: 20,
+  },
+  headerGradient: {
+    borderRadius: 20,
+    padding: 32,
     alignItems: 'center',
-    marginBottom: 24,
   },
-  title: {
-    fontSize: 32,
+  headerTitle: {
+    fontSize: 28,
     fontWeight: '800',
-    color: Colors.text.primary,
-    marginBottom: 8,
+    color: '#fff',
+    marginTop: 16,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 4,
   },
   statusCard: {
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-    alignItems: 'center',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
   },
-  statusHeader: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+    marginBottom: 12,
+  },
+  statusBadgeText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
   },
   statusTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#fff',
+    marginBottom: 4,
   },
-  trialDays: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  statusSubtext: {
+  statusDescription: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-    textAlign: 'center',
+    lineHeight: 20,
+  },
+  manageButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  manageButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   pricingCard: {
-    backgroundColor: Colors.background.card,
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 24,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  priceHeader: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  priceName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  priceTag: {
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   priceAmount: {
     fontSize: 48,
     fontWeight: '800',
-    color: Colors.brand.primary,
   },
   priceInterval: {
     fontSize: 18,
-    color: Colors.text.secondary,
+    marginLeft: 4,
   },
   trialBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FEF3C7',
-    borderRadius: 20,
-    paddingVertical: 8,
+    marginTop: 12,
     paddingHorizontal: 16,
-    marginBottom: 20,
-    gap: 8,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   trialBadgeText: {
+    fontWeight: '700',
     fontSize: 14,
-    fontWeight: '600',
-    color: '#D97706',
   },
-  trialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.brand.primary,
+  featuresCard: {
     borderRadius: 16,
-    padding: 18,
-    gap: 12,
+    padding: 20,
+    marginBottom: 20,
   },
-  trialButtonText: {
+  featuresTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
-  },
-  subscribeButton: {
-    marginBottom: 24,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  subscribeGradient: {
-    padding: 18,
-    alignItems: 'center',
-  },
-  subscribeButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  featuresSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.text.primary,
     marginBottom: 16,
   },
-  featureItem: {
+  featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    gap: 16,
+    paddingVertical: 10,
+    gap: 12,
   },
   featureIcon: {
     width: 40,
@@ -456,16 +439,31 @@ const styles = StyleSheet.create({
   },
   featureText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
-    color: Colors.text.primary,
   },
-  cancelButton: {
+  subscribeButton: {
+    marginTop: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  subscribeGradient: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'center',
+    paddingVertical: 18,
+    gap: 10,
   },
-  cancelButtonText: {
-    fontSize: 16,
-    color: Colors.status.error,
+  subscribeText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  disclaimer: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
+    lineHeight: 18,
   },
 });
