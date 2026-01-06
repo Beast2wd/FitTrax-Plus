@@ -718,6 +718,65 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  // Streak Card Styles
+  streakCard: {
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  streakGradient: {
+    padding: 16,
+  },
+  streakContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  streakIcon: {
+    fontSize: 28,
+  },
+  streakInfo: {
+    alignItems: 'center',
+  },
+  streakNumber: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  streakLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  streakDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 24,
+  },
+  streakMessage: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.95)',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+
   // Enhanced Calorie Card Styles
   calorieCardWrapper: {
     marginBottom: 24,
