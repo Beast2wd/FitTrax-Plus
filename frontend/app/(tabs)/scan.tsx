@@ -382,8 +382,16 @@ export default function ScanScreen() {
         animationType="slide"
         onRequestClose={() => setCategoryModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: colors.background.card }]}>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setCategoryModalVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.modalContainer, { backgroundColor: colors.background.card }]}
+          >
             <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
               <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
                 <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
@@ -407,8 +415,8 @@ export default function ScanScreen() {
                 />
               ))}
             </Picker>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Edit Nutrition Modal */}
@@ -422,7 +430,16 @@ export default function ScanScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={[styles.editModalContainer, { backgroundColor: colors.background.card }]}>
+          <TouchableOpacity 
+            style={{ flex: 1 }} 
+            activeOpacity={1} 
+            onPress={() => setEditModalVisible(false)}
+          />
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.editModalContainer, { backgroundColor: colors.background.card }]}
+          >
             <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
               <TouchableOpacity onPress={() => setEditModalVisible(false)}>
                 <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
@@ -482,7 +499,7 @@ export default function ScanScreen() {
                 />
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
