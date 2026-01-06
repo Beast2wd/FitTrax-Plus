@@ -1,42 +1,39 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
+import { useThemeStore } from '../../stores/themeStore';
 
 export default function TabLayout() {
+  const { theme } = useThemeStore();
+  const colors = theme.colors;
+  const accent = theme.accentColors;
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.brand.primary,
-        tabBarInactiveTintColor: Colors.text.secondary,
+        tabBarActiveTintColor: accent.primary,
+        tabBarInactiveTintColor: colors.text.muted,
         tabBarStyle: {
-          backgroundColor: Colors.background.page,
+          backgroundColor: colors.background.secondary,
           borderTopWidth: 1,
-          borderTopColor: Colors.border.light,
+          borderTopColor: colors.border.primary,
           paddingBottom: 8,
           paddingTop: 8,
           height: 65,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
-        },
-        headerStyle: {
-          backgroundColor: Colors.background.page,
-        },
-        headerTintColor: Colors.text.primary,
-        headerTitleStyle: {
           fontWeight: '600',
-          fontSize: 20,
         },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="dashboard" size={size} color={color} />
+            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
@@ -54,16 +51,16 @@ export default function TabLayout() {
         options={{
           title: 'Scan',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="camera" size={size} color={color} />
+            <Ionicons name="scan" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Settings',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="settings" size={size} color={color} />
           ),
         }}
       />
