@@ -6,19 +6,20 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fittrax",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0080FF"
+      "backgroundColor": "#0D0D0D"
     },
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fittraxx.app",
+      "bundleIdentifier": "com.fittrax.app",
       "infoPlist": {
         "NSHealthShareUsageDescription": "FitTrax needs access to your health data to track your fitness progress, including steps, workouts, heart rate, and sleep.",
-        "NSHealthUpdateUsageDescription": "FitTrax needs permission to save your workout data to Apple Health."
+        "NSHealthUpdateUsageDescription": "FitTrax needs permission to save your workout data to Apple Health.",
+        "UIBackgroundModes": ["fetch", "remote-notification"]
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
@@ -28,9 +29,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0080FF"
+        "backgroundColor": "#0D0D0D"
       },
-      "package": "com.fittraxx.app",
+      "package": "com.fittrax.app",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.health.READ_STEPS",
@@ -59,7 +60,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#0080FF"
+          "backgroundColor": "#0D0D0D"
         }
       ],
       [
