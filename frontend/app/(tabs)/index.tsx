@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,10 @@ import { dashboardAPI, waterAPI, workoutAPI } from '../../services/api';
 import { router } from 'expo-router';
 import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AchievementModal } from '../../components/AchievementModal';
+import axios from 'axios';
 
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
@@ -26,12 +29,18 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [streakData, setStreakData] = useState<any>(null);
+  const [achievementModal, setAchievementModal] = useState<any>({ visible: false, achievement: null });
+  const [pendingAchievements, setPendingAchievements] = useState<any[]>([]);
 
   const loadDashboard = async () => {
     try {
       if (!userId) return;
       const data = await dashboardAPI.getDashboard(userId);
       setDashboardData(data);
+      
+      // Also sync gamification progress
+      await syncGamification();
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       Alert.alert('Error', 'Failed to load dashboard data');
@@ -41,6 +50,42 @@ export default function DashboardScreen() {
     }
   };
 
+  const syncGamification = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      // Get streak data
+      const streakResponse = await axios.get(`${API_URL}/api/gamification/streak/${userId}`);
+      setStreakData(streakResponse.data);
+      
+      // Sync progress and check for new achievements
+      const syncResponse = await axios.post(`${API_URL}/api/gamification/sync-progress/${userId}`);
+      
+      // If there are new badges, queue them for display
+      if (syncResponse.data.new_badges && syncResponse.data.new_badges.length > 0) {
+        const newAchievements = syncResponse.data.new_badges.map((badge: any) => ({
+          type: 'badge',
+          name: badge.name,
+          description: badge.description,
+          icon: badge.icon,
+          points: badge.points,
+        }));
+        setPendingAchievements(prev => [...prev, ...newAchievements]);
+      }
+    } catch (error) {
+      console.error('Error syncing gamification:', error);
+    }
+  }, [userId]);
+
+  // Show pending achievements one by one
+  useEffect(() => {
+    if (pendingAchievements.length > 0 && !achievementModal.visible) {
+      const nextAchievement = pendingAchievements[0];
+      setAchievementModal({ visible: true, achievement: nextAchievement });
+      setPendingAchievements(prev => prev.slice(1));
+    }
+  }, [pendingAchievements, achievementModal.visible]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -49,6 +94,11 @@ export default function DashboardScreen() {
   };
 
   const getMotivationalMessage = () => {
+    if (streakData?.current_streak >= 7) {
+      return `${streakData.current_streak} day streak! 🔥 Incredible!`;
+    } else if (streakData?.current_streak >= 3) {
+      return `${streakData.current_streak} day streak! Keep it up! 💪`;
+    }
     const messages = [
       "You're crushing it today! 💪",
       "Every step counts! 🚀",
