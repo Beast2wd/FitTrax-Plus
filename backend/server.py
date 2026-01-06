@@ -1582,6 +1582,238 @@ async def get_pricing():
         ]
     }
 
+class CheckoutSessionRequest(BaseModel):
+    user_id: str
+    email: Optional[str] = None
+    success_url: Optional[str] = None
+    cancel_url: Optional[str] = None
+
+@api_router.post("/membership/create-checkout-session")
+async def create_checkout_session(request: CheckoutSessionRequest):
+    """Create a Stripe Checkout Session for subscription"""
+    try:
+        # Get or create price for $25/year subscription
+        price_id = os.getenv('STRIPE_PRICE_ID')
+        
+        # If no price ID configured, create one dynamically
+        if not price_id:
+            # First, try to find existing product
+            products = stripe.Product.list(limit=1, active=True)
+            
+            if products.data:
+                product = products.data[0]
+            else:
+                # Create product
+                product = stripe.Product.create(
+                    name="FitTrax Premium",
+                    description="Annual subscription with AI workouts, body scan, peptide calculator, and more",
+                )
+            
+            # Check for existing price
+            prices = stripe.Price.list(product=product.id, active=True, limit=10)
+            annual_price = None
+            for p in prices.data:
+                if p.recurring and p.recurring.interval == 'year' and p.unit_amount == 2500:
+                    annual_price = p
+                    break
+            
+            if not annual_price:
+                # Create price: $25/year with 3-day trial
+                annual_price = stripe.Price.create(
+                    product=product.id,
+                    unit_amount=2500,  # $25.00 in cents
+                    currency="usd",
+                    recurring={
+                        "interval": "year",
+                    },
+                )
+            
+            price_id = annual_price.id
+            logger.info(f"Using price ID: {price_id}")
+        
+        # Set default URLs
+        base_url = "fittrax://membership"
+        success_url = request.success_url or f"{base_url}?success=true&session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = request.cancel_url or f"{base_url}?canceled=true"
+        
+        # Create checkout session with 3-day free trial
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            mode="subscription",
+            line_items=[{
+                "price": price_id,
+                "quantity": 1,
+            }],
+            subscription_data={
+                "trial_period_days": 3,
+                "metadata": {
+                    "user_id": request.user_id,
+                }
+            },
+            success_url=success_url,
+            cancel_url=cancel_url,
+            customer_email=request.email,
+            metadata={
+                "user_id": request.user_id,
+            },
+            allow_promotion_codes=True,
+        )
+        
+        # Store checkout session info
+        await db.checkout_sessions.insert_one({
+            "session_id": checkout_session.id,
+            "user_id": request.user_id,
+            "status": "pending",
+            "created_at": datetime.utcnow().isoformat(),
+        })
+        
+        return {
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id,
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error creating checkout session: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/membership/checkout-status/{session_id}")
+async def get_checkout_status(session_id: str):
+    """Check the status of a checkout session"""
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        if session.payment_status == "paid" or session.status == "complete":
+            # Update user's premium status
+            user_id = session.metadata.get("user_id")
+            if user_id:
+                subscription = stripe.Subscription.retrieve(session.subscription)
+                
+                await db.subscriptions.update_one(
+                    {"user_id": user_id},
+                    {
+                        "$set": {
+                            "user_id": user_id,
+                            "subscription_id": session.subscription,
+                            "customer_id": session.customer,
+                            "status": subscription.status,
+                            "is_premium": True,
+                            "is_trial": subscription.status == "trialing",
+                            "current_period_end": datetime.fromtimestamp(subscription.current_period_end).isoformat(),
+                            "trial_end": datetime.fromtimestamp(subscription.trial_end).isoformat() if subscription.trial_end else None,
+                            "updated_at": datetime.utcnow().isoformat(),
+                        }
+                    },
+                    upsert=True
+                )
+        
+        return {
+            "status": session.status,
+            "payment_status": session.payment_status,
+            "subscription_id": session.subscription,
+            "customer_id": session.customer,
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error checking checkout status: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/membership/webhook")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events"""
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+    
+    try:
+        if webhook_secret:
+            event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+        else:
+            # Parse without signature verification (not recommended for production)
+            event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
+        
+        event_type = event["type"]
+        data = event["data"]["object"]
+        
+        logger.info(f"Received Stripe webhook: {event_type}")
+        
+        if event_type == "checkout.session.completed":
+            user_id = data.get("metadata", {}).get("user_id")
+            if user_id and data.get("subscription"):
+                subscription = stripe.Subscription.retrieve(data["subscription"])
+                await db.subscriptions.update_one(
+                    {"user_id": user_id},
+                    {
+                        "$set": {
+                            "user_id": user_id,
+                            "subscription_id": data["subscription"],
+                            "customer_id": data["customer"],
+                            "status": subscription.status,
+                            "is_premium": True,
+                            "is_trial": subscription.status == "trialing",
+                            "current_period_end": datetime.fromtimestamp(subscription.current_period_end).isoformat(),
+                            "updated_at": datetime.utcnow().isoformat(),
+                        }
+                    },
+                    upsert=True
+                )
+        
+        elif event_type == "customer.subscription.updated":
+            subscription_id = data["id"]
+            subscription_doc = await db.subscriptions.find_one({"subscription_id": subscription_id})
+            if subscription_doc:
+                await db.subscriptions.update_one(
+                    {"subscription_id": subscription_id},
+                    {
+                        "$set": {
+                            "status": data["status"],
+                            "is_premium": data["status"] in ["active", "trialing"],
+                            "is_trial": data["status"] == "trialing",
+                            "current_period_end": datetime.fromtimestamp(data["current_period_end"]).isoformat(),
+                            "updated_at": datetime.utcnow().isoformat(),
+                        }
+                    }
+                )
+        
+        elif event_type == "customer.subscription.deleted":
+            subscription_id = data["id"]
+            await db.subscriptions.update_one(
+                {"subscription_id": subscription_id},
+                {
+                    "$set": {
+                        "status": "canceled",
+                        "is_premium": False,
+                        "is_trial": False,
+                        "canceled_at": datetime.utcnow().isoformat(),
+                        "updated_at": datetime.utcnow().isoformat(),
+                    }
+                }
+            )
+        
+        elif event_type == "invoice.payment_failed":
+            subscription_id = data.get("subscription")
+            if subscription_id:
+                await db.subscriptions.update_one(
+                    {"subscription_id": subscription_id},
+                    {
+                        "$set": {
+                            "payment_failed": True,
+                            "payment_failed_at": datetime.utcnow().isoformat(),
+                        }
+                    }
+                )
+        
+        return {"status": "success"}
+        
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Webhook signature verification failed: {str(e)}")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception as e:
+        logger.error(f"Webhook error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # AI PERSONALIZED WORKOUTS
 # ============================================================================
