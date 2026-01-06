@@ -899,7 +899,11 @@ export default function PeptideCalculatorScreen() {
             activeOpacity={1}
             onPress={() => setInfoModalVisible(false)}
           >
-            <View style={styles.infoModalContent}>
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+              style={styles.infoModalContent}
+            >
               {selectedPeptideInfo && (
                 <>
                   <Text style={styles.infoTitle}>{selectedPeptideInfo.name}</Text>
