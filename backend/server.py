@@ -4746,6 +4746,25 @@ async def log_injection(data: InjectionLog):
         logger.error(f"Error logging injection: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Delete an injection
+@api_router.delete("/peptides/injection/{injection_id}")
+async def delete_injection(injection_id: str):
+    """Delete a peptide injection log"""
+    try:
+        from bson import ObjectId
+        result = await db.peptide_injections.delete_one({"_id": ObjectId(injection_id)})
+        if result.deleted_count == 0:
+            # Try with injection_id field as fallback
+            result = await db.peptide_injections.delete_one({"injection_id": injection_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Injection not found")
+            
+        return {"message": "Injection deleted successfully", "deleted_count": result.deleted_count}
+    except Exception as e:
+        logger.error(f"Error deleting injection: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Get injection history
 @api_router.get("/peptides/injections/{user_id}")
 async def get_injection_history(user_id: str, limit: int = 50, peptide_id: Optional[str] = None):
