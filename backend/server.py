@@ -1569,6 +1569,8 @@ async def get_pricing():
             "Advanced Progress Analytics",
             "Wearable Device Integration",
             "Diverse Workout Library (Yoga, HIIT, Dance, Martial Arts)",
+            "Peptide Calculator & Tracking",
+            "AI Body Composition Analysis",
             "Multi-Language Support (EN, ES, DE)",
             "Accessibility Features"
         ],
