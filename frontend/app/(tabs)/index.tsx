@@ -85,18 +85,18 @@ export default function DashboardScreen() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return t('dashboard.goodMorning');
+    if (hour < 17) return t('dashboard.goodAfternoon');
+    return t('dashboard.goodEvening');
   };
 
   const getMotivationalMessage = () => {
     if (streakData?.current_streak >= 7) {
-      return `${streakData.current_streak} day streak! 🔥`;
+      return `${streakData.current_streak} ${t('dashboard.dayStreak')}! 🔥`;
     } else if (streakData?.current_streak >= 3) {
-      return `${streakData.current_streak} day streak! 💪`;
+      return `${streakData.current_streak} ${t('dashboard.dayStreak')}! 💪`;
     }
-    const messages = ["Let's crush it today! 💪", "Every rep counts! 🚀", "Stay focused! ⚡"];
+    const messages = [t('dashboard.keepItGoing'), t('dashboard.dontBreakChain')];
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
