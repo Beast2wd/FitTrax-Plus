@@ -337,7 +337,7 @@ export default function DashboardScreen() {
         <View style={[styles.waterSection, { backgroundColor: colors.background.card }]}>
           <View style={styles.waterHeader}>
             <Ionicons name="water" size={20} color="#06B6D4" />
-            <Text style={[styles.waterTitle, { color: colors.text.primary }]}>Log Water</Text>
+            <Text style={[styles.waterTitle, { color: colors.text.primary }]}>{t('dashboard.logWater')}</Text>
           </View>
           <View style={styles.waterButtons}>
             {[8, 16, 24, 32].map((amount) => (
@@ -353,17 +353,17 @@ export default function DashboardScreen() {
         </View>
 
         {/* Quick Actions */}
-        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Quick Actions</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
           {[
-            { icon: 'camera', label: 'Scan Food', color: accent.primary, route: '/scan' },
-            { icon: 'calendar', label: 'Schedule', color: '#F59E0B', route: '/schedule' },
-            { icon: 'barbell', label: 'Workout', color: '#8B5CF6', route: '/weight-training' },
-            { icon: 'footsteps', label: 'Run', color: '#EC4899', route: '/running' },
-            { icon: 'body', label: 'Body Scan', color: '#10B981', route: '/body-scan' },
-            { icon: 'flask', label: 'Peptides', color: '#6366F1', route: '/peptides' },
-            { icon: 'trophy', label: 'Rewards', color: '#EF4444', route: '/badges' },
-            { icon: 'stats-chart', label: 'Analytics', color: '#0EA5E9', route: '/analytics' },
+            { icon: 'camera', label: t('dashboard.scanFood'), color: accent.primary, route: '/scan' },
+            { icon: 'calendar', label: t('dashboard.schedule'), color: '#F59E0B', route: '/schedule' },
+            { icon: 'barbell', label: t('dashboard.workout'), color: '#8B5CF6', route: '/weight-training' },
+            { icon: 'footsteps', label: t('dashboard.run'), color: '#EC4899', route: '/running' },
+            { icon: 'body', label: t('dashboard.bodyScan'), color: '#10B981', route: '/body-scan' },
+            { icon: 'flask', label: t('dashboard.peptides'), color: '#6366F1', route: '/peptides' },
+            { icon: 'trophy', label: t('dashboard.rewards'), color: '#EF4444', route: '/badges' },
+            { icon: 'stats-chart', label: t('dashboard.analytics'), color: '#0EA5E9', route: '/analytics' },
           ].map((action, index) => (
             <TouchableOpacity
               key={index}
