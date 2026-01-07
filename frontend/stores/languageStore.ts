@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import i18n from '../services/i18n';
 
-type LanguageCode = 'en' | 'es' | 'de';
+type LanguageCode = 'en' | 'es' | 'de' | 'fr' | 'ru' | 'it';
 
 interface LanguageState {
   language: LanguageCode;
