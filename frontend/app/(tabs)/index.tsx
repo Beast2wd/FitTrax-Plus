@@ -334,24 +334,37 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Water Quick Add */}
-        <View style={[styles.waterSection, { backgroundColor: colors.background.card }]}>
+        {/* Hydration Quick Add */}
+        <TouchableOpacity 
+          style={[styles.waterSection, { backgroundColor: colors.background.card }]}
+          onPress={() => router.push('/hydration')}
+          activeOpacity={0.8}
+        >
           <View style={styles.waterHeader}>
-            <Ionicons name="water" size={20} color="#06B6D4" />
-            <Text style={[styles.waterTitle, { color: colors.text.primary }]}>{t('dashboard.logWater')}</Text>
+            <View style={styles.waterHeaderLeft}>
+              <Ionicons name="water" size={20} color="#06B6D4" />
+              <Text style={[styles.waterTitle, { color: colors.text.primary }]}>Hydration</Text>
+            </View>
+            <View style={styles.waterHeaderRight}>
+              <Text style={[styles.viewAllText, { color: '#06B6D4' }]}>View Log</Text>
+              <Ionicons name="chevron-forward" size={16} color="#06B6D4" />
+            </View>
           </View>
           <View style={styles.waterButtons}>
             {[8, 16, 24, 32].map((amount) => (
               <TouchableOpacity
                 key={amount}
                 style={[styles.waterButton, { backgroundColor: colors.background.elevated }]}
-                onPress={() => addWater(amount)}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  addWater(amount);
+                }}
               >
                 <Text style={[styles.waterButtonText, { color: '#06B6D4' }]}>+{amount}oz</Text>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Quick Actions */}
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
