@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AchievementModal } from '../../components/AchievementModal';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
