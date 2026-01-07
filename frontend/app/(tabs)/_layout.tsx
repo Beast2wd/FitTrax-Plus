@@ -2,9 +2,11 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
   const { theme } = useThemeStore();
+  const { t } = useTranslation();
   const colors = theme.colors;
   const accent = theme.accentColors;
 
@@ -31,7 +33,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -40,7 +42,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="plans"
         options={{
-          title: 'Plans',
+          title: t('tabs.plans'),
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="fitness-center" size={size} color={color} />
           ),
@@ -49,7 +51,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="scan"
         options={{
-          title: 'Scan',
+          title: t('tabs.scan'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="scan" size={size} color={color} />
           ),
@@ -58,7 +60,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Settings',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings" size={size} color={color} />
           ),
