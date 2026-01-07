@@ -308,6 +308,7 @@ export default function DashboardScreen() {
 
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            onPress={() => router.push('/hydration')}
             activeOpacity={0.7}
           >
             <View style={[styles.statIcon, { backgroundColor: '#06B6D420' }]}>
