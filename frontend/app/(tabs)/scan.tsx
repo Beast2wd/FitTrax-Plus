@@ -119,7 +119,8 @@ export default function ScanScreen() {
       });
 
       setResult(response);
-      setSavedMealId(response.meal_id);
+      // Get meal_id from the meal object in the response
+      setSavedMealId(response.meal?.meal_id || null);
       
       // Initialize edited nutrition with result values
       if (response.analysis) {
