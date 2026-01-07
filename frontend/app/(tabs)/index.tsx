@@ -28,6 +28,7 @@ const { width } = Dimensions.get('window');
 export default function DashboardScreen() {
   const { userId, profile } = useUserStore();
   const { theme } = useThemeStore();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
