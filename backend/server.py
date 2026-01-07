@@ -489,6 +489,15 @@ async def update_meal(meal_id: str, update: MealUpdate):
     
     return {"message": "Meal updated successfully"}
 
+@api_router.delete("/meals/{meal_id}")
+async def delete_meal(meal_id: str):
+    """Delete a meal"""
+    result = await db.meals.delete_one({"meal_id": meal_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    
+    return {"message": "Meal deleted successfully"}
+
 # ============================================================================
 # WORKOUTS ENDPOINTS
 # ============================================================================
