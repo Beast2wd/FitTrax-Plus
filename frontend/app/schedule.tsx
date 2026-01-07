@@ -9,19 +9,22 @@ import {
   Modal,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { Picker } from '@react-native-picker/picker';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeStore } from '../stores/themeStore';
 import { useUserStore } from '../stores/userStore';
 import { plansAPI } from '../services/api';
 import * as Notifications from 'expo-notifications';
-import { format, addDays, isToday, isTomorrow, isYesterday } from 'date-fns';
+import { format, addDays, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import { router } from 'expo-router';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
 // Configure notifications
 Notifications.setNotificationHandler({
@@ -40,7 +43,7 @@ const generateTimeOptions = () => {
       const hour = h.toString().padStart(2, '0');
       const minute = m.toString().padStart(2, '0');
       const time = `${hour}:${minute}`;
-      const label = `${h > 12 ? h - 12 : h}:${minute} ${h >= 12 ? 'PM' : 'AM'}`;
+      const label = `${h > 12 ? h - 12 : (h === 0 ? 12 : h)}:${minute} ${h >= 12 ? 'PM' : 'AM'}`;
       options.push({ value: time, label });
     }
   }
@@ -59,11 +62,13 @@ export default function ScheduleScreen() {
   const { theme } = useThemeStore();
   const { userId } = useUserStore();
   const today = format(new Date(), 'yyyy-MM-dd');
+  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(today);
   const [scheduledWorkouts, setScheduledWorkouts] = useState<any[]>([]);
+  const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
-  const [workoutPlans, setWorkoutPlans] = useState<any[]>([]);
+  const [allPlans, setAllPlans] = useState<any[]>([]);
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [selectedDay, setSelectedDay] = useState('1');
@@ -74,10 +79,15 @@ export default function ScheduleScreen() {
   const [newScheduleDate, setNewScheduleDate] = useState('');
   
   // Picker modal states
+  const [planPickerVisible, setPlanPickerVisible] = useState(false);
   const [dayPickerVisible, setDayPickerVisible] = useState(false);
   const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [tempPlan, setTempPlan] = useState('');
   const [tempDay, setTempDay] = useState('1');
   const [tempTime, setTempTime] = useState('08:00');
+
+  const colors = theme.colors;
+  const accent = theme.accentColors;
 
   useEffect(() => {
     if (userId) {
@@ -102,16 +112,31 @@ export default function ScheduleScreen() {
 
   const loadData = async () => {
     try {
-      const [plansData, userPlansData, scheduledData] = await Promise.all([
+      setLoading(true);
+      const [plansData, userPlansData, scheduledData, weightHistoryData] = await Promise.all([
         plansAPI.getWorkoutPlans(),
         plansAPI.getUserPlans(userId!, 'active'),
-        fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/scheduled-workouts/${userId}`).then(r => r.json()),
+        fetch(`${API_URL}/api/scheduled-workouts/${userId}`).then(r => r.json()),
+        axios.get(`${API_URL}/api/weight-training/history/${userId}?days=90`),
       ]);
-      setWorkoutPlans(plansData.plans || []);
+      
+      // Combine all plans and user's active plans for selection
+      const allAvailablePlans = [
+        ...(plansData.plans || []).map((p: any) => ({ ...p, type: 'template' })),
+        ...(userPlansData.user_plans || []).map((p: any) => ({ 
+          plan_id: p.plan_id,
+          name: p.plan_details?.name || 'Custom Plan',
+          type: 'user'
+        })),
+      ];
+      setAllPlans(allAvailablePlans);
       setUserPlans(userPlansData.user_plans || []);
       setScheduledWorkouts(scheduledData.scheduled_workouts || []);
+      setCompletedWorkouts(weightHistoryData.data.workouts || []);
     } catch (error) {
       console.error('Error loading schedule data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -150,6 +175,9 @@ export default function ScheduleScreen() {
 
   const openAddWorkoutModal = () => {
     setSelectedDate(today);
+    setSelectedPlan('');
+    setSelectedDay('1');
+    setTime('08:00');
     setModalVisible(true);
   };
 
@@ -161,10 +189,10 @@ export default function ScheduleScreen() {
 
     try {
       const scheduledId = `scheduled_${Date.now()}`;
-      const planDetails = userPlans.find(p => p.plan_id === selectedPlan);
-      const planName = planDetails?.plan_details?.name || 'Workout';
+      const planDetails = allPlans.find(p => p.plan_id === selectedPlan);
+      const planName = planDetails?.name || 'Workout';
       
-      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/scheduled-workouts`, {
+      const response = await fetch(`${API_URL}/api/scheduled-workouts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -197,7 +225,7 @@ export default function ScheduleScreen() {
   const handleCompleteWorkout = async (scheduledId: string) => {
     try {
       await fetch(
-        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/scheduled-workouts/${scheduledId}?completed=true`,
+        `${API_URL}/api/scheduled-workouts/${scheduledId}?completed=true`,
         { method: 'PUT' }
       );
       loadData();
@@ -219,7 +247,7 @@ export default function ScheduleScreen() {
           onPress: async () => {
             try {
               await fetch(
-                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/scheduled-workouts/${scheduledId}`,
+                `${API_URL}/api/scheduled-workouts/${scheduledId}`,
                 { method: 'DELETE' }
               );
               loadData();
@@ -243,7 +271,7 @@ export default function ScheduleScreen() {
 
     try {
       await fetch(
-        `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/scheduled-workouts/${workoutToReschedule.scheduled_id}/reschedule`,
+        `${API_URL}/api/scheduled-workouts/${workoutToReschedule.scheduled_id}/reschedule`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -281,6 +309,12 @@ export default function ScheduleScreen() {
     return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
   };
 
+  const getSelectedPlanName = () => {
+    if (!selectedPlan) return 'Select a plan...';
+    const plan = allPlans.find(p => p.plan_id === selectedPlan);
+    return plan?.name || 'Unknown Plan';
+  };
+
   const quickDateOptions = [
     { label: 'Today', date: format(new Date(), 'yyyy-MM-dd') },
     { label: 'Tomorrow', date: format(addDays(new Date(), 1), 'yyyy-MM-dd') },
@@ -288,28 +322,62 @@ export default function ScheduleScreen() {
     { label: '+3 Days', date: format(addDays(new Date(), 3), 'yyyy-MM-dd') },
   ];
 
-  const markedDates = scheduledWorkouts.reduce((acc: any, workout) => {
-    const existingMark = acc[workout.scheduled_date] || { dots: [] };
-    acc[workout.scheduled_date] = {
-      ...existingMark,
-      marked: true,
-      dots: [
-        ...(existingMark.dots || []),
-        { color: workout.completed ? theme.colors.status.success : theme.accentColors.primary }
-      ],
-      selected: workout.scheduled_date === selectedDate,
-      selectedColor: theme.accentColors.primary,
-    };
-    return acc;
-  }, {
-    [selectedDate]: {
-      selected: true,
-      selectedColor: theme.accentColors.primary,
+  // Build marked dates for calendar
+  const markedDates = (() => {
+    const marks: any = {};
+    
+    // Add scheduled workouts
+    scheduledWorkouts.forEach(workout => {
+      const date = workout.scheduled_date;
+      if (!marks[date]) {
+        marks[date] = { dots: [] };
+      }
+      marks[date].dots.push({
+        color: workout.completed ? colors.status.success : accent.primary,
+        key: `scheduled_${workout.scheduled_id}`
+      });
+    });
+
+    // Add completed workouts from weight training history
+    completedWorkouts.forEach(workout => {
+      const date = format(new Date(workout.timestamp), 'yyyy-MM-dd');
+      if (!marks[date]) {
+        marks[date] = { dots: [] };
+      }
+      // Check if this completed workout isn't already counted
+      const alreadyMarked = marks[date].dots.some((d: any) => d.color === '#10B981');
+      if (!alreadyMarked) {
+        marks[date].dots.push({
+          color: '#10B981', // Green for completed
+          key: `completed_${workout.workout_id}`
+        });
+      }
+    });
+
+    // Add selected date highlight
+    if (marks[selectedDate]) {
+      marks[selectedDate] = {
+        ...marks[selectedDate],
+        selected: true,
+        selectedColor: accent.primary,
+      };
+    } else {
+      marks[selectedDate] = {
+        selected: true,
+        selectedColor: accent.primary,
+        dots: [],
+      };
     }
-  });
+
+    return marks;
+  })();
 
   const workoutsForSelectedDate = scheduledWorkouts.filter(
     (w) => w.scheduled_date === selectedDate
+  );
+
+  const completedForSelectedDate = completedWorkouts.filter(
+    (w) => format(new Date(w.timestamp), 'yyyy-MM-dd') === selectedDate
   );
 
   const upcomingWorkouts = scheduledWorkouts
@@ -319,18 +387,40 @@ export default function ScheduleScreen() {
 
   const styles = createStyles(theme);
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={accent.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Workout Schedule</Text>
           <TouchableOpacity onPress={openAddWorkoutModal} style={styles.addBtn}>
-            <Ionicons name="add" size={28} color={theme.accentColors.primary} />
+            <Ionicons name="add" size={28} color={accent.primary} />
           </TouchableOpacity>
+        </View>
+
+        {/* Legend */}
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: accent.primary }]} />
+            <Text style={styles.legendText}>Scheduled</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+            <Text style={styles.legendText}>Completed</Text>
+          </View>
         </View>
 
         {/* Quick Add Button */}
@@ -344,7 +434,7 @@ export default function ScheduleScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Upcoming</Text>
             {upcomingWorkouts.map((workout) => {
-              const planDetails = userPlans.find(p => p.plan_id === workout.workout_plan_id);
+              const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
               return (
                 <View key={workout.scheduled_id} style={styles.upcomingCard}>
                   <View style={styles.upcomingLeft}>
@@ -354,7 +444,7 @@ export default function ScheduleScreen() {
                     </View>
                     <View style={styles.upcomingInfo}>
                       <Text style={styles.upcomingPlan}>
-                        {planDetails?.plan_details?.name || 'Workout'}
+                        {planDetails?.name || 'Workout'}
                       </Text>
                       <Text style={styles.upcomingDay}>Day {workout.workout_day}</Text>
                     </View>
@@ -364,7 +454,7 @@ export default function ScheduleScreen() {
                       style={styles.rescheduleBtn}
                       onPress={() => openRescheduleModal(workout)}
                     >
-                      <Ionicons name="calendar-outline" size={20} color={theme.accentColors.primary} />
+                      <Ionicons name="calendar-outline" size={20} color={accent.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.completeBtn}
@@ -386,17 +476,17 @@ export default function ScheduleScreen() {
             markedDates={markedDates}
             markingType="multi-dot"
             theme={{
-              calendarBackground: theme.colors.background.card,
-              textSectionTitleColor: theme.colors.text.secondary,
-              dayTextColor: theme.colors.text.primary,
-              todayTextColor: theme.accentColors.primary,
-              selectedDayBackgroundColor: theme.accentColors.primary,
+              calendarBackground: colors.background.card,
+              textSectionTitleColor: colors.text.secondary,
+              dayTextColor: colors.text.primary,
+              todayTextColor: accent.primary,
+              selectedDayBackgroundColor: accent.primary,
               selectedDayTextColor: '#ffffff',
-              arrowColor: theme.accentColors.primary,
-              monthTextColor: theme.colors.text.primary,
+              arrowColor: accent.primary,
+              monthTextColor: colors.text.primary,
               textDayFontWeight: '500',
               textMonthFontWeight: '700',
-              textDisabledColor: theme.colors.text.muted,
+              textDisabledColor: colors.text.muted,
             }}
           />
         </View>
@@ -409,15 +499,15 @@ export default function ScheduleScreen() {
               style={styles.addForDateBtn}
               onPress={() => setModalVisible(true)}
             >
-              <Ionicons name="add" size={20} color={theme.accentColors.primary} />
+              <Ionicons name="add" size={20} color={accent.primary} />
               <Text style={styles.addForDateText}>Add</Text>
             </TouchableOpacity>
           </View>
           
-          {workoutsForSelectedDate.length === 0 ? (
+          {workoutsForSelectedDate.length === 0 && completedForSelectedDate.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color={theme.colors.text.muted} />
-              <Text style={styles.emptyText}>No workouts scheduled</Text>
+              <Ionicons name="calendar-outline" size={48} color={colors.text.muted} />
+              <Text style={styles.emptyText}>No workouts for this day</Text>
               <TouchableOpacity 
                 style={styles.emptyButton}
                 onPress={() => setModalVisible(true)}
@@ -426,60 +516,88 @@ export default function ScheduleScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            workoutsForSelectedDate.map((workout) => {
-              const planDetails = userPlans.find(p => p.plan_id === workout.workout_plan_id);
-              return (
-                <View key={workout.scheduled_id} style={[
-                  styles.workoutCard,
-                  workout.completed && styles.workoutCardCompleted
-                ]}>
-                  <View style={styles.workoutHeader}>
-                    <View style={styles.workoutTimeContainer}>
-                      <Ionicons 
-                        name={workout.completed ? "checkmark-circle" : "time-outline"} 
-                        size={20} 
-                        color={workout.completed ? theme.colors.status.success : theme.accentColors.primary} 
-                      />
-                      <Text style={styles.workoutTime}>{formatTime(workout.scheduled_time)}</Text>
+            <>
+              {/* Scheduled Workouts */}
+              {workoutsForSelectedDate.map((workout) => {
+                const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
+                return (
+                  <View key={workout.scheduled_id} style={[
+                    styles.workoutCard,
+                    workout.completed && styles.workoutCardCompleted
+                  ]}>
+                    <View style={styles.workoutHeader}>
+                      <View style={styles.workoutTimeContainer}>
+                        <Ionicons 
+                          name={workout.completed ? "checkmark-circle" : "time-outline"} 
+                          size={20} 
+                          color={workout.completed ? colors.status.success : accent.primary} 
+                        />
+                        <Text style={styles.workoutTime}>{formatTime(workout.scheduled_time)}</Text>
+                      </View>
+                      {!workout.completed && (
+                        <View style={styles.workoutActions}>
+                          <TouchableOpacity
+                            onPress={() => openRescheduleModal(workout)}
+                            style={styles.workoutActionBtn}
+                          >
+                            <Ionicons name="swap-horizontal" size={18} color={colors.text.secondary} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => handleDeleteWorkout(workout.scheduled_id)}
+                            style={styles.workoutActionBtn}
+                          >
+                            <Ionicons name="trash-outline" size={18} color={colors.status.error} />
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
+                    <Text style={styles.workoutPlan}>
+                      {planDetails?.name || 'Workout Plan'}
+                    </Text>
+                    <Text style={styles.workoutDay}>Day {workout.workout_day}</Text>
                     {!workout.completed && (
-                      <View style={styles.workoutActions}>
-                        <TouchableOpacity
-                          onPress={() => openRescheduleModal(workout)}
-                          style={styles.workoutActionBtn}
-                        >
-                          <Ionicons name="swap-horizontal" size={18} color={theme.colors.text.secondary} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleDeleteWorkout(workout.scheduled_id)}
-                          style={styles.workoutActionBtn}
-                        >
-                          <Ionicons name="trash-outline" size={18} color={theme.colors.status.error} />
-                        </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.markCompleteBtn}
+                        onPress={() => handleCompleteWorkout(workout.scheduled_id)}
+                      >
+                        <Text style={styles.markCompleteBtnText}>Mark Complete</Text>
+                      </TouchableOpacity>
+                    )}
+                    {workout.completed && (
+                      <View style={styles.completedBadge}>
+                        <Ionicons name="checkmark-circle" size={16} color={colors.status.success} />
+                        <Text style={styles.completedText}>Completed</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={styles.workoutPlan}>
-                    {planDetails?.plan_details?.name || 'Workout Plan'}
-                  </Text>
-                  <Text style={styles.workoutDay}>Day {workout.workout_day}</Text>
-                  {!workout.completed && (
-                    <TouchableOpacity
-                      style={styles.markCompleteBtn}
-                      onPress={() => handleCompleteWorkout(workout.scheduled_id)}
-                    >
-                      <Text style={styles.markCompleteBtnText}>Mark Complete</Text>
-                    </TouchableOpacity>
-                  )}
-                  {workout.completed && (
-                    <View style={styles.completedBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color={theme.colors.status.success} />
-                      <Text style={styles.completedText}>Completed</Text>
+                );
+              })}
+
+              {/* Completed Workouts from Weight Training */}
+              {completedForSelectedDate.map((workout, index) => (
+                <View key={`completed_${index}`} style={[styles.workoutCard, styles.workoutCardCompleted]}>
+                  <View style={styles.workoutHeader}>
+                    <View style={styles.workoutTimeContainer}>
+                      <MaterialCommunityIcons name="dumbbell" size={20} color="#10B981" />
+                      <Text style={styles.workoutTime}>
+                        {format(new Date(workout.timestamp), 'h:mm a')}
+                      </Text>
                     </View>
-                  )}
+                    <View style={[styles.completedBadgeSmall]}>
+                      <Text style={styles.completedBadgeText}>Logged</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.workoutPlan}>{workout.workout_name}</Text>
+                  <Text style={styles.workoutDay}>
+                    {workout.exercises?.length || 0} exercises • {workout.duration_minutes || 0} min
+                  </Text>
+                  <View style={styles.completedBadge}>
+                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                    <Text style={styles.completedText}>Workout Completed</Text>
+                  </View>
                 </View>
-              );
-            })
+              ))}
+            </>
           )}
         </View>
       </ScrollView>
@@ -504,7 +622,7 @@ export default function ScheduleScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Schedule Workout</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+                <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -535,35 +653,37 @@ export default function ScheduleScreen() {
                 Selected: {formatDateLabel(selectedDate)} ({format(new Date(selectedDate + 'T00:00:00'), 'MMM d, yyyy')})
               </Text>
 
+              {/* Plan Selection - Wheel Picker */}
               <Text style={styles.label}>Select Plan</Text>
-              {userPlans.length === 0 ? (
+              {allPlans.length === 0 ? (
                 <View style={styles.noPlansBanner}>
                   <Ionicons name="information-circle" size={20} color="#F59E0B" />
                   <Text style={styles.noPlansText}>
-                    No active plans. Go to Plans tab to start a workout plan first.
+                    No workout plans available. Go to Plans tab to start or create a workout plan first.
                   </Text>
                 </View>
               ) : (
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedPlan}
-                    onValueChange={(value) => setSelectedPlan(value)}
-                    style={styles.picker}
-                    itemStyle={{ color: theme.colors.text.primary }}
-                  >
-                    <Picker.Item label="Choose a plan..." value="" color={theme.colors.text.muted} />
-                    {userPlans.map((plan) => (
-                      <Picker.Item
-                        key={plan.user_plan_id}
-                        label={plan.plan_details?.name || 'Workout Plan'}
-                        value={plan.plan_id}
-                        color={theme.colors.text.primary}
-                      />
-                    ))}
-                  </Picker>
-                </View>
+                <TouchableOpacity 
+                  style={styles.pickerButton}
+                  onPress={() => {
+                    setTempPlan(selectedPlan);
+                    setPlanPickerVisible(true);
+                  }}
+                >
+                  <View style={styles.pickerButtonContent}>
+                    <MaterialCommunityIcons name="dumbbell" size={20} color={accent.primary} />
+                    <Text style={[
+                      styles.pickerButtonText,
+                      !selectedPlan && { color: colors.text.muted }
+                    ]}>
+                      {getSelectedPlanName()}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                </TouchableOpacity>
               )}
 
+              {/* Workout Day - Wheel Picker */}
               <Text style={styles.label}>Workout Day</Text>
               <TouchableOpacity 
                 style={styles.pickerButton}
@@ -572,10 +692,14 @@ export default function ScheduleScreen() {
                   setDayPickerVisible(true);
                 }}
               >
-                <Text style={styles.pickerButtonText}>Day {selectedDay}</Text>
-                <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
+                <View style={styles.pickerButtonContent}>
+                  <Ionicons name="calendar" size={20} color={accent.primary} />
+                  <Text style={styles.pickerButtonText}>Day {selectedDay}</Text>
+                </View>
+                <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
               </TouchableOpacity>
 
+              {/* Time - Wheel Picker */}
               <Text style={styles.label}>Time</Text>
               <TouchableOpacity 
                 style={styles.pickerButton}
@@ -584,10 +708,14 @@ export default function ScheduleScreen() {
                   setTimePickerVisible(true);
                 }}
               >
-                <Text style={styles.pickerButtonText}>{formatTime(time)}</Text>
-                <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
+                <View style={styles.pickerButtonContent}>
+                  <Ionicons name="time" size={20} color={accent.primary} />
+                  <Text style={styles.pickerButtonText}>{formatTime(time)}</Text>
+                </View>
+                <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
               </TouchableOpacity>
 
+              {/* Reminder Toggle */}
               <View style={styles.switchRow}>
                 <View>
                   <Text style={styles.label}>Reminder</Text>
@@ -637,6 +765,55 @@ export default function ScheduleScreen() {
         </TouchableOpacity>
       </Modal>
 
+      {/* Plan Picker Modal */}
+      <Modal
+        visible={planPickerVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setPlanPickerVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setPlanPickerVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={styles.pickerModalContent}
+          >
+            <View style={styles.pickerModalHeader}>
+              <TouchableOpacity onPress={() => setPlanPickerVisible(false)}>
+                <Text style={styles.pickerCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.pickerModalTitle}>Select Plan</Text>
+              <TouchableOpacity onPress={() => {
+                setSelectedPlan(tempPlan);
+                setPlanPickerVisible(false);
+              }}>
+                <Text style={styles.pickerDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <Picker
+              selectedValue={tempPlan}
+              onValueChange={(value) => setTempPlan(value)}
+              style={styles.wheelPicker}
+              itemStyle={{ color: colors.text.primary, fontSize: 18 }}
+            >
+              <Picker.Item label="Select a plan..." value="" color={colors.text.muted} />
+              {allPlans.map((plan) => (
+                <Picker.Item 
+                  key={plan.plan_id} 
+                  label={plan.name} 
+                  value={plan.plan_id}
+                  color={colors.text.primary}
+                />
+              ))}
+            </Picker>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Day Picker Modal */}
       <Modal
         visible={dayPickerVisible}
@@ -670,7 +847,7 @@ export default function ScheduleScreen() {
               selectedValue={tempDay}
               onValueChange={(value) => setTempDay(value)}
               style={styles.wheelPicker}
-              itemStyle={{ color: theme.colors.text.primary, fontSize: 20 }}
+              itemStyle={{ color: colors.text.primary, fontSize: 20 }}
             >
               {DAY_OPTIONS.map((option) => (
                 <Picker.Item key={option.value} label={option.label} value={option.value} />
@@ -713,7 +890,7 @@ export default function ScheduleScreen() {
               selectedValue={tempTime}
               onValueChange={(value) => setTempTime(value)}
               style={styles.wheelPicker}
-              itemStyle={{ color: theme.colors.text.primary, fontSize: 20 }}
+              itemStyle={{ color: colors.text.primary, fontSize: 20 }}
             >
               {TIME_OPTIONS.map((option) => (
                 <Picker.Item key={option.value} label={option.label} value={option.value} />
@@ -743,7 +920,7 @@ export default function ScheduleScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Move Workout</Text>
               <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+                <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -779,19 +956,19 @@ export default function ScheduleScreen() {
                   markedDates={{
                     [newScheduleDate]: {
                       selected: true,
-                      selectedColor: theme.accentColors.primary,
+                      selectedColor: accent.primary,
                     }
                   }}
                   theme={{
-                    calendarBackground: theme.colors.background.secondary,
-                    textSectionTitleColor: theme.colors.text.secondary,
-                    dayTextColor: theme.colors.text.primary,
-                    todayTextColor: theme.accentColors.primary,
-                    selectedDayBackgroundColor: theme.accentColors.primary,
+                    calendarBackground: colors.background.secondary,
+                    textSectionTitleColor: colors.text.secondary,
+                    dayTextColor: colors.text.primary,
+                    todayTextColor: accent.primary,
+                    selectedDayBackgroundColor: accent.primary,
                     selectedDayTextColor: '#ffffff',
-                    arrowColor: theme.accentColors.primary,
-                    monthTextColor: theme.colors.text.primary,
-                    textDisabledColor: theme.colors.text.muted,
+                    arrowColor: accent.primary,
+                    monthTextColor: colors.text.primary,
+                    textDisabledColor: colors.text.muted,
                   }}
                   style={styles.miniCalendar}
                 />
@@ -815,6 +992,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background.primary,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollContent: {
     padding: 16,
@@ -840,6 +1022,26 @@ const createStyles = (theme: any) => StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'flex-end',
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 24,
+    marginBottom: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
   },
   quickAddButton: {
     flexDirection: 'row',
@@ -986,7 +1188,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 12,
   },
   workoutCardCompleted: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
   workoutHeader: {
     flexDirection: 'row',
@@ -1038,6 +1240,17 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginTop: 12,
+  },
+  completedBadgeSmall: {
+    backgroundColor: '#10B98120',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  completedBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#10B981',
   },
   completedText: {
     fontSize: 14,
@@ -1120,15 +1333,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 13,
     color: '#92400E',
   },
-  pickerContainer: {
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-    color: theme.colors.text.primary,
-  },
   pickerButton: {
     backgroundColor: theme.colors.background.secondary,
     borderRadius: 12,
@@ -1136,6 +1340,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  pickerButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   pickerButtonText: {
     fontSize: 16,
