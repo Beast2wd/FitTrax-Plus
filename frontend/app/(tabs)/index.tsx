@@ -229,11 +229,11 @@ export default function DashboardScreen() {
             <View style={styles.calorieHeaderLeft}>
               <Ionicons name="flame" size={24} color={accent.primary} />
               <Text style={[styles.calorieTitle, { color: colors.text.primary }]}>
-                Today's Calories
+                {t('dashboard.todaysCalories')}
               </Text>
             </View>
             <Text style={[styles.calorieGoal, { color: colors.text.muted }]}>
-              Goal: {today.calories_goal || 2000}
+              {t('dashboard.goal')}: {today.calories_goal || 2000}
             </Text>
           </View>
           
@@ -242,14 +242,14 @@ export default function DashboardScreen() {
               <Text style={[styles.calorieStatValue, { color: colors.text.primary }]}>
                 {Math.round(today.calories_consumed || 0)}
               </Text>
-              <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>Eaten</Text>
+              <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>{t('dashboard.eaten')}</Text>
             </View>
             <View style={[styles.calorieStatDivider, { backgroundColor: colors.border.primary }]} />
             <View style={styles.calorieStat}>
               <Text style={[styles.calorieStatValue, { color: '#22C55E' }]}>
                 {Math.round(today.calories_burned || 0)}
               </Text>
-              <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>Burned</Text>
+              <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>{t('dashboard.burned')}</Text>
             </View>
             <View style={[styles.calorieStatDivider, { backgroundColor: colors.border.primary }]} />
             <View style={styles.calorieStat}>
@@ -260,7 +260,7 @@ export default function DashboardScreen() {
                 {Math.abs(Math.round(caloriesRemaining))}
               </Text>
               <Text style={[styles.calorieStatLabel, { color: colors.text.muted }]}>
-                {caloriesRemaining >= 0 ? 'Left' : 'Over'}
+                {caloriesRemaining >= 0 ? t('dashboard.left') : t('dashboard.over')}
               </Text>
             </View>
           </View>
@@ -290,7 +290,7 @@ export default function DashboardScreen() {
             <Text style={[styles.statValue, { color: colors.text.primary }]}>
               {today.meals_count || 0}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Meals</Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>{t('dashboard.meals')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -303,7 +303,7 @@ export default function DashboardScreen() {
             <Text style={[styles.statValue, { color: colors.text.primary }]}>
               {today.workouts_count || 0}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Workouts</Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>{t('dashboard.workouts')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
