@@ -88,7 +88,10 @@
     "selectLanguage": "Seleccionar Idioma",
     "english": "Inglés",
     "spanish": "Español",
-    "german": "Alemán"
+    "german": "Alemán",
+    "french": "Francés",
+    "russian": "Ruso",
+    "italian": "Italiano"
   },
   "membership": {
     "title": "FitTrax Premium",
