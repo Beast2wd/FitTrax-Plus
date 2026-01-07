@@ -11,6 +11,8 @@ import {
   TextInput,
   RefreshControl,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -39,6 +41,10 @@ export default function WeightTrainingScreen() {
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [showExerciseLibraryModal, setShowExerciseLibraryModal] = useState(false);
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
+  const [showEditExerciseModal, setShowEditExerciseModal] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<any>(null);
+  const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
+  const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
   
   // Workout logging state
   const [workoutName, setWorkoutName] = useState('');
@@ -46,6 +52,12 @@ export default function WeightTrainingScreen() {
   const [currentExercise, setCurrentExercise] = useState('');
   const [currentSets, setCurrentSets] = useState<any[]>([]);
   const [savingWorkout, setSavingWorkout] = useState(false);
+
+  // Edit exercise state
+  const [editExName, setEditExName] = useState('');
+  const [editExSets, setEditExSets] = useState('');
+  const [editExReps, setEditExReps] = useState('');
+  const [editExRest, setEditExRest] = useState('');
 
   useEffect(() => {
     loadData();
@@ -81,16 +93,43 @@ export default function WeightTrainingScreen() {
   };
 
   const openProgram = (programId: string) => {
-    setSelectedProgram({ id: programId, ...programs[programId] });
+    const program = programs[programId];
+    // Deep clone to allow editing
+    setSelectedProgram({ 
+      id: programId, 
+      ...program,
+      days: program.days?.map((day: any) => ({
+        ...day,
+        exercises: day.exercises?.map((ex: any) => ({ ...ex }))
+      }))
+    });
     setShowProgramModal(true);
   };
 
   const startWorkout = (day: any) => {
     setSelectedDay(day);
     setWorkoutName(day.name);
-    setWorkoutExercises([]);
+    // Pre-populate exercises from the day's workout plan
+    const prefilledExercises = day.exercises?.map((ex: any) => ({
+      exercise_name: ex.name,
+      sets: Array.from({ length: parseInt(ex.sets) || 3 }, (_, i) => ({
+        set_number: i + 1,
+        weight: '',
+        reps: ex.reps?.split('-')[0] || '10',
+        rpe: ''
+      }))
+    })) || [];
+    setWorkoutExercises(prefilledExercises);
     setCurrentSets([]);
+    setCurrentExercise('');
     setShowWorkoutModal(true);
+  };
+
+  const startFullDayWorkout = (day: any) => {
+    setShowProgramModal(false);
+    setTimeout(() => {
+      startWorkout(day);
+    }, 300);
   };
 
   const openExerciseLibrary = (muscleGroup: string) => {
@@ -148,9 +187,112 @@ export default function WeightTrainingScreen() {
     setCurrentSets([]);
   };
 
+  // Update exercise sets in prefilled workout
+  const updateExerciseSet = (exerciseIndex: number, setIndex: number, field: string, value: string) => {
+    const updated = [...workoutExercises];
+    updated[exerciseIndex].sets[setIndex][field] = value;
+    setWorkoutExercises(updated);
+  };
+
+  // Remove exercise from workout
+  const removeExerciseFromWorkout = (index: number) => {
+    setWorkoutExercises(workoutExercises.filter((_, i) => i !== index));
+  };
+
+  // Move exercise up in workout
+  const moveExerciseUp = (index: number) => {
+    if (index === 0) return;
+    const updated = [...workoutExercises];
+    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+    setWorkoutExercises(updated);
+  };
+
+  // Move exercise down in workout
+  const moveExerciseDown = (index: number) => {
+    if (index === workoutExercises.length - 1) return;
+    const updated = [...workoutExercises];
+    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+    setWorkoutExercises(updated);
+  };
+
+  // Edit exercise in program
+  const openEditExercise = (dayIndex: number, exerciseIndex: number, exercise: any) => {
+    setEditingDayIndex(dayIndex);
+    setEditingExerciseIndex(exerciseIndex);
+    setEditingExercise(exercise);
+    setEditExName(exercise.name);
+    setEditExSets(exercise.sets?.toString() || '3');
+    setEditExReps(exercise.reps || '10');
+    setEditExRest(exercise.rest?.toString() || '60');
+    setShowEditExerciseModal(true);
+  };
+
+  const saveExerciseEdit = () => {
+    if (!selectedProgram || editingDayIndex === null || editingExerciseIndex === null) return;
+    
+    const updated = { ...selectedProgram };
+    updated.days[editingDayIndex].exercises[editingExerciseIndex] = {
+      ...editingExercise,
+      name: editExName,
+      sets: parseInt(editExSets) || 3,
+      reps: editExReps,
+      rest: parseInt(editExRest) || 60,
+    };
+    setSelectedProgram(updated);
+    setShowEditExerciseModal(false);
+  };
+
+  // Move exercise up in program day
+  const moveExerciseUpInDay = (dayIndex: number, exerciseIndex: number) => {
+    if (exerciseIndex === 0) return;
+    const updated = { ...selectedProgram };
+    const exercises = [...updated.days[dayIndex].exercises];
+    [exercises[exerciseIndex - 1], exercises[exerciseIndex]] = [exercises[exerciseIndex], exercises[exerciseIndex - 1]];
+    updated.days[dayIndex].exercises = exercises;
+    setSelectedProgram(updated);
+  };
+
+  // Move exercise down in program day
+  const moveExerciseDownInDay = (dayIndex: number, exerciseIndex: number) => {
+    if (!selectedProgram || exerciseIndex === selectedProgram.days[dayIndex].exercises.length - 1) return;
+    const updated = { ...selectedProgram };
+    const exercises = [...updated.days[dayIndex].exercises];
+    [exercises[exerciseIndex], exercises[exerciseIndex + 1]] = [exercises[exerciseIndex + 1], exercises[exerciseIndex]];
+    updated.days[dayIndex].exercises = exercises;
+    setSelectedProgram(updated);
+  };
+
+  // Delete exercise from program day
+  const deleteExerciseFromDay = (dayIndex: number, exerciseIndex: number) => {
+    Alert.alert(
+      'Remove Exercise',
+      'Are you sure you want to remove this exercise?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            const updated = { ...selectedProgram };
+            updated.days[dayIndex].exercises = updated.days[dayIndex].exercises.filter((_: any, i: number) => i !== exerciseIndex);
+            setSelectedProgram(updated);
+          }
+        }
+      ]
+    );
+  };
+
   const saveWorkout = async () => {
-    if (workoutExercises.length === 0) {
-      Alert.alert('No Exercises', 'Please add at least one exercise');
+    // Filter exercises that have at least one completed set
+    const completedExercises = workoutExercises
+      .map(ex => ({
+        ...ex,
+        sets: ex.sets.filter((s: any) => s.weight && s.reps)
+      }))
+      .filter(ex => ex.sets.length > 0);
+
+    if (completedExercises.length === 0) {
+      Alert.alert('No Exercises', 'Please complete at least one set with weight and reps');
       return;
     }
 
@@ -160,7 +302,7 @@ export default function WeightTrainingScreen() {
         workout_id: `wt_${Date.now()}`,
         user_id: userId,
         workout_name: workoutName || 'Weight Training',
-        exercises: workoutExercises,
+        exercises: completedExercises,
         duration_minutes: 60,
         notes: ''
       });
@@ -438,23 +580,15 @@ export default function WeightTrainingScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Program Detail Modal */}
+      {/* Program Detail Modal - FIXED SCROLLING */}
       <Modal
         visible={showProgramModal}
         animationType="slide"
         transparent
         onRequestClose={() => setShowProgramModal(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowProgramModal(false)}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={styles.fullScreenModal}
-          >
+        <View style={styles.fullScreenModalContainer}>
+          <View style={styles.fullScreenModalContent}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setShowProgramModal(false)}>
                 <Ionicons name="close" size={28} color={theme.colors.text.primary} />
@@ -464,46 +598,168 @@ export default function WeightTrainingScreen() {
             </View>
 
             {selectedProgram && (
-              <ScrollView style={styles.modalContent}>
+              <ScrollView 
+                style={styles.programScrollView}
+                contentContainerStyle={styles.programScrollContent}
+                showsVerticalScrollIndicator={true}
+              >
                 <Text style={styles.programDetailDesc}>{selectedProgram.description}</Text>
                 <View style={styles.programDetailMeta}>
                   <Text style={styles.programDetailFreq}>📅 {selectedProgram.frequency}</Text>
                   <Text style={styles.programDetailLevel}>💪 {selectedProgram.level}</Text>
                 </View>
 
-                {selectedProgram.days?.map((day: any, index: number) => (
-                  <View key={index} style={styles.dayCard}>
+                <Text style={styles.instructionText}>
+                  Tap exercises to edit • Use arrows to reorder • Tap Start to begin workout
+                </Text>
+
+                {selectedProgram.days?.map((day: any, dayIndex: number) => (
+                  <View key={dayIndex} style={styles.dayCard}>
                     <View style={styles.dayHeader}>
-                      <Text style={styles.dayName}>{day.name}</Text>
+                      <View>
+                        <Text style={styles.dayName}>{day.name}</Text>
+                        <Text style={styles.dayFocus}>Focus: {day.focus?.join(', ')}</Text>
+                      </View>
                       <TouchableOpacity
-                        style={styles.startDayBtn}
-                        onPress={() => {
-                          setShowProgramModal(false);
-                          startWorkout(day);
-                        }}
+                        style={styles.startAllBtn}
+                        onPress={() => startFullDayWorkout(day)}
                       >
-                        <Ionicons name="play" size={16} color="#fff" />
-                        <Text style={styles.startDayBtnText}>Start</Text>
+                        <Ionicons name="play" size={18} color="#fff" />
+                        <Text style={styles.startAllBtnText}>Start All</Text>
                       </TouchableOpacity>
                     </View>
-                    <Text style={styles.dayFocus}>Focus: {day.focus?.join(', ')}</Text>
                     
                     {day.exercises?.map((ex: any, exIndex: number) => (
-                      <View key={exIndex} style={styles.dayExercise}>
-                        <Text style={styles.dayExNumber}>{exIndex + 1}</Text>
-                        <View style={styles.dayExInfo}>
-                          <Text style={styles.dayExName}>{ex.name}</Text>
-                          <Text style={styles.dayExDetails}>
-                            {ex.sets} sets × {ex.reps} • {ex.rest}s rest
-                          </Text>
+                      <View key={exIndex} style={styles.dayExerciseEditable}>
+                        <View style={styles.exerciseReorderBtns}>
+                          <TouchableOpacity 
+                            onPress={() => moveExerciseUpInDay(dayIndex, exIndex)}
+                            style={[styles.reorderBtn, exIndex === 0 && styles.reorderBtnDisabled]}
+                            disabled={exIndex === 0}
+                          >
+                            <Ionicons name="chevron-up" size={18} color={exIndex === 0 ? theme.colors.text.muted : theme.accentColors.primary} />
+                          </TouchableOpacity>
+                          <TouchableOpacity 
+                            onPress={() => moveExerciseDownInDay(dayIndex, exIndex)}
+                            style={[styles.reorderBtn, exIndex === day.exercises.length - 1 && styles.reorderBtnDisabled]}
+                            disabled={exIndex === day.exercises.length - 1}
+                          >
+                            <Ionicons name="chevron-down" size={18} color={exIndex === day.exercises.length - 1 ? theme.colors.text.muted : theme.accentColors.primary} />
+                          </TouchableOpacity>
                         </View>
+
+                        <TouchableOpacity 
+                          style={styles.dayExInfo}
+                          onPress={() => openEditExercise(dayIndex, exIndex, ex)}
+                        >
+                          <Text style={styles.dayExNumber}>{exIndex + 1}</Text>
+                          <View style={styles.dayExDetails}>
+                            <Text style={styles.dayExName}>{ex.name}</Text>
+                            <Text style={styles.dayExMeta}>
+                              {ex.sets} sets × {ex.reps} • {ex.rest}s rest
+                            </Text>
+                          </View>
+                          <Ionicons name="pencil" size={16} color={theme.colors.text.muted} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                          style={styles.deleteExBtn}
+                          onPress={() => deleteExerciseFromDay(dayIndex, exIndex)}
+                        >
+                          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                        </TouchableOpacity>
                       </View>
                     ))}
                   </View>
                 ))}
+
+                <View style={{ height: 100 }} />
               </ScrollView>
             )}
-          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Exercise Modal */}
+      <Modal
+        visible={showEditExerciseModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowEditExerciseModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowEditExerciseModal(false)}
+        >
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.editModalWrapper}
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+              style={styles.editExerciseModal}
+            >
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setShowEditExerciseModal(false)}>
+                  <Text style={styles.cancelBtn}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Edit Exercise</Text>
+                <TouchableOpacity onPress={saveExerciseEdit}>
+                  <Text style={styles.saveBtn}>Save</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.editForm}>
+                <View style={styles.editFormRow}>
+                  <Text style={styles.editLabel}>Exercise Name</Text>
+                  <TextInput
+                    style={styles.editInput}
+                    value={editExName}
+                    onChangeText={setEditExName}
+                    placeholder="Exercise name"
+                    placeholderTextColor={theme.colors.text.muted}
+                  />
+                </View>
+
+                <View style={styles.editFormGrid}>
+                  <View style={styles.editFormGridItem}>
+                    <Text style={styles.editLabel}>Sets</Text>
+                    <TextInput
+                      style={styles.editInputSmall}
+                      value={editExSets}
+                      onChangeText={setEditExSets}
+                      keyboardType="numeric"
+                      placeholder="3"
+                      placeholderTextColor={theme.colors.text.muted}
+                    />
+                  </View>
+                  <View style={styles.editFormGridItem}>
+                    <Text style={styles.editLabel}>Reps</Text>
+                    <TextInput
+                      style={styles.editInputSmall}
+                      value={editExReps}
+                      onChangeText={setEditExReps}
+                      placeholder="8-12"
+                      placeholderTextColor={theme.colors.text.muted}
+                    />
+                  </View>
+                  <View style={styles.editFormGridItem}>
+                    <Text style={styles.editLabel}>Rest (s)</Text>
+                    <TextInput
+                      style={styles.editInputSmall}
+                      value={editExRest}
+                      onChangeText={setEditExRest}
+                      keyboardType="numeric"
+                      placeholder="60"
+                      placeholderTextColor={theme.colors.text.muted}
+                    />
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
         </TouchableOpacity>
       </Modal>
 
@@ -514,16 +770,8 @@ export default function WeightTrainingScreen() {
         transparent
         onRequestClose={() => setShowWorkoutModal(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowWorkoutModal(false)}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={styles.fullScreenModal}
-          >
+        <View style={styles.fullScreenModalContainer}>
+          <View style={styles.fullScreenModalContent}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setShowWorkoutModal(false)}>
                 <Ionicons name="close" size={28} color={theme.colors.text.primary} />
@@ -538,7 +786,7 @@ export default function WeightTrainingScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalContent}>
+            <ScrollView style={styles.workoutScrollView} contentContainerStyle={styles.workoutScrollContent}>
               {/* Workout Name */}
               <Text style={styles.inputLabel}>Workout Name</Text>
               <TextInput
@@ -549,30 +797,69 @@ export default function WeightTrainingScreen() {
                 placeholderTextColor={theme.colors.text.muted}
               />
 
-              {/* Logged Exercises */}
-              {workoutExercises.map((ex, index) => (
-                <View key={index} style={styles.loggedExercise}>
-                  <View style={styles.loggedExHeader}>
-                    <Text style={styles.loggedExName}>{ex.exercise_name}</Text>
-                    <TouchableOpacity 
-                      onPress={() => setWorkoutExercises(workoutExercises.filter((_, i) => i !== index))}
-                    >
-                      <Ionicons name="trash-outline" size={20} color={theme.colors.status.error} />
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.loggedSets}>
-                    {ex.sets.map((s: any, sIndex: number) => (
-                      <Text key={sIndex} style={styles.loggedSetText}>
-                        Set {s.set_number}: {s.weight} lbs × {s.reps}
-                      </Text>
-                    ))}
-                  </View>
+              {/* Pre-filled Exercises from Program */}
+              {workoutExercises.length > 0 && (
+                <View style={styles.prefilledSection}>
+                  <Text style={styles.prefilledTitle}>
+                    Exercises ({workoutExercises.length})
+                  </Text>
+                  <Text style={styles.prefilledHint}>
+                    Fill in your weights • Use arrows to reorder
+                  </Text>
+                  
+                  {workoutExercises.map((ex, exIndex) => (
+                    <View key={exIndex} style={styles.prefilledExercise}>
+                      <View style={styles.prefilledExHeader}>
+                        <View style={styles.exerciseReorderBtns}>
+                          <TouchableOpacity 
+                            onPress={() => moveExerciseUp(exIndex)}
+                            style={[styles.smallReorderBtn, exIndex === 0 && styles.reorderBtnDisabled]}
+                          >
+                            <Ionicons name="chevron-up" size={16} color={exIndex === 0 ? theme.colors.text.muted : '#7C3AED'} />
+                          </TouchableOpacity>
+                          <TouchableOpacity 
+                            onPress={() => moveExerciseDown(exIndex)}
+                            style={[styles.smallReorderBtn, exIndex === workoutExercises.length - 1 && styles.reorderBtnDisabled]}
+                          >
+                            <Ionicons name="chevron-down" size={16} color={exIndex === workoutExercises.length - 1 ? theme.colors.text.muted : '#7C3AED'} />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.prefilledExName}>{ex.exercise_name}</Text>
+                        <TouchableOpacity onPress={() => removeExerciseFromWorkout(exIndex)}>
+                          <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
+                      
+                      {ex.sets.map((set: any, setIndex: number) => (
+                        <View key={setIndex} style={styles.prefilledSet}>
+                          <Text style={styles.prefilledSetNum}>Set {set.set_number}</Text>
+                          <TextInput
+                            style={styles.prefilledInput}
+                            value={set.weight?.toString() || ''}
+                            onChangeText={(v) => updateExerciseSet(exIndex, setIndex, 'weight', v)}
+                            placeholder="Weight"
+                            placeholderTextColor={theme.colors.text.muted}
+                            keyboardType="numeric"
+                          />
+                          <Text style={styles.prefilledX}>×</Text>
+                          <TextInput
+                            style={styles.prefilledInput}
+                            value={set.reps?.toString() || ''}
+                            onChangeText={(v) => updateExerciseSet(exIndex, setIndex, 'reps', v)}
+                            placeholder="Reps"
+                            placeholderTextColor={theme.colors.text.muted}
+                            keyboardType="numeric"
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  ))}
                 </View>
-              ))}
+              )}
 
-              {/* Add Exercise Section */}
+              {/* Add New Exercise Section */}
               <View style={styles.addExerciseSection}>
-                <Text style={styles.inputLabel}>Add Exercise</Text>
+                <Text style={styles.inputLabel}>Add New Exercise</Text>
                 <View style={styles.exerciseInputRow}>
                   <TextInput
                     style={[styles.textInput, { flex: 1 }]}
@@ -624,13 +911,17 @@ export default function WeightTrainingScreen() {
                   </View>
                 ))}
 
-                <TouchableOpacity style={styles.addExerciseBtn} onPress={addExerciseToWorkout}>
-                  <Text style={styles.addExerciseBtnText}>+ Add Exercise to Workout</Text>
-                </TouchableOpacity>
+                {currentExercise && currentSets.length > 0 && (
+                  <TouchableOpacity style={styles.addExerciseBtn} onPress={addExerciseToWorkout}>
+                    <Text style={styles.addExerciseBtnText}>+ Add to Workout</Text>
+                  </TouchableOpacity>
+                )}
               </View>
+
+              <View style={{ height: 100 }} />
             </ScrollView>
-          </TouchableOpacity>
-        </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -869,12 +1160,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
-  fullScreenModal: {
+  fullScreenModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  fullScreenModalContent: {
+    flex: 1,
     backgroundColor: theme.colors.background.primary,
+    marginTop: 60,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '95%',
-    minHeight: '70%',
   },
   exerciseLibraryModal: {
     backgroundColor: theme.colors.background.primary,
@@ -896,14 +1191,26 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text.primary,
   },
-  modalContent: {
-    flex: 1,
-    padding: 16,
+  cancelBtn: {
+    fontSize: 16,
+    color: theme.colors.text.secondary,
   },
   saveBtn: {
     fontSize: 16,
     fontWeight: '600',
     color: theme.accentColors.primary,
+  },
+  programScrollView: {
+    flex: 1,
+  },
+  programScrollContent: {
+    padding: 16,
+  },
+  workoutScrollView: {
+    flex: 1,
+  },
+  workoutScrollContent: {
+    padding: 16,
   },
   programDetailDesc: {
     fontSize: 16,
@@ -913,7 +1220,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   programDetailMeta: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   programDetailFreq: {
     fontSize: 14,
@@ -922,6 +1229,14 @@ const createStyles = (theme: any) => StyleSheet.create({
   programDetailLevel: {
     fontSize: 14,
     color: theme.colors.text.primary,
+  },
+  instructionText: {
+    fontSize: 13,
+    color: theme.colors.text.muted,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
   },
   dayCard: {
     backgroundColor: theme.colors.background.card,
@@ -932,39 +1247,56 @@ const createStyles = (theme: any) => StyleSheet.create({
   dayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   dayName: {
     fontSize: 18,
     fontWeight: '700',
     color: theme.colors.text.primary,
   },
-  startDayBtn: {
+  dayFocus: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+    marginTop: 4,
+  },
+  startAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#7C3AED',
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 6,
   },
-  startDayBtnText: {
+  startAllBtnText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#fff',
   },
-  dayFocus: {
-    fontSize: 14,
-    color: theme.colors.text.secondary,
-    marginBottom: 12,
-  },
-  dayExercise: {
+  dayExerciseEditable: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.primary,
+  },
+  exerciseReorderBtns: {
+    marginRight: 8,
+  },
+  reorderBtn: {
+    padding: 4,
+  },
+  smallReorderBtn: {
+    padding: 2,
+  },
+  reorderBtnDisabled: {
+    opacity: 0.3,
+  },
+  dayExInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   dayExNumber: {
     width: 28,
@@ -979,7 +1311,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginRight: 12,
     overflow: 'hidden',
   },
-  dayExInfo: {
+  dayExDetails: {
     flex: 1,
   },
   dayExName: {
@@ -987,9 +1319,61 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.primary,
   },
-  dayExDetails: {
+  dayExMeta: {
     fontSize: 13,
     color: theme.colors.text.secondary,
+  },
+  deleteExBtn: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  editModalWrapper: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  editExerciseModal: {
+    backgroundColor: theme.colors.background.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+  },
+  editForm: {
+    padding: 20,
+  },
+  editFormRow: {
+    marginBottom: 16,
+  },
+  editLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+    marginBottom: 8,
+  },
+  editInput: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: theme.colors.text.primary,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+  },
+  editFormGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  editFormGridItem: {
+    flex: 1,
+  },
+  editInputSmall: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: theme.colors.text.primary,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    textAlign: 'center',
   },
   inputLabel: {
     fontSize: 14,
@@ -1007,6 +1391,70 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border.primary,
   },
+  prefilledSection: {
+    marginTop: 24,
+  },
+  prefilledTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    marginBottom: 4,
+  },
+  prefilledHint: {
+    fontSize: 13,
+    color: theme.colors.text.muted,
+    marginBottom: 16,
+  },
+  prefilledExercise: {
+    backgroundColor: theme.colors.background.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  prefilledExHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  prefilledExName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    marginLeft: 8,
+  },
+  prefilledSet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  prefilledSetNum: {
+    width: 50,
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+  },
+  prefilledInput: {
+    flex: 1,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: theme.colors.text.primary,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    textAlign: 'center',
+  },
+  prefilledX: {
+    fontSize: 14,
+    color: theme.colors.text.muted,
+  },
+  addExerciseSection: {
+    marginTop: 24,
+    backgroundColor: '#7C3AED10',
+    borderRadius: 16,
+    padding: 16,
+  },
   exerciseInputRow: {
     flexDirection: 'row',
     gap: 10,
@@ -1017,36 +1465,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: 48,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  loggedExercise: {
-    backgroundColor: theme.colors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  loggedExHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  loggedExName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-  },
-  loggedSets: {
-    gap: 4,
-  },
-  loggedSetText: {
-    fontSize: 14,
-    color: theme.colors.text.secondary,
-  },
-  addExerciseSection: {
-    marginTop: 24,
-    backgroundColor: '#7C3AED10',
-    borderRadius: 16,
-    padding: 16,
   },
   setsHeader: {
     flexDirection: 'row',
