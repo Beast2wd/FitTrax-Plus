@@ -134,16 +134,16 @@ export default function DashboardScreen() {
         <View style={styles.centered}>
           <FitTraxLogo size="xlarge" showText={true} />
           <Text style={[styles.welcomeText, { color: colors.text.primary }]}>
-            Welcome to FitTrax
+            {t('dashboard.welcome')}
           </Text>
           <Text style={[styles.welcomeSubtext, { color: colors.text.secondary }]}>
-            Create your profile to start your fitness journey
+            {t('dashboard.createProfile')}
           </Text>
           <TouchableOpacity 
             style={[styles.ctaButton, { backgroundColor: accent.primary }]}
             onPress={() => router.push('/profile')}
           >
-            <Text style={styles.ctaButtonText}>Get Started</Text>
+            <Text style={styles.ctaButtonText}>{t('dashboard.getStarted')}</Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
