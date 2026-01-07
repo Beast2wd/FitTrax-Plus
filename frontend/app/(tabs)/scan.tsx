@@ -140,7 +140,11 @@ export default function ScanScreen() {
   };
 
   const handleDelete = async () => {
-    if (!savedMealId) return;
+    if (!savedMealId) {
+      Alert.alert('Info', 'This scan was not saved to the database yet.');
+      reset();
+      return;
+    }
 
     Alert.alert(
       'Delete Scan',
@@ -156,6 +160,7 @@ export default function ScanScreen() {
               Alert.alert('Deleted', 'Food scan has been removed');
               reset();
             } catch (error) {
+              console.error('Delete error:', error);
               Alert.alert('Error', 'Failed to delete');
             }
           },
