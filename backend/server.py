@@ -581,6 +581,468 @@ async def delete_meal(meal_id: str):
     return {"message": "Meal deleted successfully"}
 
 # ============================================================================
+# NUTRITION TRACKING ENDPOINTS
+# ============================================================================
+
+# Sample food database for search
+FOOD_DATABASE = [
+    {"food_id": "fd_001", "name": "Chicken Breast (grilled)", "brand": "Generic", "serving_size": "4 oz (113g)", "calories": 187, "protein": 35, "carbs": 0, "fat": 4, "fiber": 0},
+    {"food_id": "fd_002", "name": "Brown Rice (cooked)", "brand": "Generic", "serving_size": "1 cup (195g)", "calories": 216, "protein": 5, "carbs": 45, "fat": 2, "fiber": 4},
+    {"food_id": "fd_003", "name": "Broccoli (steamed)", "brand": "Generic", "serving_size": "1 cup (156g)", "calories": 55, "protein": 4, "carbs": 11, "fat": 1, "fiber": 5},
+    {"food_id": "fd_004", "name": "Salmon (baked)", "brand": "Generic", "serving_size": "4 oz (113g)", "calories": 234, "protein": 25, "carbs": 0, "fat": 14, "fiber": 0},
+    {"food_id": "fd_005", "name": "Egg (large, whole)", "brand": "Generic", "serving_size": "1 large (50g)", "calories": 72, "protein": 6, "carbs": 0, "fat": 5, "fiber": 0},
+    {"food_id": "fd_006", "name": "Greek Yogurt (plain)", "brand": "Generic", "serving_size": "1 cup (245g)", "calories": 130, "protein": 22, "carbs": 8, "fat": 0, "fiber": 0},
+    {"food_id": "fd_007", "name": "Oatmeal (cooked)", "brand": "Generic", "serving_size": "1 cup (234g)", "calories": 158, "protein": 6, "carbs": 27, "fat": 3, "fiber": 4},
+    {"food_id": "fd_008", "name": "Banana (medium)", "brand": "Generic", "serving_size": "1 medium (118g)", "calories": 105, "protein": 1, "carbs": 27, "fat": 0, "fiber": 3},
+    {"food_id": "fd_009", "name": "Almonds (raw)", "brand": "Generic", "serving_size": "1 oz (28g)", "calories": 164, "protein": 6, "carbs": 6, "fat": 14, "fiber": 4},
+    {"food_id": "fd_010", "name": "Avocado", "brand": "Generic", "serving_size": "1/2 medium (68g)", "calories": 114, "protein": 1, "carbs": 6, "fat": 10, "fiber": 5},
+    {"food_id": "fd_011", "name": "Sweet Potato (baked)", "brand": "Generic", "serving_size": "1 medium (114g)", "calories": 103, "protein": 2, "carbs": 24, "fat": 0, "fiber": 4},
+    {"food_id": "fd_012", "name": "Quinoa (cooked)", "brand": "Generic", "serving_size": "1 cup (185g)", "calories": 222, "protein": 8, "carbs": 39, "fat": 4, "fiber": 5},
+    {"food_id": "fd_013", "name": "Tuna (canned in water)", "brand": "Generic", "serving_size": "3 oz (85g)", "calories": 73, "protein": 17, "carbs": 0, "fat": 1, "fiber": 0},
+    {"food_id": "fd_014", "name": "Spinach (raw)", "brand": "Generic", "serving_size": "2 cups (60g)", "calories": 14, "protein": 2, "carbs": 2, "fat": 0, "fiber": 1},
+    {"food_id": "fd_015", "name": "Cottage Cheese (low fat)", "brand": "Generic", "serving_size": "1 cup (226g)", "calories": 163, "protein": 28, "carbs": 6, "fat": 2, "fiber": 0},
+    {"food_id": "fd_016", "name": "Whole Wheat Bread", "brand": "Generic", "serving_size": "1 slice (43g)", "calories": 81, "protein": 4, "carbs": 14, "fat": 1, "fiber": 2},
+    {"food_id": "fd_017", "name": "Turkey Breast (deli)", "brand": "Generic", "serving_size": "3 oz (85g)", "calories": 72, "protein": 13, "carbs": 2, "fat": 1, "fiber": 0},
+    {"food_id": "fd_018", "name": "Black Beans (canned)", "brand": "Generic", "serving_size": "1/2 cup (130g)", "calories": 114, "protein": 8, "carbs": 20, "fat": 0, "fiber": 8},
+    {"food_id": "fd_019", "name": "Peanut Butter", "brand": "Generic", "serving_size": "2 tbsp (32g)", "calories": 188, "protein": 8, "carbs": 6, "fat": 16, "fiber": 2},
+    {"food_id": "fd_020", "name": "Apple (medium)", "brand": "Generic", "serving_size": "1 medium (182g)", "calories": 95, "protein": 0, "carbs": 25, "fat": 0, "fiber": 4},
+    {"food_id": "fd_021", "name": "Protein Shake", "brand": "Optimum Nutrition", "serving_size": "1 scoop (31g)", "calories": 120, "protein": 24, "carbs": 3, "fat": 1, "fiber": 1},
+    {"food_id": "fd_022", "name": "Ground Beef (93% lean)", "brand": "Generic", "serving_size": "4 oz (113g)", "calories": 170, "protein": 23, "carbs": 0, "fat": 8, "fiber": 0},
+    {"food_id": "fd_023", "name": "White Rice (cooked)", "brand": "Generic", "serving_size": "1 cup (158g)", "calories": 206, "protein": 4, "carbs": 45, "fat": 0, "fiber": 1},
+    {"food_id": "fd_024", "name": "Milk (2%)", "brand": "Generic", "serving_size": "1 cup (244g)", "calories": 122, "protein": 8, "carbs": 12, "fat": 5, "fiber": 0},
+    {"food_id": "fd_025", "name": "Cheese (cheddar)", "brand": "Generic", "serving_size": "1 oz (28g)", "calories": 113, "protein": 7, "carbs": 0, "fat": 9, "fiber": 0},
+]
+
+@api_router.get("/nutrition/goals/{user_id}")
+async def get_nutrition_goals(user_id: str):
+    """Get user's nutrition goals"""
+    goals = await db.nutrition_goals.find_one({"user_id": user_id})
+    
+    if not goals:
+        # Get user profile to calculate default goals
+        profile = await db.users.find_one({"user_id": user_id})
+        
+        if profile:
+            # Calculate based on profile
+            daily_calories = profile.get('daily_calorie_goal', 2000)
+            # Default macro split: 30% protein, 40% carbs, 30% fat
+            protein_cals = daily_calories * 0.30
+            carbs_cals = daily_calories * 0.40
+            fat_cals = daily_calories * 0.30
+            
+            goals = {
+                "user_id": user_id,
+                "daily_calories": daily_calories,
+                "protein_grams": round(protein_cals / 4),  # 4 cal per gram protein
+                "carbs_grams": round(carbs_cals / 4),  # 4 cal per gram carbs
+                "fat_grams": round(fat_cals / 9),  # 9 cal per gram fat
+                "protein_percentage": 30,
+                "carbs_percentage": 40,
+                "fat_percentage": 30,
+            }
+        else:
+            # Default goals
+            goals = {
+                "user_id": user_id,
+                "daily_calories": 2000,
+                "protein_grams": 150,
+                "carbs_grams": 200,
+                "fat_grams": 65,
+                "protein_percentage": 30,
+                "carbs_percentage": 40,
+                "fat_percentage": 30,
+            }
+    
+    goals.pop('_id', None)
+    return {"goals": goals}
+
+@api_router.post("/nutrition/goals/{user_id}")
+async def set_nutrition_goals(user_id: str, goals: NutritionGoalsUpdate):
+    """Set user's nutrition goals"""
+    update_data = {k: v for k, v in goals.dict().items() if v is not None}
+    update_data["user_id"] = user_id
+    update_data["updated_at"] = datetime.utcnow().isoformat()
+    
+    await db.nutrition_goals.update_one(
+        {"user_id": user_id},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"message": "Goals updated successfully", "goals": update_data}
+
+@api_router.get("/nutrition/foods/search")
+async def search_foods(q: str, user_id: Optional[str] = None):
+    """Search food database and user's custom foods"""
+    results = []
+    query_lower = q.lower()
+    
+    # Search built-in food database
+    for food in FOOD_DATABASE:
+        if query_lower in food["name"].lower() or query_lower in food.get("brand", "").lower():
+            results.append({**food, "source": "database"})
+    
+    # Search user's custom foods if user_id provided
+    if user_id:
+        custom_foods_cursor = db.custom_foods.find({
+            "user_id": user_id,
+            "$or": [
+                {"name": {"$regex": q, "$options": "i"}},
+                {"brand": {"$regex": q, "$options": "i"}}
+            ]
+        })
+        custom_foods = await custom_foods_cursor.to_list(length=50)
+        for food in custom_foods:
+            food.pop('_id', None)
+            food["source"] = "custom"
+            results.append(food)
+    
+    # Sort by relevance (exact matches first)
+    results.sort(key=lambda x: (
+        0 if query_lower == x["name"].lower() else 
+        1 if x["name"].lower().startswith(query_lower) else 2
+    ))
+    
+    return {"foods": results[:30]}
+
+@api_router.get("/nutrition/foods/frequent/{user_id}")
+async def get_frequent_foods(user_id: str, limit: int = 10):
+    """Get user's most frequently logged foods"""
+    # Aggregate meals to find frequent foods
+    pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$group": {
+            "_id": "$food_name",
+            "count": {"$sum": 1},
+            "avg_calories": {"$avg": "$calories"},
+            "avg_protein": {"$avg": "$protein"},
+            "avg_carbs": {"$avg": "$carbs"},
+            "avg_fat": {"$avg": "$fat"},
+            "last_logged": {"$max": "$timestamp"}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": limit}
+    ]
+    
+    frequent = await db.meals.aggregate(pipeline).to_list(length=limit)
+    
+    foods = [{
+        "name": item["_id"],
+        "log_count": item["count"],
+        "calories": round(item["avg_calories"]),
+        "protein": round(item["avg_protein"]),
+        "carbs": round(item["avg_carbs"]),
+        "fat": round(item["avg_fat"]),
+        "last_logged": item["last_logged"]
+    } for item in frequent]
+    
+    return {"frequent_foods": foods}
+
+@api_router.post("/nutrition/custom-foods/{user_id}")
+async def create_custom_food(user_id: str, food: CustomFoodCreate):
+    """Create a custom food item"""
+    custom_food = CustomFood(
+        food_id=f"custom_{int(datetime.now().timestamp() * 1000)}",
+        user_id=user_id,
+        **food.dict()
+    )
+    
+    await db.custom_foods.insert_one(custom_food.dict())
+    return {"message": "Custom food created", "food": custom_food.dict()}
+
+@api_router.get("/nutrition/custom-foods/{user_id}")
+async def get_custom_foods(user_id: str):
+    """Get user's custom foods"""
+    foods_cursor = db.custom_foods.find({"user_id": user_id}).sort("created_at", -1)
+    foods = await foods_cursor.to_list(length=100)
+    
+    for food in foods:
+        food.pop('_id', None)
+    
+    return {"custom_foods": foods}
+
+@api_router.delete("/nutrition/custom-foods/{food_id}")
+async def delete_custom_food(food_id: str):
+    """Delete a custom food"""
+    result = await db.custom_foods.delete_one({"food_id": food_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Custom food not found")
+    
+    return {"message": "Custom food deleted"}
+
+@api_router.post("/nutrition/quick-log")
+async def quick_log_food(food: QuickLogFood):
+    """Quick log a food item"""
+    meal = Meal(
+        meal_id=f"meal_{int(datetime.now().timestamp() * 1000)}",
+        user_id=food.user_id,
+        food_name=food.name,
+        calories=food.calories * food.servings,
+        protein=food.protein * food.servings,
+        carbs=food.carbs * food.servings,
+        fat=food.fat * food.servings,
+        meal_category=food.meal_category,
+        image_base64="",
+        timestamp=datetime.utcnow().isoformat()
+    )
+    
+    await db.meals.insert_one(meal.dict())
+    return {"message": "Food logged successfully", "meal": meal.dict()}
+
+@api_router.post("/nutrition/copy-meals")
+async def copy_meals(request: CopyMealRequest):
+    """Copy meals from one day to another"""
+    # Get meals from source date
+    source_start = f"{request.source_date}T00:00:00"
+    source_end = f"{request.source_date}T23:59:59"
+    
+    query = {
+        "user_id": request.user_id,
+        "timestamp": {"$gte": source_start, "$lte": source_end}
+    }
+    
+    if request.meal_category:
+        query["meal_category"] = request.meal_category
+    
+    source_meals = await db.meals.find(query).to_list(length=100)
+    
+    if not source_meals:
+        raise HTTPException(status_code=404, detail="No meals found on source date")
+    
+    # Create new meals for target date
+    new_meals = []
+    for meal in source_meals:
+        new_meal = {
+            "meal_id": f"meal_{int(datetime.now().timestamp() * 1000)}_{len(new_meals)}",
+            "user_id": request.user_id,
+            "food_name": meal["food_name"],
+            "calories": meal["calories"],
+            "protein": meal["protein"],
+            "carbs": meal["carbs"],
+            "fat": meal["fat"],
+            "meal_category": meal["meal_category"],
+            "image_base64": meal.get("image_base64", ""),
+            "timestamp": f"{request.target_date}T{meal['timestamp'].split('T')[1] if 'T' in meal['timestamp'] else '12:00:00'}"
+        }
+        new_meals.append(new_meal)
+    
+    if new_meals:
+        await db.meals.insert_many(new_meals)
+    
+    return {"message": f"Copied {len(new_meals)} meals", "meals_copied": len(new_meals)}
+
+@api_router.get("/nutrition/daily-summary/{user_id}")
+async def get_daily_summary(user_id: str, date: Optional[str] = None):
+    """Get detailed daily nutrition summary"""
+    if not date:
+        date = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    start_time = f"{date}T00:00:00"
+    end_time = f"{date}T23:59:59"
+    
+    # Get meals for the day
+    meals_cursor = db.meals.find({
+        "user_id": user_id,
+        "timestamp": {"$gte": start_time, "$lte": end_time}
+    }).sort("timestamp", 1)
+    
+    meals = await meals_cursor.to_list(length=100)
+    
+    # Get user's goals
+    goals_result = await get_nutrition_goals(user_id)
+    goals = goals_result["goals"]
+    
+    # Calculate totals
+    totals = {
+        "calories": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0
+    }
+    
+    # Group by meal category
+    by_category = {
+        "breakfast": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
+        "lunch": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
+        "dinner": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
+        "snack": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
+    }
+    
+    for meal in meals:
+        meal.pop('_id', None)
+        category = meal.get("meal_category", "snack")
+        if category not in by_category:
+            category = "snack"
+        
+        by_category[category]["meals"].append(meal)
+        by_category[category]["totals"]["calories"] += meal.get("calories", 0)
+        by_category[category]["totals"]["protein"] += meal.get("protein", 0)
+        by_category[category]["totals"]["carbs"] += meal.get("carbs", 0)
+        by_category[category]["totals"]["fat"] += meal.get("fat", 0)
+        
+        totals["calories"] += meal.get("calories", 0)
+        totals["protein"] += meal.get("protein", 0)
+        totals["carbs"] += meal.get("carbs", 0)
+        totals["fat"] += meal.get("fat", 0)
+    
+    # Calculate remaining
+    remaining = {
+        "calories": goals["daily_calories"] - totals["calories"],
+        "protein": goals["protein_grams"] - totals["protein"],
+        "carbs": goals["carbs_grams"] - totals["carbs"],
+        "fat": goals["fat_grams"] - totals["fat"]
+    }
+    
+    # Calculate progress percentages
+    progress = {
+        "calories": min(100, round((totals["calories"] / goals["daily_calories"]) * 100)) if goals["daily_calories"] > 0 else 0,
+        "protein": min(100, round((totals["protein"] / goals["protein_grams"]) * 100)) if goals["protein_grams"] > 0 else 0,
+        "carbs": min(100, round((totals["carbs"] / goals["carbs_grams"]) * 100)) if goals["carbs_grams"] > 0 else 0,
+        "fat": min(100, round((totals["fat"] / goals["fat_grams"]) * 100)) if goals["fat_grams"] > 0 else 0
+    }
+    
+    return {
+        "date": date,
+        "totals": totals,
+        "goals": goals,
+        "remaining": remaining,
+        "progress": progress,
+        "by_category": by_category,
+        "meal_count": len(meals)
+    }
+
+@api_router.get("/nutrition/weekly-summary/{user_id}")
+async def get_weekly_summary(user_id: str):
+    """Get weekly nutrition trends"""
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=7)
+    
+    # Get goals
+    goals_result = await get_nutrition_goals(user_id)
+    goals = goals_result["goals"]
+    
+    # Get meals for the week
+    meals_cursor = db.meals.find({
+        "user_id": user_id,
+        "timestamp": {
+            "$gte": start_date.strftime("%Y-%m-%dT00:00:00"),
+            "$lte": end_date.strftime("%Y-%m-%dT23:59:59")
+        }
+    })
+    
+    meals = await meals_cursor.to_list(length=1000)
+    
+    # Group by day
+    daily_data = {}
+    for i in range(7):
+        day = (end_date - timedelta(days=i)).strftime("%Y-%m-%d")
+        daily_data[day] = {
+            "calories": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "meal_count": 0
+        }
+    
+    for meal in meals:
+        day = meal["timestamp"][:10]
+        if day in daily_data:
+            daily_data[day]["calories"] += meal.get("calories", 0)
+            daily_data[day]["protein"] += meal.get("protein", 0)
+            daily_data[day]["carbs"] += meal.get("carbs", 0)
+            daily_data[day]["fat"] += meal.get("fat", 0)
+            daily_data[day]["meal_count"] += 1
+    
+    # Calculate averages
+    days_with_data = sum(1 for d in daily_data.values() if d["meal_count"] > 0)
+    
+    averages = {
+        "calories": round(sum(d["calories"] for d in daily_data.values()) / max(days_with_data, 1)),
+        "protein": round(sum(d["protein"] for d in daily_data.values()) / max(days_with_data, 1)),
+        "carbs": round(sum(d["carbs"] for d in daily_data.values()) / max(days_with_data, 1)),
+        "fat": round(sum(d["fat"] for d in daily_data.values()) / max(days_with_data, 1))
+    }
+    
+    # Goal adherence (days within 10% of goal)
+    adherence = {
+        "calories": sum(1 for d in daily_data.values() if d["meal_count"] > 0 and abs(d["calories"] - goals["daily_calories"]) <= goals["daily_calories"] * 0.1),
+        "protein": sum(1 for d in daily_data.values() if d["meal_count"] > 0 and abs(d["protein"] - goals["protein_grams"]) <= goals["protein_grams"] * 0.1)
+    }
+    
+    return {
+        "daily_data": daily_data,
+        "averages": averages,
+        "goals": goals,
+        "days_logged": days_with_data,
+        "adherence": adherence,
+        "insights": generate_nutrition_insights(averages, goals, daily_data)
+    }
+
+def generate_nutrition_insights(averages: dict, goals: dict, daily_data: dict) -> List[str]:
+    """Generate actionable nutrition insights"""
+    insights = []
+    
+    # Calorie insights
+    cal_diff = averages["calories"] - goals["daily_calories"]
+    if cal_diff > 200:
+        insights.append(f"You're averaging {abs(round(cal_diff))} calories over your daily goal. Consider smaller portions or lower-calorie alternatives.")
+    elif cal_diff < -300:
+        insights.append(f"You're averaging {abs(round(cal_diff))} calories under your goal. Make sure you're eating enough to fuel your activities.")
+    else:
+        insights.append("Great job! Your calorie intake is on track with your goals.")
+    
+    # Protein insights
+    if averages["protein"] < goals["protein_grams"] * 0.8:
+        insights.append(f"Your protein intake is lower than recommended. Try adding more lean meats, eggs, or legumes.")
+    elif averages["protein"] >= goals["protein_grams"]:
+        insights.append("Excellent protein intake! This supports muscle maintenance and recovery.")
+    
+    # Consistency insight
+    days_logged = sum(1 for d in daily_data.values() if d["meal_count"] > 0)
+    if days_logged >= 6:
+        insights.append("You've been consistent with tracking! Keep it up for best results.")
+    elif days_logged < 4:
+        insights.append("Try to log meals more consistently for accurate insights and better progress tracking.")
+    
+    return insights
+
+@api_router.post("/nutrition/saved-meals/{user_id}")
+async def create_saved_meal(user_id: str, name: str, description: str, foods: List[dict], meal_category: str):
+    """Save a meal/recipe for quick logging"""
+    # Calculate totals
+    total_calories = sum(f.get("calories", 0) for f in foods)
+    total_protein = sum(f.get("protein", 0) for f in foods)
+    total_carbs = sum(f.get("carbs", 0) for f in foods)
+    total_fat = sum(f.get("fat", 0) for f in foods)
+    
+    saved_meal = SavedMeal(
+        saved_meal_id=f"saved_{int(datetime.now().timestamp() * 1000)}",
+        user_id=user_id,
+        name=name,
+        description=description,
+        foods=foods,
+        total_calories=total_calories,
+        total_protein=total_protein,
+        total_carbs=total_carbs,
+        total_fat=total_fat,
+        meal_category=meal_category
+    )
+    
+    await db.saved_meals.insert_one(saved_meal.dict())
+    return {"message": "Meal saved", "saved_meal": saved_meal.dict()}
+
+@api_router.get("/nutrition/saved-meals/{user_id}")
+async def get_saved_meals(user_id: str):
+    """Get user's saved meals"""
+    meals_cursor = db.saved_meals.find({"user_id": user_id}).sort("created_at", -1)
+    meals = await meals_cursor.to_list(length=50)
+    
+    for meal in meals:
+        meal.pop('_id', None)
+    
+    return {"saved_meals": meals}
+
+# ============================================================================
 # WORKOUTS ENDPOINTS
 # ============================================================================
 
