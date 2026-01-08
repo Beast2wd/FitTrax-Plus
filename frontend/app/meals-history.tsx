@@ -193,6 +193,9 @@ export default function MealsHistoryScreen() {
       loadDailySummary();
       loadFrequentFoods();
       loadWeeklyData();
+    } else {
+      // No userId, set loading false and show empty state
+      setLoading(false);
     }
   }, [userId, selectedDate]);
 
