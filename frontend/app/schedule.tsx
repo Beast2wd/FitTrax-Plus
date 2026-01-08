@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,20 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  FlatList,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
-import { Picker } from '@react-native-picker/picker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeStore } from '../stores/themeStore';
 import { useUserStore } from '../stores/userStore';
 import { plansAPI } from '../services/api';
 import * as Notifications from 'expo-notifications';
-import { format, addDays, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
+import { format, addDays, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { router } from 'expo-router';
 import axios from 'axios';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
@@ -58,6 +60,55 @@ const DAY_OPTIONS = Array.from({ length: 7 }, (_, i) => ({
   label: `Day ${i + 1}`,
 }));
 
+// Custom Scrollable Picker Component
+const ScrollPicker = ({ 
+  options, 
+  selectedValue, 
+  onValueChange, 
+  theme 
+}: { 
+  options: { value: string; label: string }[];
+  selectedValue: string;
+  onValueChange: (value: string) => void;
+  theme: any;
+}) => {
+  const colors = theme.colors;
+  const accent = theme.accentColors;
+  
+  return (
+    <ScrollView 
+      style={{ maxHeight: 250 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {options.map((option) => (
+        <TouchableOpacity
+          key={option.value}
+          style={[
+            styles.pickerOption,
+            { backgroundColor: colors.background.secondary },
+            selectedValue === option.value && { 
+              backgroundColor: accent.primary,
+              borderColor: accent.primary,
+            }
+          ]}
+          onPress={() => onValueChange(option.value)}
+        >
+          <Text style={[
+            styles.pickerOptionText,
+            { color: colors.text.primary },
+            selectedValue === option.value && { color: '#fff', fontWeight: '700' }
+          ]}>
+            {option.label}
+          </Text>
+          {selectedValue === option.value && (
+            <Ionicons name="checkmark" size={20} color="#fff" />
+          )}
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+};
+
 export default function ScheduleScreen() {
   const { theme } = useThemeStore();
   const { userId } = useUserStore();
@@ -82,12 +133,10 @@ export default function ScheduleScreen() {
   const [planPickerVisible, setPlanPickerVisible] = useState(false);
   const [dayPickerVisible, setDayPickerVisible] = useState(false);
   const [timePickerVisible, setTimePickerVisible] = useState(false);
-  const [tempPlan, setTempPlan] = useState('');
-  const [tempDay, setTempDay] = useState('1');
-  const [tempTime, setTempTime] = useState('08:00');
 
   const colors = theme.colors;
   const accent = theme.accentColors;
+  const swipeableRefs = useRef<{ [key: string]: Swipeable | null }>({});
 
   useEffect(() => {
     if (userId) {
@@ -122,7 +171,6 @@ export default function ScheduleScreen() {
         axios.get(`${API_URL}/api/weight-training/history/${userId}?days=90`),
       ]);
       
-      // Combine all plans and user's active plans for selection
       const allAvailablePlans = [
         ...(plansData.plans || []).map((p: any) => ({ ...p, type: 'template' })),
         ...(userPlansData.user_plans || []).map((p: any) => ({ 
@@ -166,7 +214,7 @@ export default function ScheduleScreen() {
             seconds: secondsFromNow,
           },
         });
-        console.log('Notification scheduled:', identifier, 'in', secondsFromNow, 'seconds');
+        console.log('Notification scheduled:', identifier);
         return identifier;
       }
     } catch (error) {
@@ -238,6 +286,18 @@ export default function ScheduleScreen() {
   };
 
   const handleDeleteWorkout = async (scheduledId: string) => {
+    try {
+      await fetch(
+        `${API_URL}/api/scheduled-workouts/${scheduledId}`,
+        { method: 'DELETE' }
+      );
+      loadData();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete workout');
+    }
+  };
+
+  const confirmDeleteWorkout = (scheduledId: string) => {
     Alert.alert(
       'Delete Workout',
       'Are you sure you want to delete this scheduled workout?',
@@ -246,17 +306,7 @@ export default function ScheduleScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await fetch(
-                `${API_URL}/api/scheduled-workouts/${scheduledId}`,
-                { method: 'DELETE' }
-              );
-              loadData();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete workout');
-            }
-          },
+          onPress: () => handleDeleteWorkout(scheduledId),
         },
       ]
     );
@@ -324,11 +374,23 @@ export default function ScheduleScreen() {
     { label: '+3 Days', date: format(addDays(new Date(), 3), 'yyyy-MM-dd') },
   ];
 
+  // Render swipe delete action
+  const renderRightActions = (scheduledId: string) => {
+    return (
+      <TouchableOpacity
+        style={[localStyles.deleteAction, { backgroundColor: colors.status.error }]}
+        onPress={() => confirmDeleteWorkout(scheduledId)}
+      >
+        <Ionicons name="trash" size={24} color="#fff" />
+        <Text style={localStyles.deleteActionText}>Delete</Text>
+      </TouchableOpacity>
+    );
+  };
+
   // Build marked dates for calendar
   const markedDates = (() => {
     const marks: any = {};
     
-    // Add scheduled workouts
     scheduledWorkouts.forEach(workout => {
       const date = workout.scheduled_date;
       if (!marks[date]) {
@@ -340,23 +402,20 @@ export default function ScheduleScreen() {
       });
     });
 
-    // Add completed workouts from weight training history
     completedWorkouts.forEach(workout => {
       const date = format(new Date(workout.timestamp), 'yyyy-MM-dd');
       if (!marks[date]) {
         marks[date] = { dots: [] };
       }
-      // Check if this completed workout isn't already counted
       const alreadyMarked = marks[date].dots.some((d: any) => d.color === '#10B981');
       if (!alreadyMarked) {
         marks[date].dots.push({
-          color: '#10B981', // Green for completed
+          color: '#10B981',
           key: `completed_${workout.workout_id}`
         });
       }
     });
 
-    // Add selected date highlight
     if (marks[selectedDate]) {
       marks[selectedDate] = {
         ...marks[selectedDate],
@@ -387,599 +446,602 @@ export default function ScheduleScreen() {
     .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
     .slice(0, 5);
 
-  const styles = createStyles(theme);
+  const localStyles = createStyles(theme);
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={accent.primary} />
-        </View>
-      </SafeAreaView>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaView style={localStyles.container}>
+          <View style={localStyles.centered}>
+            <ActivityIndicator size="large" color={accent.primary} />
+          </View>
+        </SafeAreaView>
+      </GestureHandlerRootView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Workout Schedule</Text>
-          <TouchableOpacity onPress={openAddWorkoutModal} style={styles.addBtn}>
-            <Ionicons name="add" size={28} color={accent.primary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Legend */}
-        <View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: accent.primary }]} />
-            <Text style={styles.legendText}>Scheduled</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
-            <Text style={styles.legendText}>Completed</Text>
-          </View>
-        </View>
-
-        {/* Quick Add Button */}
-        <TouchableOpacity style={styles.quickAddButton} onPress={openAddWorkoutModal}>
-          <Ionicons name="add-circle" size={24} color="#fff" />
-          <Text style={styles.quickAddText}>Schedule a Workout</Text>
-        </TouchableOpacity>
-
-        {/* Upcoming Workouts */}
-        {upcomingWorkouts.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Upcoming</Text>
-            {upcomingWorkouts.map((workout) => {
-              const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
-              return (
-                <View key={workout.scheduled_id} style={styles.upcomingCard}>
-                  <View style={styles.upcomingLeft}>
-                    <View style={styles.upcomingDate}>
-                      <Text style={styles.upcomingDateText}>{formatDateLabel(workout.scheduled_date)}</Text>
-                      <Text style={styles.upcomingTime}>{formatTime(workout.scheduled_time)}</Text>
-                    </View>
-                    <View style={styles.upcomingInfo}>
-                      <Text style={styles.upcomingPlan}>
-                        {planDetails?.name || 'Workout'}
-                      </Text>
-                      <Text style={styles.upcomingDay}>Day {workout.workout_day}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.upcomingActions}>
-                    <TouchableOpacity
-                      style={styles.rescheduleBtn}
-                      onPress={() => openRescheduleModal(workout)}
-                    >
-                      <Ionicons name="calendar-outline" size={20} color={accent.primary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.completeBtn}
-                      onPress={() => handleCompleteWorkout(workout.scheduled_id)}
-                    >
-                      <Ionicons name="checkmark" size={20} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Calendar */}
-        <View style={styles.card}>
-          <Calendar
-            onDayPress={(day: any) => setSelectedDate(day.dateString)}
-            markedDates={markedDates}
-            markingType="multi-dot"
-            theme={{
-              calendarBackground: colors.background.card,
-              textSectionTitleColor: colors.text.secondary,
-              dayTextColor: colors.text.primary,
-              todayTextColor: accent.primary,
-              selectedDayBackgroundColor: accent.primary,
-              selectedDayTextColor: '#ffffff',
-              arrowColor: accent.primary,
-              monthTextColor: colors.text.primary,
-              textDayFontWeight: '500',
-              textMonthFontWeight: '700',
-              textDisabledColor: colors.text.muted,
-            }}
-          />
-        </View>
-
-        {/* Workouts for selected date */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{formatDateLabel(selectedDate)}</Text>
-            <TouchableOpacity 
-              style={styles.addForDateBtn}
-              onPress={() => setModalVisible(true)}
-            >
-              <Ionicons name="add" size={20} color={accent.primary} />
-              <Text style={styles.addForDateText}>Add</Text>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={localStyles.container}>
+        <ScrollView contentContainerStyle={localStyles.scrollContent}>
+          {/* Header */}
+          <View style={localStyles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={localStyles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={localStyles.title}>Workout Schedule</Text>
+            <TouchableOpacity onPress={openAddWorkoutModal} style={localStyles.addBtn}>
+              <Ionicons name="add" size={28} color={accent.primary} />
             </TouchableOpacity>
           </View>
-          
-          {workoutsForSelectedDate.length === 0 && completedForSelectedDate.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color={colors.text.muted} />
-              <Text style={styles.emptyText}>No workouts for this day</Text>
-              <TouchableOpacity 
-                style={styles.emptyButton}
-                onPress={() => setModalVisible(true)}
-              >
-                <Text style={styles.emptyButtonText}>Add Workout</Text>
-              </TouchableOpacity>
+
+          {/* Legend */}
+          <View style={localStyles.legend}>
+            <View style={localStyles.legendItem}>
+              <View style={[localStyles.legendDot, { backgroundColor: accent.primary }]} />
+              <Text style={localStyles.legendText}>Scheduled</Text>
             </View>
-          ) : (
-            <>
-              {/* Scheduled Workouts */}
-              {workoutsForSelectedDate.map((workout) => {
+            <View style={localStyles.legendItem}>
+              <View style={[localStyles.legendDot, { backgroundColor: '#10B981' }]} />
+              <Text style={localStyles.legendText}>Completed</Text>
+            </View>
+          </View>
+
+          {/* Swipe hint */}
+          <View style={localStyles.swipeHint}>
+            <Ionicons name="arrow-back" size={14} color={colors.text.muted} />
+            <Text style={localStyles.swipeHintText}>Swipe left on workouts to delete</Text>
+          </View>
+
+          {/* Quick Add Button */}
+          <TouchableOpacity style={localStyles.quickAddButton} onPress={openAddWorkoutModal}>
+            <Ionicons name="add-circle" size={24} color="#fff" />
+            <Text style={localStyles.quickAddText}>Schedule a Workout</Text>
+          </TouchableOpacity>
+
+          {/* Upcoming Workouts */}
+          {upcomingWorkouts.length > 0 && (
+            <View style={localStyles.section}>
+              <Text style={localStyles.sectionTitle}>Upcoming</Text>
+              {upcomingWorkouts.map((workout) => {
                 const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
                 return (
-                  <View key={workout.scheduled_id} style={[
-                    styles.workoutCard,
-                    workout.completed && styles.workoutCardCompleted
-                  ]}>
-                    <View style={styles.workoutHeader}>
-                      <View style={styles.workoutTimeContainer}>
-                        <Ionicons 
-                          name={workout.completed ? "checkmark-circle" : "time-outline"} 
-                          size={20} 
-                          color={workout.completed ? colors.status.success : accent.primary} 
-                        />
-                        <Text style={styles.workoutTime}>{formatTime(workout.scheduled_time)}</Text>
-                      </View>
-                      {!workout.completed && (
-                        <View style={styles.workoutActions}>
-                          <TouchableOpacity
-                            onPress={() => openRescheduleModal(workout)}
-                            style={styles.workoutActionBtn}
-                          >
-                            <Ionicons name="swap-horizontal" size={18} color={colors.text.secondary} />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={() => handleDeleteWorkout(workout.scheduled_id)}
-                            style={styles.workoutActionBtn}
-                          >
-                            <Ionicons name="trash-outline" size={18} color={colors.status.error} />
-                          </TouchableOpacity>
+                  <Swipeable
+                    key={workout.scheduled_id}
+                    ref={(ref) => { swipeableRefs.current[workout.scheduled_id] = ref; }}
+                    renderRightActions={() => renderRightActions(workout.scheduled_id)}
+                    overshootRight={false}
+                  >
+                    <View style={localStyles.upcomingCard}>
+                      <View style={localStyles.upcomingLeft}>
+                        <View style={localStyles.upcomingDate}>
+                          <Text style={localStyles.upcomingDateText}>{formatDateLabel(workout.scheduled_date)}</Text>
+                          <Text style={localStyles.upcomingTime}>{formatTime(workout.scheduled_time)}</Text>
                         </View>
-                      )}
-                    </View>
-                    <Text style={styles.workoutPlan}>
-                      {planDetails?.name || 'Workout Plan'}
-                    </Text>
-                    <Text style={styles.workoutDay}>Day {workout.workout_day}</Text>
-                    {!workout.completed && (
-                      <TouchableOpacity
-                        style={styles.markCompleteBtn}
-                        onPress={() => handleCompleteWorkout(workout.scheduled_id)}
-                      >
-                        <Text style={styles.markCompleteBtnText}>Mark Complete</Text>
-                      </TouchableOpacity>
-                    )}
-                    {workout.completed && (
-                      <View style={styles.completedBadge}>
-                        <Ionicons name="checkmark-circle" size={16} color={colors.status.success} />
-                        <Text style={styles.completedText}>Completed</Text>
+                        <View style={localStyles.upcomingInfo}>
+                          <Text style={localStyles.upcomingPlan}>
+                            {planDetails?.name || 'Workout'}
+                          </Text>
+                          <Text style={localStyles.upcomingDay}>Day {workout.workout_day}</Text>
+                        </View>
                       </View>
-                    )}
-                  </View>
+                      <View style={localStyles.upcomingActions}>
+                        <TouchableOpacity
+                          style={localStyles.rescheduleBtn}
+                          onPress={() => openRescheduleModal(workout)}
+                        >
+                          <Ionicons name="calendar-outline" size={20} color={accent.primary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={localStyles.completeBtn}
+                          onPress={() => handleCompleteWorkout(workout.scheduled_id)}
+                        >
+                          <Ionicons name="checkmark" size={20} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Swipeable>
                 );
               })}
-
-              {/* Completed Workouts from Weight Training */}
-              {completedForSelectedDate.map((workout, index) => (
-                <View key={`completed_${index}`} style={[styles.workoutCard, styles.workoutCardCompleted]}>
-                  <View style={styles.workoutHeader}>
-                    <View style={styles.workoutTimeContainer}>
-                      <MaterialCommunityIcons name="dumbbell" size={20} color="#10B981" />
-                      <Text style={styles.workoutTime}>
-                        {format(new Date(workout.timestamp), 'h:mm a')}
-                      </Text>
-                    </View>
-                    <View style={[styles.completedBadgeSmall]}>
-                      <Text style={styles.completedBadgeText}>Logged</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.workoutPlan}>{workout.workout_name}</Text>
-                  <Text style={styles.workoutDay}>
-                    {workout.exercises?.length || 0} exercises • {workout.duration_minutes || 0} min
-                  </Text>
-                  <View style={styles.completedBadge}>
-                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                    <Text style={styles.completedText}>Workout Completed</Text>
-                  </View>
-                </View>
-              ))}
-            </>
+            </View>
           )}
-        </View>
-      </ScrollView>
 
-      {/* Add Workout Modal */}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setModalVisible(false)}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={styles.modalContent}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Schedule Workout</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
+          {/* Calendar */}
+          <View style={localStyles.card}>
+            <Calendar
+              onDayPress={(day: any) => setSelectedDate(day.dateString)}
+              markedDates={markedDates}
+              markingType="multi-dot"
+              theme={{
+                calendarBackground: colors.background.card,
+                textSectionTitleColor: colors.text.secondary,
+                dayTextColor: colors.text.primary,
+                todayTextColor: accent.primary,
+                selectedDayBackgroundColor: accent.primary,
+                selectedDayTextColor: '#ffffff',
+                arrowColor: accent.primary,
+                monthTextColor: colors.text.primary,
+                textDayFontWeight: '500',
+                textMonthFontWeight: '700',
+                textDisabledColor: colors.text.muted,
+              }}
+            />
+          </View>
+
+          {/* Workouts for selected date */}
+          <View style={localStyles.section}>
+            <View style={localStyles.sectionHeader}>
+              <Text style={localStyles.sectionTitle}>{formatDateLabel(selectedDate)}</Text>
+              <TouchableOpacity 
+                style={localStyles.addForDateBtn}
+                onPress={() => setModalVisible(true)}
+              >
+                <Ionicons name="add" size={20} color={accent.primary} />
+                <Text style={localStyles.addForDateText}>Add</Text>
               </TouchableOpacity>
             </View>
-
-            <ScrollView style={styles.modalScroll}>
-              {/* Quick Date Selection */}
-              <Text style={styles.label}>Date</Text>
-              <View style={styles.quickDates}>
-                {quickDateOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.date}
-                    style={[
-                      styles.quickDateBtn,
-                      selectedDate === option.date && styles.quickDateBtnActive
-                    ]}
-                    onPress={() => setSelectedDate(option.date)}
-                  >
-                    <Text style={[
-                      styles.quickDateText,
-                      selectedDate === option.date && styles.quickDateTextActive
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              
-              <Text style={styles.selectedDateLabel}>
-                Selected: {formatDateLabel(selectedDate)} ({format(new Date(selectedDate + 'T00:00:00'), 'MMM d, yyyy')})
-              </Text>
-
-              {/* Plan Selection - Wheel Picker */}
-              <Text style={styles.label}>Select Plan</Text>
-              {allPlans.length === 0 ? (
-                <View style={styles.noPlansBanner}>
-                  <Ionicons name="information-circle" size={20} color="#F59E0B" />
-                  <Text style={styles.noPlansText}>
-                    No workout plans available. Go to Plans tab to start or create a workout plan first.
-                  </Text>
-                </View>
-              ) : (
+            
+            {workoutsForSelectedDate.length === 0 && completedForSelectedDate.length === 0 ? (
+              <View style={localStyles.emptyState}>
+                <Ionicons name="calendar-outline" size={48} color={colors.text.muted} />
+                <Text style={localStyles.emptyText}>No workouts for this day</Text>
                 <TouchableOpacity 
-                  style={styles.pickerButton}
-                  onPress={() => {
-                    setTempPlan(selectedPlan);
-                    setPlanPickerVisible(true);
-                  }}
+                  style={localStyles.emptyButton}
+                  onPress={() => setModalVisible(true)}
                 >
-                  <View style={styles.pickerButtonContent}>
-                    <MaterialCommunityIcons name="dumbbell" size={20} color={accent.primary} />
-                    <Text style={[
-                      styles.pickerButtonText,
-                      !selectedPlan && { color: colors.text.muted }
-                    ]}>
-                      {getSelectedPlanName()}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                  <Text style={localStyles.emptyButtonText}>Add Workout</Text>
                 </TouchableOpacity>
-              )}
+              </View>
+            ) : (
+              <>
+                {/* Scheduled Workouts */}
+                {workoutsForSelectedDate.map((workout) => {
+                  const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
+                  return (
+                    <Swipeable
+                      key={workout.scheduled_id}
+                      ref={(ref) => { swipeableRefs.current[`date_${workout.scheduled_id}`] = ref; }}
+                      renderRightActions={() => renderRightActions(workout.scheduled_id)}
+                      overshootRight={false}
+                    >
+                      <View style={[
+                        localStyles.workoutCard,
+                        workout.completed && localStyles.workoutCardCompleted
+                      ]}>
+                        <View style={localStyles.workoutHeader}>
+                          <View style={localStyles.workoutTimeContainer}>
+                            <Ionicons 
+                              name={workout.completed ? "checkmark-circle" : "time-outline"} 
+                              size={20} 
+                              color={workout.completed ? colors.status.success : accent.primary} 
+                            />
+                            <Text style={localStyles.workoutTime}>{formatTime(workout.scheduled_time)}</Text>
+                          </View>
+                          {!workout.completed && (
+                            <View style={localStyles.workoutActions}>
+                              <TouchableOpacity
+                                onPress={() => openRescheduleModal(workout)}
+                                style={localStyles.workoutActionBtn}
+                              >
+                                <Ionicons name="swap-horizontal" size={18} color={colors.text.secondary} />
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={localStyles.workoutPlan}>
+                          {planDetails?.name || 'Workout Plan'}
+                        </Text>
+                        <Text style={localStyles.workoutDay}>Day {workout.workout_day}</Text>
+                        {!workout.completed && (
+                          <TouchableOpacity
+                            style={localStyles.markCompleteBtn}
+                            onPress={() => handleCompleteWorkout(workout.scheduled_id)}
+                          >
+                            <Text style={localStyles.markCompleteBtnText}>Mark Complete</Text>
+                          </TouchableOpacity>
+                        )}
+                        {workout.completed && (
+                          <View style={localStyles.completedBadge}>
+                            <Ionicons name="checkmark-circle" size={16} color={colors.status.success} />
+                            <Text style={localStyles.completedText}>Completed</Text>
+                          </View>
+                        )}
+                      </View>
+                    </Swipeable>
+                  );
+                })}
 
-              {/* Workout Day - Wheel Picker */}
-              <Text style={styles.label}>Workout Day</Text>
-              <TouchableOpacity 
-                style={styles.pickerButton}
-                onPress={() => {
-                  setTempDay(selectedDay);
-                  setDayPickerVisible(true);
-                }}
-              >
-                <View style={styles.pickerButtonContent}>
-                  <Ionicons name="calendar" size={20} color={accent.primary} />
-                  <Text style={styles.pickerButtonText}>Day {selectedDay}</Text>
-                </View>
-                <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
-              </TouchableOpacity>
+                {/* Completed Workouts from Weight Training */}
+                {completedForSelectedDate.map((workout, index) => (
+                  <View key={`completed_${index}`} style={[localStyles.workoutCard, localStyles.workoutCardCompleted]}>
+                    <View style={localStyles.workoutHeader}>
+                      <View style={localStyles.workoutTimeContainer}>
+                        <MaterialCommunityIcons name="dumbbell" size={20} color="#10B981" />
+                        <Text style={localStyles.workoutTime}>
+                          {format(new Date(workout.timestamp), 'h:mm a')}
+                        </Text>
+                      </View>
+                      <View style={[localStyles.completedBadgeSmall]}>
+                        <Text style={localStyles.completedBadgeText}>Logged</Text>
+                      </View>
+                    </View>
+                    <Text style={localStyles.workoutPlan}>{workout.workout_name}</Text>
+                    <Text style={localStyles.workoutDay}>
+                      {workout.exercises?.length || 0} exercises • {workout.duration_minutes || 0} min
+                    </Text>
+                    <View style={localStyles.completedBadge}>
+                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                      <Text style={localStyles.completedText}>Workout Completed</Text>
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+          </View>
+        </ScrollView>
 
-              {/* Time - Wheel Picker */}
-              <Text style={styles.label}>Time</Text>
-              <TouchableOpacity 
-                style={styles.pickerButton}
-                onPress={() => {
-                  setTempTime(time);
-                  setTimePickerVisible(true);
-                }}
-              >
-                <View style={styles.pickerButtonContent}>
-                  <Ionicons name="time" size={20} color={accent.primary} />
-                  <Text style={styles.pickerButtonText}>{formatTime(time)}</Text>
-                </View>
-                <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
-              </TouchableOpacity>
-
-              {/* Reminder Toggle */}
-              <View style={styles.switchRow}>
-                <View>
-                  <Text style={styles.label}>Reminder</Text>
-                  <Text style={styles.switchSubtext}>Get notified before workout</Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.switch, reminderEnabled && styles.switchActive]}
-                  onPress={() => setReminderEnabled(!reminderEnabled)}
-                >
-                  <Text style={[styles.switchText, reminderEnabled && styles.switchTextActive]}>
-                    {reminderEnabled ? 'ON' : 'OFF'}
-                  </Text>
+        {/* Add Workout Modal */}
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableOpacity 
+            style={localStyles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          >
+            <View 
+              style={localStyles.modalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={localStyles.modalHeader}>
+                <Text style={localStyles.modalTitle}>Schedule Workout</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Ionicons name="close" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
               </View>
 
-              {reminderEnabled && (
-                <View style={styles.reminderOptions}>
-                  {[15, 30, 60].map((mins) => (
+              <ScrollView style={localStyles.modalScroll} showsVerticalScrollIndicator={false}>
+                {/* Quick Date Selection */}
+                <Text style={localStyles.label}>Date</Text>
+                <View style={localStyles.quickDates}>
+                  {quickDateOptions.map((option) => (
                     <TouchableOpacity
-                      key={mins}
+                      key={option.date}
                       style={[
-                        styles.reminderOption,
-                        reminderMinutes === mins && styles.reminderOptionActive
+                        localStyles.quickDateBtn,
+                        selectedDate === option.date && localStyles.quickDateBtnActive
                       ]}
-                      onPress={() => setReminderMinutes(mins)}
+                      onPress={() => setSelectedDate(option.date)}
                     >
                       <Text style={[
-                        styles.reminderOptionText,
-                        reminderMinutes === mins && styles.reminderOptionTextActive
+                        localStyles.quickDateText,
+                        selectedDate === option.date && localStyles.quickDateTextActive
                       ]}>
-                        {mins < 60 ? `${mins} min` : '1 hour'}
+                        {option.label}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
-              )}
-            </ScrollView>
+                
+                <Text style={localStyles.selectedDateLabel}>
+                  Selected: {formatDateLabel(selectedDate)}
+                </Text>
 
-            <TouchableOpacity 
-              style={[styles.scheduleButton, !selectedPlan && styles.scheduleButtonDisabled]} 
-              onPress={handleScheduleWorkout}
-              disabled={!selectedPlan}
-            >
-              <Text style={styles.scheduleButtonText}>Schedule for {formatDateLabel(selectedDate)}</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Plan Picker Modal */}
-      <Modal
-        visible={planPickerVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setPlanPickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalOverlayTouchable}
-            activeOpacity={1}
-            onPress={() => setPlanPickerVisible(false)}
-          />
-          <View style={styles.pickerModalContent}>
-            <View style={styles.pickerModalHeader}>
-              <TouchableOpacity onPress={() => setPlanPickerVisible(false)}>
-                <Text style={styles.pickerCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={styles.pickerModalTitle}>Select Plan</Text>
-              <TouchableOpacity onPress={() => {
-                setSelectedPlan(tempPlan);
-                setPlanPickerVisible(false);
-              }}>
-                <Text style={styles.pickerDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-            <Picker
-              selectedValue={tempPlan}
-              onValueChange={(value: string) => setTempPlan(value)}
-              style={styles.wheelPicker}
-              itemStyle={{ color: colors.text.primary, fontSize: 18 }}
-            >
-              <Picker.Item label="Select a plan..." value="" color={colors.text.muted} />
-              {allPlans.map((plan) => (
-                <Picker.Item 
-                  key={plan.plan_id} 
-                  label={plan.name} 
-                  value={plan.plan_id}
-                  color={colors.text.primary}
-                />
-              ))}
-            </Picker>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Day Picker Modal */}
-      <Modal
-        visible={dayPickerVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setDayPickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalOverlayTouchable}
-            activeOpacity={1}
-            onPress={() => setDayPickerVisible(false)}
-          />
-          <View style={styles.pickerModalContent}>
-            <View style={styles.pickerModalHeader}>
-              <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
-                <Text style={styles.pickerCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={styles.pickerModalTitle}>Workout Day</Text>
-              <TouchableOpacity onPress={() => {
-                setSelectedDay(tempDay);
-                setDayPickerVisible(false);
-              }}>
-                <Text style={styles.pickerDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-            <Picker
-              selectedValue={tempDay}
-              onValueChange={(value: string) => setTempDay(value)}
-              style={styles.wheelPicker}
-              itemStyle={{ color: colors.text.primary, fontSize: 20 }}
-            >
-              {DAY_OPTIONS.map((option) => (
-                <Picker.Item key={option.value} label={option.label} value={option.value} />
-              ))}
-            </Picker>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Time Picker Modal */}
-      <Modal
-        visible={timePickerVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setTimePickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalOverlayTouchable}
-            activeOpacity={1}
-            onPress={() => setTimePickerVisible(false)}
-          />
-          <View style={styles.pickerModalContent}>
-            <View style={styles.pickerModalHeader}>
-              <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
-                <Text style={styles.pickerCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={styles.pickerModalTitle}>Workout Time</Text>
-              <TouchableOpacity onPress={() => {
-                setTime(tempTime);
-                setTimePickerVisible(false);
-              }}>
-                <Text style={styles.pickerDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-            <Picker
-              selectedValue={tempTime}
-              onValueChange={(value: string) => setTempTime(value)}
-              style={styles.wheelPicker}
-              itemStyle={{ color: colors.text.primary, fontSize: 20 }}
-            >
-              {TIME_OPTIONS.map((option) => (
-                <Picker.Item key={option.value} label={option.label} value={option.value} />
-              ))}
-            </Picker>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Reschedule Modal */}
-      <Modal
-        visible={rescheduleModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setRescheduleModalVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setRescheduleModalVisible(false)}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={styles.modalContent}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Move Workout</Text>
-              <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalScroll}>
-              <Text style={styles.rescheduleInfo}>
-                Moving workout from {formatDateLabel(workoutToReschedule?.scheduled_date || '')}
-              </Text>
-
-              <Text style={styles.label}>New Date</Text>
-              <View style={styles.quickDates}>
-                {quickDateOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.date}
-                    style={[
-                      styles.quickDateBtn,
-                      newScheduleDate === option.date && styles.quickDateBtnActive
-                    ]}
-                    onPress={() => setNewScheduleDate(option.date)}
+                {/* Plan Selection */}
+                <Text style={localStyles.label}>Select Plan</Text>
+                {allPlans.length === 0 ? (
+                  <View style={localStyles.noPlansBanner}>
+                    <Ionicons name="information-circle" size={20} color="#F59E0B" />
+                    <Text style={localStyles.noPlansText}>
+                      No workout plans available. Go to Plans tab to start or create a workout plan first.
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={localStyles.pickerButton}
+                    onPress={() => setPlanPickerVisible(true)}
                   >
-                    <Text style={[
-                      styles.quickDateText,
-                      newScheduleDate === option.date && styles.quickDateTextActive
-                    ]}>
-                      {option.label}
+                    <View style={localStyles.pickerButtonContent}>
+                      <MaterialCommunityIcons name="dumbbell" size={20} color={accent.primary} />
+                      <Text style={[
+                        localStyles.pickerButtonText,
+                        !selectedPlan && { color: colors.text.muted }
+                      ]}>
+                        {getSelectedPlanName()}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                  </TouchableOpacity>
+                )}
+
+                {/* Workout Day */}
+                <Text style={localStyles.label}>Workout Day</Text>
+                <TouchableOpacity 
+                  style={localStyles.pickerButton}
+                  onPress={() => setDayPickerVisible(true)}
+                >
+                  <View style={localStyles.pickerButtonContent}>
+                    <Ionicons name="calendar" size={20} color={accent.primary} />
+                    <Text style={localStyles.pickerButtonText}>Day {selectedDay}</Text>
+                  </View>
+                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                </TouchableOpacity>
+
+                {/* Time */}
+                <Text style={localStyles.label}>Time</Text>
+                <TouchableOpacity 
+                  style={localStyles.pickerButton}
+                  onPress={() => setTimePickerVisible(true)}
+                >
+                  <View style={localStyles.pickerButtonContent}>
+                    <Ionicons name="time" size={20} color={accent.primary} />
+                    <Text style={localStyles.pickerButtonText}>{formatTime(time)}</Text>
+                  </View>
+                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                </TouchableOpacity>
+
+                {/* Reminder Toggle */}
+                <View style={localStyles.switchRow}>
+                  <View>
+                    <Text style={localStyles.label}>Reminder</Text>
+                    <Text style={localStyles.switchSubtext}>Get notified before workout</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[localStyles.switch, reminderEnabled && localStyles.switchActive]}
+                    onPress={() => setReminderEnabled(!reminderEnabled)}
+                  >
+                    <Text style={[localStyles.switchText, reminderEnabled && localStyles.switchTextActive]}>
+                      {reminderEnabled ? 'ON' : 'OFF'}
                     </Text>
                   </TouchableOpacity>
-                ))}
-              </View>
+                </View>
 
-              <View style={styles.miniCalendarContainer}>
-                <Calendar
-                  onDayPress={(day: any) => setNewScheduleDate(day.dateString)}
-                  markedDates={{
-                    [newScheduleDate]: {
-                      selected: true,
-                      selectedColor: accent.primary,
-                    }
-                  }}
-                  theme={{
-                    calendarBackground: colors.background.secondary,
-                    textSectionTitleColor: colors.text.secondary,
-                    dayTextColor: colors.text.primary,
-                    todayTextColor: accent.primary,
-                    selectedDayBackgroundColor: accent.primary,
-                    selectedDayTextColor: '#ffffff',
-                    arrowColor: accent.primary,
-                    monthTextColor: colors.text.primary,
-                    textDisabledColor: colors.text.muted,
-                  }}
-                  style={styles.miniCalendar}
-                />
-              </View>
-            </ScrollView>
+                {reminderEnabled && (
+                  <View style={localStyles.reminderOptions}>
+                    {[15, 30, 60].map((mins) => (
+                      <TouchableOpacity
+                        key={mins}
+                        style={[
+                          localStyles.reminderOption,
+                          reminderMinutes === mins && localStyles.reminderOptionActive
+                        ]}
+                        onPress={() => setReminderMinutes(mins)}
+                      >
+                        <Text style={[
+                          localStyles.reminderOptionText,
+                          reminderMinutes === mins && localStyles.reminderOptionTextActive
+                        ]}>
+                          {mins < 60 ? `${mins} min` : '1 hour'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </ScrollView>
 
-            <TouchableOpacity 
-              style={styles.scheduleButton} 
-              onPress={handleRescheduleWorkout}
-            >
-              <Text style={styles.scheduleButtonText}>Move to {formatDateLabel(newScheduleDate)}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={[localStyles.scheduleButton, !selectedPlan && localStyles.scheduleButtonDisabled]} 
+                onPress={handleScheduleWorkout}
+                disabled={!selectedPlan}
+              >
+                <Text style={localStyles.scheduleButtonText}>Schedule for {formatDateLabel(selectedDate)}</Text>
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+
+        {/* Plan Picker Modal */}
+        <Modal
+          visible={planPickerVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setPlanPickerVisible(false)}
+        >
+          <TouchableOpacity 
+            style={localStyles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setPlanPickerVisible(false)}
+          >
+            <View 
+              style={localStyles.pickerModalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={localStyles.pickerModalHeader}>
+                <TouchableOpacity onPress={() => setPlanPickerVisible(false)}>
+                  <Text style={localStyles.pickerCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={localStyles.pickerModalTitle}>Select Plan</Text>
+                <TouchableOpacity onPress={() => setPlanPickerVisible(false)}>
+                  <Text style={localStyles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollPicker
+                options={allPlans.map(p => ({ value: p.plan_id, label: p.name }))}
+                selectedValue={selectedPlan}
+                onValueChange={setSelectedPlan}
+                theme={theme}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Day Picker Modal */}
+        <Modal
+          visible={dayPickerVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setDayPickerVisible(false)}
+        >
+          <TouchableOpacity 
+            style={localStyles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setDayPickerVisible(false)}
+          >
+            <View 
+              style={localStyles.pickerModalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={localStyles.pickerModalHeader}>
+                <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
+                  <Text style={localStyles.pickerCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={localStyles.pickerModalTitle}>Workout Day</Text>
+                <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
+                  <Text style={localStyles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollPicker
+                options={DAY_OPTIONS}
+                selectedValue={selectedDay}
+                onValueChange={setSelectedDay}
+                theme={theme}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Time Picker Modal */}
+        <Modal
+          visible={timePickerVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setTimePickerVisible(false)}
+        >
+          <TouchableOpacity 
+            style={localStyles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setTimePickerVisible(false)}
+          >
+            <View 
+              style={localStyles.pickerModalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={localStyles.pickerModalHeader}>
+                <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
+                  <Text style={localStyles.pickerCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={localStyles.pickerModalTitle}>Workout Time</Text>
+                <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
+                  <Text style={localStyles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollPicker
+                options={TIME_OPTIONS}
+                selectedValue={time}
+                onValueChange={setTime}
+                theme={theme}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Reschedule Modal */}
+        <Modal
+          visible={rescheduleModalVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setRescheduleModalVisible(false)}
+        >
+          <TouchableOpacity 
+            style={localStyles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setRescheduleModalVisible(false)}
+          >
+            <View 
+              style={localStyles.modalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={localStyles.modalHeader}>
+                <Text style={localStyles.modalTitle}>Move Workout</Text>
+                <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
+                  <Ionicons name="close" size={24} color={colors.text.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={localStyles.modalScroll}>
+                <Text style={localStyles.rescheduleInfo}>
+                  Moving workout from {formatDateLabel(workoutToReschedule?.scheduled_date || '')}
+                </Text>
+
+                <Text style={localStyles.label}>New Date</Text>
+                <View style={localStyles.quickDates}>
+                  {quickDateOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.date}
+                      style={[
+                        localStyles.quickDateBtn,
+                        newScheduleDate === option.date && localStyles.quickDateBtnActive
+                      ]}
+                      onPress={() => setNewScheduleDate(option.date)}
+                    >
+                      <Text style={[
+                        localStyles.quickDateText,
+                        newScheduleDate === option.date && localStyles.quickDateTextActive
+                      ]}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={localStyles.miniCalendarContainer}>
+                  <Calendar
+                    onDayPress={(day: any) => setNewScheduleDate(day.dateString)}
+                    markedDates={{
+                      [newScheduleDate]: {
+                        selected: true,
+                        selectedColor: accent.primary,
+                      }
+                    }}
+                    theme={{
+                      calendarBackground: colors.background.secondary,
+                      textSectionTitleColor: colors.text.secondary,
+                      dayTextColor: colors.text.primary,
+                      todayTextColor: accent.primary,
+                      selectedDayBackgroundColor: accent.primary,
+                      selectedDayTextColor: '#ffffff',
+                      arrowColor: accent.primary,
+                      monthTextColor: colors.text.primary,
+                      textDisabledColor: colors.text.muted,
+                    }}
+                    style={localStyles.miniCalendar}
+                  />
+                </View>
+              </ScrollView>
+
+              <TouchableOpacity 
+                style={localStyles.scheduleButton} 
+                onPress={handleRescheduleWorkout}
+              >
+                <Text style={localStyles.scheduleButtonText}>Move to {formatDateLabel(newScheduleDate)}</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  pickerOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginVertical: 4,
+    marginHorizontal: 8,
+    borderRadius: 10,
+  },
+  pickerOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+});
 
 const createStyles = (theme: any) => StyleSheet.create({
   container: {
@@ -1020,7 +1082,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 24,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   legendItem: {
     flexDirection: 'row',
@@ -1035,6 +1097,17 @@ const createStyles = (theme: any) => StyleSheet.create({
   legendText: {
     fontSize: 13,
     color: theme.colors.text.secondary,
+  },
+  swipeHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
+  swipeHintText: {
+    fontSize: 12,
+    color: theme.colors.text.muted,
   },
   quickAddButton: {
     flexDirection: 'row',
@@ -1250,13 +1323,24 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.status.success,
     fontWeight: '500',
   },
+  deleteAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    borderRadius: 12,
+    marginBottom: 10,
+    marginLeft: 8,
+  },
+  deleteActionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
-  },
-  modalOverlayTouchable: {
-    flex: 1,
   },
   modalContent: {
     backgroundColor: theme.colors.background.card,
@@ -1352,6 +1436,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingBottom: 40,
+    maxHeight: '60%',
   },
   pickerModalHeader: {
     flexDirection: 'row',
@@ -1374,9 +1459,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.accentColors.primary,
-  },
-  wheelPicker: {
-    height: 200,
   },
   switchRow: {
     flexDirection: 'row',
