@@ -93,6 +93,8 @@ export default function ScheduleScreen() {
     if (userId) {
       loadData();
       requestNotificationPermissions();
+    } else {
+      setLoading(false);
     }
   }, [userId]);
 
