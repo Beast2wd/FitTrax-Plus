@@ -818,16 +818,13 @@ export default function ScheduleScreen() {
         transparent
         onRequestClose={() => setDayPickerVisible(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setDayPickerVisible(false)}
-        >
+        <View style={styles.modalOverlay}>
           <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={styles.pickerModalContent}
-          >
+            style={styles.modalOverlayTouchable}
+            activeOpacity={1}
+            onPress={() => setDayPickerVisible(false)}
+          />
+          <View style={styles.pickerModalContent}>
             <View style={styles.pickerModalHeader}>
               <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
                 <Text style={styles.pickerCancelText}>Cancel</Text>
@@ -842,7 +839,7 @@ export default function ScheduleScreen() {
             </View>
             <Picker
               selectedValue={tempDay}
-              onValueChange={(value) => setTempDay(value)}
+              onValueChange={(value: string) => setTempDay(value)}
               style={styles.wheelPicker}
               itemStyle={{ color: colors.text.primary, fontSize: 20 }}
             >
@@ -850,8 +847,8 @@ export default function ScheduleScreen() {
                 <Picker.Item key={option.value} label={option.label} value={option.value} />
               ))}
             </Picker>
-          </TouchableOpacity>
-        </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
       {/* Time Picker Modal */}
