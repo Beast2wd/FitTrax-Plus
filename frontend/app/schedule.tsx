@@ -1253,6 +1253,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
+  modalOverlayTouchable: {
+    flex: 1,
+  },
   modalContent: {
     backgroundColor: theme.colors.background.card,
     borderTopLeftRadius: 24,
