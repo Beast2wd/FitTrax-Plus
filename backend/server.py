@@ -212,6 +212,88 @@ class ScheduledWorkoutCreate(BaseModel):
     notes: Optional[str] = ""
 
 # ============================================================================
+# NUTRITION TRACKING MODELS
+# ============================================================================
+
+class NutritionGoals(BaseModel):
+    user_id: str
+    daily_calories: float = 2000
+    protein_grams: float = 150
+    carbs_grams: float = 200
+    fat_grams: float = 65
+    protein_percentage: Optional[float] = 30
+    carbs_percentage: Optional[float] = 40
+    fat_percentage: Optional[float] = 30
+    updated_at: Optional[str] = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class NutritionGoalsUpdate(BaseModel):
+    daily_calories: Optional[float] = None
+    protein_grams: Optional[float] = None
+    carbs_grams: Optional[float] = None
+    fat_grams: Optional[float] = None
+    protein_percentage: Optional[float] = None
+    carbs_percentage: Optional[float] = None
+    fat_percentage: Optional[float] = None
+
+class CustomFood(BaseModel):
+    food_id: str
+    user_id: str
+    name: str
+    brand: Optional[str] = ""
+    serving_size: str = "1 serving"
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+    fiber: Optional[float] = 0
+    sugar: Optional[float] = 0
+    sodium: Optional[float] = 0
+    is_favorite: bool = False
+    created_at: Optional[str] = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class CustomFoodCreate(BaseModel):
+    name: str
+    brand: Optional[str] = ""
+    serving_size: str = "1 serving"
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+    fiber: Optional[float] = 0
+    sugar: Optional[float] = 0
+    sodium: Optional[float] = 0
+
+class SavedMeal(BaseModel):
+    saved_meal_id: str
+    user_id: str
+    name: str
+    description: Optional[str] = ""
+    foods: List[dict]  # List of food items with portions
+    total_calories: float
+    total_protein: float
+    total_carbs: float
+    total_fat: float
+    meal_category: str  # breakfast, lunch, dinner, snack
+    created_at: Optional[str] = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class QuickLogFood(BaseModel):
+    user_id: str
+    name: str
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+    meal_category: str
+    serving_size: Optional[str] = "1 serving"
+    servings: Optional[float] = 1.0
+
+class CopyMealRequest(BaseModel):
+    user_id: str
+    source_date: str
+    target_date: str
+    meal_category: Optional[str] = None  # If None, copy all meals from that day
+
+# ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
 
