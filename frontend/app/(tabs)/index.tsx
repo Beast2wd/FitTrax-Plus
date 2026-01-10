@@ -161,6 +161,34 @@ export default function DashboardScreen() {
     return R * c;
   };
 
+  // Calculate pace based on language setting
+  const calculatePace = (): { value: string; unit: string } => {
+    if (runDistance <= 0 || runTime <= 0) {
+      return { value: '0.0', unit: isEnglish ? 'min/mi' : 'min/km' };
+    }
+    
+    if (isEnglish) {
+      // min/mi for English
+      const paceMinPerMile = (runTime / 60) / runDistance;
+      return { value: paceMinPerMile.toFixed(1), unit: 'min/mi' };
+    } else {
+      // min/km for other languages
+      const distanceKm = runDistance * 1.60934;
+      const paceMinPerKm = (runTime / 60) / distanceKm;
+      return { value: paceMinPerKm.toFixed(1), unit: 'min/km' };
+    }
+  };
+
+  // Get display distance based on language
+  const getDisplayDistance = (): { value: string; unit: string } => {
+    if (isEnglish) {
+      return { value: runDistance.toFixed(2), unit: 'miles' };
+    } else {
+      const distanceKm = runDistance * 1.60934;
+      return { value: distanceKm.toFixed(2), unit: 'km' };
+    }
+  };
+
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
