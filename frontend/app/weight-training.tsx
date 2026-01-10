@@ -504,7 +504,14 @@ export default function WeightTrainingScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Workouts</Text>
             {history.slice(0, 5).map((workout, index) => (
-              <View key={index} style={styles.historyCard}>
+              <TouchableOpacity 
+                key={index} 
+                style={styles.historyCard}
+                onPress={() => {
+                  setSelectedPastWorkout(workout);
+                  setShowPastWorkoutModal(true);
+                }}
+              >
                 <View style={styles.historyIcon}>
                   <MaterialCommunityIcons name="dumbbell" size={24} color="#7C3AED" />
                 </View>
@@ -514,10 +521,13 @@ export default function WeightTrainingScreen() {
                     {workout.exercises?.length || 0} exercises • {workout.duration_minutes} min
                   </Text>
                 </View>
-                <Text style={styles.historyDate}>
-                  {new Date(workout.timestamp).toLocaleDateString()}
-                </Text>
-              </View>
+                <View style={styles.historyRight}>
+                  <Text style={styles.historyDate}>
+                    {new Date(workout.timestamp).toLocaleDateString()}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color={theme.colors.text.muted} />
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
