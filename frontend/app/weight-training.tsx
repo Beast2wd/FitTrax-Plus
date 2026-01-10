@@ -1143,14 +1143,104 @@ export default function WeightTrainingScreen() {
 
           {selectedExerciseDetail && (
             <ScrollView style={styles.exerciseDetailContent}>
-              {/* Exercise Icon and Name */}
+              {/* Exercise Name Header */}
               <View style={[styles.exerciseDetailTop, { backgroundColor: theme.colors.background.card }]}>
-                <View style={styles.exerciseDetailIconLarge}>
-                  <MaterialCommunityIcons name="dumbbell" size={48} color="#7C3AED" />
-                </View>
                 <Text style={[styles.exerciseDetailName, { color: theme.colors.text.primary }]}>
                   {selectedExerciseDetail.name}
                 </Text>
+              </View>
+
+              {/* AI Generated Phase Images */}
+              <View style={[styles.exerciseDetailSection, { backgroundColor: theme.colors.background.card }]}>
+                <Text style={[styles.exerciseDetailSectionTitle, { color: theme.colors.text.primary }]}>
+                  📸 Exercise Demonstration
+                </Text>
+                
+                {loadingPhaseImages ? (
+                  <View style={styles.imageLoadingContainer}>
+                    <ActivityIndicator size="large" color="#7C3AED" />
+                    <Text style={[styles.imageLoadingText, { color: theme.colors.text.secondary }]}>
+                      Generating AI demonstration images...
+                    </Text>
+                    <Text style={[styles.imageLoadingSubtext, { color: theme.colors.text.muted }]}>
+                      This may take up to a minute
+                    </Text>
+                  </View>
+                ) : exercisePhaseImages.length > 0 ? (
+                  <View>
+                    {/* Phase Tabs */}
+                    <View style={styles.phaseTabs}>
+                      {exercisePhaseImages.map((phase, index) => (
+                        <TouchableOpacity
+                          key={phase.phase}
+                          style={[
+                            styles.phaseTab,
+                            currentPhaseIndex === index && styles.phaseTabActive
+                          ]}
+                          onPress={() => setCurrentPhaseIndex(index)}
+                        >
+                          <Text style={[
+                            styles.phaseTabText,
+                            currentPhaseIndex === index && styles.phaseTabTextActive
+                          ]}>
+                            {phase.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    
+                    {/* Current Phase Image */}
+                    {exercisePhaseImages[currentPhaseIndex]?.image_base64 ? (
+                      <View style={styles.phaseImageContainer}>
+                        <Image
+                          source={{ uri: `data:image/png;base64,${exercisePhaseImages[currentPhaseIndex].image_base64}` }}
+                          style={styles.phaseImage}
+                          resizeMode="contain"
+                        />
+                        <View style={styles.phaseIndicator}>
+                          <Text style={styles.phaseIndicatorText}>
+                            {currentPhaseIndex + 1} of 3: {exercisePhaseImages[currentPhaseIndex]?.label}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={styles.imagePlaceholder}>
+                        <Ionicons name="image-outline" size={48} color={theme.colors.text.muted} />
+                        <Text style={[styles.imagePlaceholderText, { color: theme.colors.text.muted }]}>
+                          Image not available
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Navigation Arrows */}
+                    <View style={styles.phaseNavigation}>
+                      <TouchableOpacity
+                        style={[styles.phaseNavBtn, currentPhaseIndex === 0 && styles.phaseNavBtnDisabled]}
+                        onPress={() => setCurrentPhaseIndex(Math.max(0, currentPhaseIndex - 1))}
+                        disabled={currentPhaseIndex === 0}
+                      >
+                        <Ionicons name="chevron-back" size={24} color={currentPhaseIndex === 0 ? '#ccc' : '#7C3AED'} />
+                        <Text style={[styles.phaseNavText, currentPhaseIndex === 0 && { color: '#ccc' }]}>Previous</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.phaseNavBtn, currentPhaseIndex === 2 && styles.phaseNavBtnDisabled]}
+                        onPress={() => setCurrentPhaseIndex(Math.min(2, currentPhaseIndex + 1))}
+                        disabled={currentPhaseIndex === 2}
+                      >
+                        <Text style={[styles.phaseNavText, currentPhaseIndex === 2 && { color: '#ccc' }]}>Next</Text>
+                        <Ionicons name="chevron-forward" size={24} color={currentPhaseIndex === 2 ? '#ccc' : '#7C3AED'} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.generateImagesBtn}
+                    onPress={() => loadExercisePhaseImages(selectedExerciseDetail)}
+                  >
+                    <Ionicons name="sparkles" size={24} color="#fff" />
+                    <Text style={styles.generateImagesBtnText}>Generate AI Images</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Target Muscles */}
