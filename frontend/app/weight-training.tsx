@@ -963,19 +963,24 @@ export default function WeightTrainingScreen() {
       >
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
           <View style={styles.pastWorkoutHeader}>
-            <TouchableOpacity onPress={() => setShowPastWorkoutModal(false)}>
-              <Ionicons name="close" size={28} color={theme.colors.text.primary} />
+            <TouchableOpacity 
+              onPress={() => setShowPastWorkoutModal(false)}
+              style={styles.closeButtonContainer}
+            >
+              <Ionicons name="close-circle" size={32} color={theme.colors.text.primary} />
             </TouchableOpacity>
-            <Text style={styles.pastWorkoutTitle}>Workout Details</Text>
-            <View style={{ width: 28 }} />
+            <Text style={[styles.pastWorkoutTitle, { color: theme.colors.text.primary }]}>Workout Details</Text>
+            <View style={{ width: 40 }} />
           </View>
 
           {selectedPastWorkout && (
             <ScrollView style={styles.pastWorkoutContent}>
               {/* Workout Header */}
-              <View style={styles.pastWorkoutInfo}>
-                <Text style={styles.pastWorkoutName}>{selectedPastWorkout.workout_name}</Text>
-                <Text style={styles.pastWorkoutDate}>
+              <View style={[styles.pastWorkoutInfo, { backgroundColor: theme.colors.background.card }]}>
+                <Text style={[styles.pastWorkoutName, { color: theme.colors.text.primary }]}>
+                  {selectedPastWorkout.workout_name}
+                </Text>
+                <Text style={[styles.pastWorkoutDate, { color: theme.colors.text.secondary }]}>
                   {new Date(selectedPastWorkout.timestamp).toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
@@ -984,40 +989,54 @@ export default function WeightTrainingScreen() {
                   })}
                 </Text>
                 <View style={styles.pastWorkoutStats}>
-                  <View style={styles.pastWorkoutStat}>
+                  <View style={[styles.pastWorkoutStat, { backgroundColor: theme.colors.background.secondary }]}>
                     <MaterialCommunityIcons name="dumbbell" size={20} color={theme.accentColors.primary} />
-                    <Text style={styles.pastWorkoutStatValue}>{selectedPastWorkout.exercises?.length || 0}</Text>
-                    <Text style={styles.pastWorkoutStatLabel}>Exercises</Text>
+                    <Text style={[styles.pastWorkoutStatValue, { color: theme.colors.text.primary }]}>
+                      {selectedPastWorkout.exercises?.length || 0}
+                    </Text>
+                    <Text style={[styles.pastWorkoutStatLabel, { color: theme.colors.text.secondary }]}>Exercises</Text>
                   </View>
-                  <View style={styles.pastWorkoutStat}>
+                  <View style={[styles.pastWorkoutStat, { backgroundColor: theme.colors.background.secondary }]}>
                     <Ionicons name="time-outline" size={20} color={theme.accentColors.primary} />
-                    <Text style={styles.pastWorkoutStatValue}>{selectedPastWorkout.duration_minutes || 0}</Text>
-                    <Text style={styles.pastWorkoutStatLabel}>Minutes</Text>
+                    <Text style={[styles.pastWorkoutStatValue, { color: theme.colors.text.primary }]}>
+                      {selectedPastWorkout.duration_minutes || 0}
+                    </Text>
+                    <Text style={[styles.pastWorkoutStatLabel, { color: theme.colors.text.secondary }]}>Minutes</Text>
                   </View>
-                  <View style={styles.pastWorkoutStat}>
+                  <View style={[styles.pastWorkoutStat, { backgroundColor: theme.colors.background.secondary }]}>
                     <Ionicons name="barbell-outline" size={20} color={theme.accentColors.primary} />
-                    <Text style={styles.pastWorkoutStatValue}>
+                    <Text style={[styles.pastWorkoutStatValue, { color: theme.colors.text.primary }]}>
                       {selectedPastWorkout.exercises?.reduce((acc: number, ex: any) => 
                         acc + (ex.sets?.reduce((setAcc: number, set: any) => 
                           setAcc + ((parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0)), 0) || 0), 0
                       ).toLocaleString() || 0}
                     </Text>
-                    <Text style={styles.pastWorkoutStatLabel}>Volume (lbs)</Text>
+                    <Text style={[styles.pastWorkoutStatLabel, { color: theme.colors.text.secondary }]}>Volume (lbs)</Text>
                   </View>
                 </View>
               </View>
 
               {/* Exercises List */}
-              <Text style={styles.pastWorkoutSectionTitle}>Exercises Performed</Text>
+              <Text style={[styles.pastWorkoutSectionTitle, { color: theme.colors.text.primary }]}>
+                Exercises Performed
+              </Text>
               {selectedPastWorkout.exercises?.map((exercise: any, index: number) => (
-                <View key={index} style={styles.pastExerciseCard}>
-                  <Text style={styles.pastExerciseName}>{exercise.name}</Text>
+                <View key={index} style={[styles.pastExerciseCard, { backgroundColor: theme.colors.background.card }]}>
+                  <Text style={[styles.pastExerciseName, { color: theme.colors.text.primary }]}>
+                    {exercise.exercise_name || exercise.name}
+                  </Text>
                   <View style={styles.pastExerciseSets}>
                     {exercise.sets?.map((set: any, setIndex: number) => (
-                      <View key={setIndex} style={styles.pastSetRow}>
-                        <Text style={styles.pastSetNumber}>Set {setIndex + 1}</Text>
-                        <Text style={styles.pastSetWeight}>{set.weight} lbs</Text>
-                        <Text style={styles.pastSetReps}>× {set.reps} reps</Text>
+                      <View key={setIndex} style={[styles.pastSetRow, { backgroundColor: theme.colors.background.secondary }]}>
+                        <Text style={[styles.pastSetNumber, { color: theme.colors.text.secondary }]}>
+                          Set {set.set_number || setIndex + 1}
+                        </Text>
+                        <Text style={[styles.pastSetWeight, { color: theme.colors.text.primary }]}>
+                          {set.weight} lbs
+                        </Text>
+                        <Text style={[styles.pastSetReps, { color: theme.accentColors.primary }]}>
+                          × {set.reps} reps
+                        </Text>
                       </View>
                     ))}
                   </View>
@@ -1025,11 +1044,157 @@ export default function WeightTrainingScreen() {
               ))}
 
               {selectedPastWorkout.notes && (
-                <View style={styles.pastWorkoutNotes}>
-                  <Text style={styles.pastWorkoutNotesLabel}>Notes</Text>
-                  <Text style={styles.pastWorkoutNotesText}>{selectedPastWorkout.notes}</Text>
+                <View style={[styles.pastWorkoutNotes, { backgroundColor: theme.colors.background.card }]}>
+                  <Text style={[styles.pastWorkoutNotesLabel, { color: theme.colors.text.secondary }]}>Notes</Text>
+                  <Text style={[styles.pastWorkoutNotesText, { color: theme.colors.text.primary }]}>
+                    {selectedPastWorkout.notes}
+                  </Text>
                 </View>
               )}
+
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* Exercise Detail Modal */}
+      <Modal
+        visible={showExerciseDetailModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowExerciseDetailModal(false)}
+      >
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+          <View style={styles.exerciseDetailHeader}>
+            <TouchableOpacity 
+              onPress={() => setShowExerciseDetailModal(false)}
+              style={styles.closeButtonContainer}
+            >
+              <Ionicons name="close-circle" size={32} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={[styles.exerciseDetailTitle, { color: theme.colors.text.primary }]}>
+              Exercise Details
+            </Text>
+            <TouchableOpacity 
+              onPress={() => {
+                if (selectedExerciseDetail) {
+                  selectExerciseFromLibrary(selectedExerciseDetail.name);
+                  setShowExerciseDetailModal(false);
+                }
+              }}
+              style={styles.addToWorkoutBtn}
+            >
+              <Text style={styles.addToWorkoutBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          {selectedExerciseDetail && (
+            <ScrollView style={styles.exerciseDetailContent}>
+              {/* Exercise Icon and Name */}
+              <View style={[styles.exerciseDetailTop, { backgroundColor: theme.colors.background.card }]}>
+                <View style={styles.exerciseDetailIconLarge}>
+                  <MaterialCommunityIcons name="dumbbell" size={48} color="#7C3AED" />
+                </View>
+                <Text style={[styles.exerciseDetailName, { color: theme.colors.text.primary }]}>
+                  {selectedExerciseDetail.name}
+                </Text>
+              </View>
+
+              {/* Target Muscles */}
+              <View style={[styles.exerciseDetailSection, { backgroundColor: theme.colors.background.card }]}>
+                <Text style={[styles.exerciseDetailSectionTitle, { color: theme.colors.text.primary }]}>
+                  🎯 Target Muscles
+                </Text>
+                <View style={styles.muscleGroupList}>
+                  {selectedExerciseDetail.muscle_groups?.map((muscle: string, idx: number) => (
+                    <View key={idx} style={[styles.muscleGroupChip, { backgroundColor: '#7C3AED20' }]}>
+                      <Text style={[styles.muscleGroupChipText, { color: '#7C3AED' }]}>{muscle}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Equipment */}
+              <View style={[styles.exerciseDetailSection, { backgroundColor: theme.colors.background.card }]}>
+                <Text style={[styles.exerciseDetailSectionTitle, { color: theme.colors.text.primary }]}>
+                  🏋️ Equipment Needed
+                </Text>
+                <View style={styles.equipmentList}>
+                  {selectedExerciseDetail.equipment?.map((eq: string, idx: number) => (
+                    <View key={idx} style={[styles.equipmentChip, { backgroundColor: theme.colors.background.secondary }]}>
+                      <Ionicons name="fitness" size={16} color={theme.accentColors.primary} />
+                      <Text style={[styles.equipmentChipText, { color: theme.colors.text.primary }]}>{eq}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* How To Perform */}
+              <View style={[styles.exerciseDetailSection, { backgroundColor: theme.colors.background.card }]}>
+                <Text style={[styles.exerciseDetailSectionTitle, { color: theme.colors.text.primary }]}>
+                  📝 How to Perform
+                </Text>
+                <View style={styles.instructionsList}>
+                  <View style={styles.instructionItem}>
+                    <View style={[styles.instructionNumber, { backgroundColor: '#7C3AED20' }]}>
+                      <Text style={styles.instructionNumberText}>1</Text>
+                    </View>
+                    <Text style={[styles.instructionText, { color: theme.colors.text.secondary }]}>
+                      Set up your position with proper form and grip
+                    </Text>
+                  </View>
+                  <View style={styles.instructionItem}>
+                    <View style={[styles.instructionNumber, { backgroundColor: '#7C3AED20' }]}>
+                      <Text style={styles.instructionNumberText}>2</Text>
+                    </View>
+                    <Text style={[styles.instructionText, { color: theme.colors.text.secondary }]}>
+                      Engage your core and maintain a neutral spine
+                    </Text>
+                  </View>
+                  <View style={styles.instructionItem}>
+                    <View style={[styles.instructionNumber, { backgroundColor: '#7C3AED20' }]}>
+                      <Text style={styles.instructionNumberText}>3</Text>
+                    </View>
+                    <Text style={[styles.instructionText, { color: theme.colors.text.secondary }]}>
+                      Perform the movement with controlled tempo
+                    </Text>
+                  </View>
+                  <View style={styles.instructionItem}>
+                    <View style={[styles.instructionNumber, { backgroundColor: '#7C3AED20' }]}>
+                      <Text style={styles.instructionNumberText}>4</Text>
+                    </View>
+                    <Text style={[styles.instructionText, { color: theme.colors.text.secondary }]}>
+                      Focus on the mind-muscle connection with target muscles
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Tips */}
+              <View style={[styles.exerciseDetailSection, { backgroundColor: '#FEF3C7' }]}>
+                <Text style={[styles.exerciseDetailSectionTitle, { color: '#92400E' }]}>
+                  💡 Pro Tips
+                </Text>
+                <Text style={{ color: '#78350F', fontSize: 14, lineHeight: 20 }}>
+                  • Start with lighter weight to perfect your form{'\n'}
+                  • Control the negative (lowering) phase{'\n'}
+                  • Breathe out on exertion, in on recovery{'\n'}
+                  • Rest 60-90 seconds between sets for hypertrophy
+                </Text>
+              </View>
+
+              {/* Add to Workout Button */}
+              <TouchableOpacity 
+                style={styles.addToWorkoutFullBtn}
+                onPress={() => {
+                  selectExerciseFromLibrary(selectedExerciseDetail.name);
+                  setShowExerciseDetailModal(false);
+                }}
+              >
+                <Ionicons name="add-circle" size={24} color="#fff" />
+                <Text style={styles.addToWorkoutFullBtnText}>Add to Current Workout</Text>
+              </TouchableOpacity>
 
               <View style={{ height: 40 }} />
             </ScrollView>
