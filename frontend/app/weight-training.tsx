@@ -231,8 +231,17 @@ export default function WeightTrainingScreen() {
     setWorkoutExercises(updated);
   };
 
-  // Edit exercise in program
+  // Edit exercise in program - using inline expansion instead of nested modal
   const openEditExercise = (dayIndex: number, exerciseIndex: number, exercise: any) => {
+    const key = `${dayIndex}-${exerciseIndex}`;
+    
+    // If same exercise is clicked, collapse it
+    if (expandedExerciseKey === key) {
+      setExpandedExerciseKey(null);
+      return;
+    }
+    
+    // Expand and populate edit fields
     setEditingDayIndex(dayIndex);
     setEditingExerciseIndex(exerciseIndex);
     setEditingExercise(exercise);
@@ -240,7 +249,7 @@ export default function WeightTrainingScreen() {
     setEditExSets(exercise.sets?.toString() || '3');
     setEditExReps(exercise.reps || '10');
     setEditExRest(exercise.rest?.toString() || '60');
-    setShowEditExerciseModal(true);
+    setExpandedExerciseKey(key);
   };
 
   const saveExerciseEdit = () => {
@@ -255,7 +264,11 @@ export default function WeightTrainingScreen() {
       rest: parseInt(editExRest) || 60,
     };
     setSelectedProgram(updated);
-    setShowEditExerciseModal(false);
+    setExpandedExerciseKey(null);
+  };
+
+  const cancelExerciseEdit = () => {
+    setExpandedExerciseKey(null);
   };
 
   // Move exercise up in program day
