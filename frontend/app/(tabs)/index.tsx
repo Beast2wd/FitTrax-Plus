@@ -31,7 +31,7 @@ const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const { userId, profile } = useUserStore();
-  const { theme, accent } = useThemeStore();
+  const { theme, accent: accentKey } = useThemeStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,8 +47,8 @@ export default function DashboardScreen() {
   const [runCoordinates, setRunCoordinates] = useState<any[]>([]);
   
   // Get accent color gradient for running button
-  const runningButtonGradient = AccentColors[accent]?.gradient || ['#EC4899', '#BE185D'];
-  const runningButtonPrimary = AccentColors[accent]?.primary || '#EC4899';
+  const runningButtonGradient = AccentColors[accentKey]?.gradient || ['#EC4899', '#BE185D'];
+  const runningButtonPrimary = AccentColors[accentKey]?.primary || '#EC4899';
   
   // Check if using English for pace display
   const isEnglish = i18next.language?.startsWith('en') || i18next.language === 'en';
