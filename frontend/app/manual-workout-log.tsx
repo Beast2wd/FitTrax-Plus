@@ -135,17 +135,27 @@ export default function ManualWorkoutLogScreen() {
         notes: notes,
       };
 
+      const savedExerciseName = exerciseName;
+
       if (editingEntry) {
         // Update existing entry
         await axios.put(`${API_URL}/api/manual-workout-log/${editingEntry.entry_id}`, entryData);
-        Alert.alert('Success', 'Workout entry updated');
+        Alert.alert('Updated!', `${savedExerciseName} has been updated.`);
       } else {
         // Create new entry
         await axios.post(`${API_URL}/api/manual-workout-log`, entryData);
-        Alert.alert('Success', 'Workout entry saved');
+        // Show brief confirmation, form resets immediately for next entry
+        Alert.alert(
+          'Saved!', 
+          `${savedExerciseName} added. Ready for next exercise.`,
+          [{ text: 'OK' }],
+          { cancelable: true }
+        );
       }
 
+      // Reset form immediately for next entry
       resetForm();
+      // Reload entries list to show the new one
       loadEntries();
     } catch (error) {
       console.error('Error saving workout entry:', error);
