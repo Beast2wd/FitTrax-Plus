@@ -63,6 +63,7 @@ class UserProfileCreate(BaseModel):
     weight: float
     goal_weight: float
     activity_level: str
+    custom_calorie_goal: Optional[int] = None  # User's manually set calorie goal
 
 # Food/Meal Models
 class FoodAnalysisRequest(BaseModel):
