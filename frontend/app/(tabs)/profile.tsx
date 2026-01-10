@@ -130,6 +130,11 @@ export default function ProfileScreen() {
   const [weightModalVisible, setWeightModalVisible] = useState(false);
   const [goalWeightModalVisible, setGoalWeightModalVisible] = useState(false);
   const [activityModalVisible, setActivityModalVisible] = useState(false);
+  
+  // Calorie goal state
+  const [calorieModalVisible, setCalorieModalVisible] = useState(false);
+  const [customCalorieGoal, setCustomCalorieGoal] = useState('');
+  const [isCustomCalorieGoal, setIsCustomCalorieGoal] = useState(false);
 
   const [formData, setFormData] = useState({
     name: profile?.name || '',
@@ -140,6 +145,7 @@ export default function ProfileScreen() {
     weight: profile?.weight || 160,
     goal_weight: profile?.goal_weight || 155,
     activity_level: profile?.activity_level || 'moderate',
+    custom_calorie_goal: profile?.custom_calorie_goal || null,
   });
 
   const colors = theme.colors;
