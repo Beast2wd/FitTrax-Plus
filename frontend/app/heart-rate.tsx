@@ -130,6 +130,31 @@ export default function HeartRateScreen() {
     }
   };
 
+  // Delete a heart rate entry
+  const deleteHeartRateEntry = (heartRateId: string) => {
+    Alert.alert(
+      'Delete Entry',
+      'Are you sure you want to delete this heart rate entry?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await heartRateAPI.deleteHeartRate(heartRateId);
+              setHeartRates(heartRates.filter(hr => hr.heart_rate_id !== heartRateId));
+              Alert.alert('Deleted', 'Heart rate entry removed successfully');
+            } catch (error) {
+              console.error('Error deleting heart rate:', error);
+              Alert.alert('Error', 'Failed to delete entry. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getZoneForBPM = (bpmValue: number) => {
     if (!zones) return null;
     if (bpmValue >= zones.peak.min) return { name: 'Peak', color: '#EF4444' };
