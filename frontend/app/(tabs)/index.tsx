@@ -317,7 +317,7 @@ export default function DashboardScreen() {
             <Text style={[styles.statValue, { color: colors.text.primary }]}>
               {Math.round(today.water_intake || 0)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>oz</Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Hydration</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
