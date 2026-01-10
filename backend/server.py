@@ -2923,6 +2923,160 @@ async def get_exercise_image(exercise_name: str):
         logger.error(f"Error getting exercise image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class ExercisePhaseImageRequest(BaseModel):
+    exercise_name: str
+    equipment: Optional[List[str]] = None
+    muscle_groups: Optional[List[str]] = None
+
+@api_router.post("/exercises/generate-phase-images")
+async def generate_exercise_phase_images(request: ExercisePhaseImageRequest):
+    """Generate 3 AI images showing exercise phases: start, mid-range, and completion"""
+    try:
+        exercise_key = request.exercise_name.lower().replace(" ", "_")
+        
+        # Check cache first
+        cached = await db.exercise_phase_images.find_one({
+            "exercise_key": exercise_key
+        })
+        if cached and cached.get("phases"):
+            return {
+                "exercise_name": request.exercise_name,
+                "phases": cached["phases"],
+                "cached": True
+            }
+        
+        # Generate images using GPT-image-1
+        emergent_key = os.getenv("EMERGENT_LLM_KEY")
+        image_gen = OpenAIImageGeneration(api_key=emergent_key)
+        
+        equipment_str = ", ".join(request.equipment) if request.equipment else "gym equipment"
+        muscles_str = ", ".join(request.muscle_groups) if request.muscle_groups else "target muscles"
+        
+        # Define the 3 phases with specific prompts
+        phases = [
+            {
+                "name": "start",
+                "label": "Starting Position",
+                "description": f"starting position, ready to begin the movement, proper grip and stance"
+            },
+            {
+                "name": "mid",
+                "label": "Mid-Range",
+                "description": f"mid-range position, halfway through the movement, muscles engaged"
+            },
+            {
+                "name": "end",
+                "label": "Completion",
+                "description": f"completion position, full range of motion achieved, peak contraction"
+            }
+        ]
+        
+        generated_phases = []
+        
+        for phase in phases:
+            prompt = f"""Create a professional fitness instruction photograph showing:
+
+Exercise: {request.exercise_name}
+Phase: {phase['label']} - {phase['description']}
+Equipment: {equipment_str}
+Target Muscles: {muscles_str}
+
+Requirements:
+- Clean, well-lit gym environment with professional lighting
+- Athletic person demonstrating EXACTLY the {phase['name']} position
+- Crystal clear demonstration of proper form and posture
+- Realistic photographic style, not cartoon or illustration
+- Side angle view to show full body mechanics
+- Person wearing athletic workout clothing
+- NO text, labels, or watermarks on the image
+- High quality, sharp focus on the person
+- Natural skin tones and realistic proportions"""
+
+            logger.info(f"Generating {phase['name']} phase image for: {request.exercise_name}")
+            
+            try:
+                images = await image_gen.generate_images(
+                    prompt=prompt,
+                    model="gpt-image-1",
+                    number_of_images=1
+                )
+                
+                if images and len(images) > 0:
+                    image_base64 = base64.b64encode(images[0]).decode('utf-8')
+                    generated_phases.append({
+                        "phase": phase["name"],
+                        "label": phase["label"],
+                        "image_base64": image_base64
+                    })
+                else:
+                    generated_phases.append({
+                        "phase": phase["name"],
+                        "label": phase["label"],
+                        "image_base64": None,
+                        "error": "Failed to generate"
+                    })
+            except Exception as gen_error:
+                logger.error(f"Error generating {phase['name']} image: {str(gen_error)}")
+                generated_phases.append({
+                    "phase": phase["name"],
+                    "label": phase["label"],
+                    "image_base64": None,
+                    "error": str(gen_error)
+                })
+        
+        # Cache the results
+        await db.exercise_phase_images.update_one(
+            {"exercise_key": exercise_key},
+            {
+                "$set": {
+                    "exercise_key": exercise_key,
+                    "exercise_name": request.exercise_name,
+                    "equipment": request.equipment,
+                    "muscle_groups": request.muscle_groups,
+                    "phases": generated_phases,
+                    "generated_at": datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "exercise_name": request.exercise_name,
+            "phases": generated_phases,
+            "cached": False
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating exercise phase images: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/exercises/phase-images/{exercise_name}")
+async def get_exercise_phase_images(exercise_name: str):
+    """Get cached exercise phase images"""
+    try:
+        exercise_key = exercise_name.lower().replace(" ", "_")
+        cached = await db.exercise_phase_images.find_one({
+            "exercise_key": exercise_key
+        })
+        
+        if cached and cached.get("phases"):
+            return {
+                "exercise_name": exercise_name,
+                "phases": cached["phases"],
+                "exists": True
+            }
+        
+        return {
+            "exercise_name": exercise_name,
+            "phases": [],
+            "exists": False
+        }
+    except Exception as e:
+        logger.error(f"Error getting exercise phase images: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/exercises/generate-workout-images/{workout_id}")
 async def generate_workout_images(workout_id: str, user_id: str):
     """Generate images for all exercises in a workout (Premium feature)"""
