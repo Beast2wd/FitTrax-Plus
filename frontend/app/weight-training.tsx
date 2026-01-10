@@ -577,66 +577,57 @@ export default function WeightTrainingScreen() {
       <Modal
         visible={showExerciseLibraryModal}
         animationType="slide"
-        transparent
-        onRequestClose={() => setShowExerciseLibraryModal(false)}
+        presentationStyle="pageSheet"
+        onRequestClose={closeExerciseLibrary}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowExerciseLibraryModal(false)}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={styles.exerciseLibraryModal}
-          >
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setShowExerciseLibraryModal(false)}>
-                <Ionicons name="close" size={28} color={theme.colors.text.primary} />
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>
-                {selectedMuscleGroup ? selectedMuscleGroup.charAt(0).toUpperCase() + selectedMuscleGroup.slice(1) : ''} Exercises
-              </Text>
-              <View style={{ width: 28 }} />
-            </View>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={closeExerciseLibrary} style={styles.closeButtonContainer}>
+              <Ionicons name="close-circle" size={32} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>
+              {selectedMuscleGroup ? selectedMuscleGroup.charAt(0).toUpperCase() + selectedMuscleGroup.slice(1) : ''} Exercises
+            </Text>
+            <View style={{ width: 40 }} />
+          </View>
 
-            <FlatList
-              data={selectedMuscleGroup ? exercises[selectedMuscleGroup] || [] : []}
-              keyExtractor={(item, index) => `${item.name}-${index}`}
-              renderItem={({ item }) => (
-                <TouchableOpacity 
-                  style={styles.exerciseItem}
-                  onPress={() => viewExerciseDetail(item)}
-                >
-                  <View style={styles.exerciseItemLeft}>
-                    <View style={styles.exerciseIconContainer}>
-                      <MaterialCommunityIcons name="dumbbell" size={24} color="#7C3AED" />
-                    </View>
-                    <View style={styles.exerciseItemInfo}>
-                      <Text style={styles.exerciseItemName}>{item.name}</Text>
-                      <Text style={styles.exerciseItemEquipment}>
-                        {item.equipment?.join(', ')}
-                      </Text>
-                      <View style={styles.muscleTagsRow}>
-                        {item.muscle_groups?.slice(0, 3).map((mg: string, idx: number) => (
-                          <View key={idx} style={styles.muscleTag}>
-                            <Text style={styles.muscleTagText}>{mg}</Text>
-                          </View>
-                        ))}
-                      </View>
+          <FlatList
+            data={selectedMuscleGroup ? exercises[selectedMuscleGroup] || [] : []}
+            keyExtractor={(item, index) => `${item.name}-${index}`}
+            contentContainerStyle={{ padding: 16 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity 
+                style={[styles.exerciseItem, { marginHorizontal: 0 }]}
+                onPress={() => viewExerciseDetail(item)}
+              >
+                <View style={styles.exerciseItemLeft}>
+                  <View style={styles.exerciseIconContainer}>
+                    <MaterialCommunityIcons name="dumbbell" size={24} color="#7C3AED" />
+                  </View>
+                  <View style={styles.exerciseItemInfo}>
+                    <Text style={styles.exerciseItemName}>{item.name}</Text>
+                    <Text style={styles.exerciseItemEquipment}>
+                      {item.equipment?.join(', ')}
+                    </Text>
+                    <View style={styles.muscleTagsRow}>
+                      {item.muscle_groups?.slice(0, 3).map((mg: string, idx: number) => (
+                        <View key={idx} style={styles.muscleTag}>
+                          <Text style={styles.muscleTagText}>{mg}</Text>
+                        </View>
+                      ))}
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={24} color={theme.colors.text.muted} />
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={
-                <View style={styles.emptyList}>
-                  <Text style={styles.emptyListText}>No exercises found</Text>
                 </View>
-              }
-            />
-          </TouchableOpacity>
-        </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.muted} />
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyList}>
+                <Text style={styles.emptyListText}>No exercises found</Text>
+              </View>
+            }
+          />
+        </SafeAreaView>
       </Modal>
 
       {/* Program Detail Modal - FIXED SCROLLING */}
