@@ -332,7 +332,10 @@ export default function DashboardScreen() {
     };
   }, []);
 
-  // Onboarding view
+  // Get TOS acceptance status from store
+  const { tosAccepted } = useUserStore();
+
+  // Onboarding view - Check TOS first
   if (!userId || !profile) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
@@ -346,7 +349,14 @@ export default function DashboardScreen() {
           </Text>
           <TouchableOpacity 
             style={[styles.ctaButton, { backgroundColor: accent.primary }]}
-            onPress={() => router.push('/profile')}
+            onPress={() => {
+              // Check if TOS has been accepted
+              if (!tosAccepted?.accepted) {
+                router.push('/terms-of-service');
+              } else {
+                router.push('/onboarding');
+              }
+            }}
           >
             <Text style={styles.ctaButtonText}>{t('dashboard.getStarted')}</Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
