@@ -170,14 +170,50 @@ export default function WeightTrainingScreen() {
     // Close the exercise library first, then open detail after delay
     setShowExerciseLibraryModal(false);
     setSelectedExerciseDetail(exercise);
+    setExercisePhaseImages([]);
+    setCurrentPhaseIndex(0);
     setTimeout(() => {
       setShowExerciseDetailModal(true);
+      // Load phase images after modal opens
+      loadExercisePhaseImages(exercise);
     }, 350);
+  };
+
+  const loadExercisePhaseImages = async (exercise: any) => {
+    setLoadingPhaseImages(true);
+    try {
+      // First check if images already exist in cache
+      const cacheResponse = await axios.get(`${API_URL}/api/exercises/phase-images/${encodeURIComponent(exercise.name)}`);
+      
+      if (cacheResponse.data.exists && cacheResponse.data.phases?.length > 0) {
+        setExercisePhaseImages(cacheResponse.data.phases);
+        setLoadingPhaseImages(false);
+        return;
+      }
+      
+      // Generate new images
+      const response = await axios.post(`${API_URL}/api/exercises/generate-phase-images`, {
+        exercise_name: exercise.name,
+        equipment: exercise.equipment,
+        muscle_groups: exercise.muscle_groups
+      }, { timeout: 180000 }); // 3 minute timeout for image generation
+      
+      if (response.data.phases) {
+        setExercisePhaseImages(response.data.phases);
+      }
+    } catch (error) {
+      console.error('Error loading exercise images:', error);
+      // Don't show error to user, just leave images empty
+    } finally {
+      setLoadingPhaseImages(false);
+    }
   };
 
   const closeExerciseDetail = () => {
     setShowExerciseDetailModal(false);
     setSelectedExerciseDetail(null);
+    setExercisePhaseImages([]);
+    setCurrentPhaseIndex(0);
   };
 
   const addSet = () => {
