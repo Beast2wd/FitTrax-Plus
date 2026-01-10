@@ -53,6 +53,10 @@ interface InjectionSite {
 
 export default function PeptideCalculatorScreen() {
   const { userId } = useUserStore();
+  const { theme } = useThemeStore();
+  const colors = theme.colors;
+  const accent = theme.accentColors;
+  
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('calculator');
