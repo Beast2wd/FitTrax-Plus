@@ -1231,7 +1231,7 @@ async def get_heart_rate_zones(user_id: str):
 async def delete_heart_rate(heart_rate_id: str):
     """Delete a heart rate entry"""
     try:
-        result = await db.heart_rates.delete_one({"heart_rate_id": heart_rate_id})
+        result = await db.heart_rate.delete_one({"heart_rate_id": heart_rate_id})
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Heart rate entry not found")
         return {"message": "Heart rate entry deleted successfully", "heart_rate_id": heart_rate_id}
