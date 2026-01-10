@@ -476,7 +476,7 @@ export default function HeartRateScreen() {
           <CameraView
             style={styles.camera}
             facing="back"
-            enableTorch={true}
+            enableTorch={torchOn}
           />
 
           {/* Overlay */}
@@ -484,11 +484,21 @@ export default function HeartRateScreen() {
             {/* Header */}
             <SafeAreaView style={styles.cameraHeader}>
               <TouchableOpacity onPress={closeCameraModal} style={styles.closeButton}>
-                <Ionicons name="close" size={32} color="#fff" />
+                <View style={styles.closeButtonCircle}>
+                  <Ionicons name="close" size={24} color="#fff" />
+                </View>
               </TouchableOpacity>
               <Text style={styles.cameraTitle}>Heart Rate Measurement</Text>
-              <View style={{ width: 40 }} />
+              <View style={{ width: 50 }} />
             </SafeAreaView>
+
+            {/* Torch Status Indicator */}
+            <View style={styles.torchIndicator}>
+              <Ionicons name={torchOn ? "flashlight" : "flashlight-outline"} size={20} color={torchOn ? "#FCD34D" : "#fff"} />
+              <Text style={[styles.torchText, torchOn && { color: '#FCD34D' }]}>
+                {torchOn ? "Flashlight ON" : "Flashlight OFF"}
+              </Text>
+            </View>
 
             {/* Center Content */}
             <View style={styles.cameraCenter}>
@@ -499,7 +509,7 @@ export default function HeartRateScreen() {
                   </View>
                   <Text style={styles.instructionTitle}>Place Your Finger</Text>
                   <Text style={styles.instructionText}>
-                    Gently cover the camera lens and flashlight completely with your fingertip
+                    Gently cover the camera lens and flashlight completely with your fingertip. The flash should illuminate your finger.
                   </Text>
                   <TouchableOpacity
                     style={styles.readyButton}
@@ -541,6 +551,16 @@ export default function HeartRateScreen() {
 
             {/* Bottom Actions */}
             <SafeAreaView style={styles.cameraBottom}>
+              {/* Cancel Button Always Visible */}
+              {!detectedBPM || isDetecting ? (
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={closeCameraModal}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              ) : null}
+              
               {detectedBPM && !isDetecting && (
                 <View style={styles.resultActions}>
                   <TouchableOpacity
