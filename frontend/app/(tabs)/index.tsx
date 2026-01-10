@@ -674,6 +674,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  startRunningButton: {
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  startRunningGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  startRunningContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  startRunningIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  startRunningTextContainer: {},
+  startRunningTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  startRunningSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 2,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
