@@ -59,6 +59,10 @@ export default function WeightTrainingScreen() {
   const [editExSets, setEditExSets] = useState('');
   const [editExReps, setEditExReps] = useState('');
   const [editExRest, setEditExRest] = useState('');
+  
+  // Past workout view state
+  const [showPastWorkoutModal, setShowPastWorkoutModal] = useState(false);
+  const [selectedPastWorkout, setSelectedPastWorkout] = useState<any>(null);
 
   useEffect(() => {
     loadData();
