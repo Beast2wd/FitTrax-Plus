@@ -666,7 +666,7 @@ export default function DashboardScreen() {
           {[
             { icon: 'camera', label: t('dashboard.scanFood'), color: accent.primary, route: '/scan' },
             { icon: 'calendar', label: t('dashboard.schedule'), color: '#F59E0B', route: '/schedule' },
-            { icon: 'barbell', label: t('dashboard.workout'), color: '#8B5CF6', route: '/weight-training' },
+            { icon: 'clipboard', label: 'Workout Log', color: '#8B5CF6', route: '/manual-workout-log' },
             { icon: 'footsteps', label: t('dashboard.run'), color: '#EC4899', route: '/running' },
             { icon: 'body', label: t('dashboard.bodyScan'), color: '#10B981', route: '/body-scan' },
             { icon: 'flask', label: t('dashboard.peptides'), color: '#6366F1', route: '/peptides' },
