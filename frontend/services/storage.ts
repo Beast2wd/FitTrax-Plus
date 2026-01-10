@@ -4,6 +4,7 @@ const KEYS = {
   USER_ID: '@fittraxx_user_id',
   USER_PROFILE: '@fittraxx_user_profile',
   ONBOARDING_COMPLETE: '@fittraxx_onboarding',
+  TOS_ACCEPTANCE: '@fittraxx_tos_acceptance',
 };
 
 export const storage = {
@@ -37,4 +38,21 @@ export const storage = {
   clearAll: async () => {
     await AsyncStorage.clear();
   },
+};
+
+// TOS Acceptance functions (exported separately for compatibility)
+export const saveTosAcceptance = async (acceptance: any) => {
+  await AsyncStorage.setItem(KEYS.TOS_ACCEPTANCE, JSON.stringify(acceptance));
+};
+
+export const getTosAcceptance = async (): Promise<any | null> => {
+  const acceptance = await AsyncStorage.getItem(KEYS.TOS_ACCEPTANCE);
+  return acceptance ? JSON.parse(acceptance) : null;
+};
+
+export const isTosAccepted = async (): Promise<boolean> => {
+  const acceptance = await AsyncStorage.getItem(KEYS.TOS_ACCEPTANCE);
+  if (!acceptance) return false;
+  const data = JSON.parse(acceptance);
+  return data.accepted === true;
 };
