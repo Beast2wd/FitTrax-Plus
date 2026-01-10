@@ -38,6 +38,16 @@ export default function DashboardScreen() {
   const [achievementModal, setAchievementModal] = useState<any>({ visible: false, achievement: null });
   const [pendingAchievements, setPendingAchievements] = useState<any[]>([]);
 
+  // Quick Run tracking state
+  const [isRunning, setIsRunning] = useState(false);
+  const [runTime, setRunTime] = useState(0); // in seconds
+  const [runDistance, setRunDistance] = useState(0); // in miles
+  const [runCoordinates, setRunCoordinates] = useState<any[]>([]);
+  const [lastPosition, setLastPosition] = useState<any>(null);
+  const locationSubscription = useRef<any>(null);
+  const timerRef = useRef<any>(null);
+  const runStartTime = useRef<Date | null>(null);
+
   const colors = theme.colors;
   const accent = theme.accentColors;
 
