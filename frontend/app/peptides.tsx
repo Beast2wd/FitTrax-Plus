@@ -868,10 +868,10 @@ export default function PeptideCalculatorScreen() {
               onPress={(e) => e.stopPropagation()}
               style={[styles.modalContent, { maxHeight: '80%' }]}
             >
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Peptide</Text>
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
+                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Select Peptide</Text>
                 <TouchableOpacity onPress={() => setSelectorVisible(false)}>
-                  <Ionicons name="close" size={24} color={Colors.text.primary} />
+                  <Ionicons name="close" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
               </View>
 
@@ -888,11 +888,11 @@ export default function PeptideCalculatorScreen() {
                       {peptides.map(([id, peptide]) => (
                         <TouchableOpacity
                           key={id}
-                          style={styles.selectorItem}
+                          style={[styles.selectorItem, { backgroundColor: colors.background.input }]}
                           onPress={() => selectPeptide(id)}
                         >
-                          <Text style={styles.selectorItemText}>{peptide.name}</Text>
-                          <Text style={styles.selectorItemDose}>
+                          <Text style={[styles.selectorItemText, { color: colors.text.primary }]}>{peptide.name}</Text>
+                          <Text style={[styles.selectorItemDose, { color: accent.primary }]}>
                             {peptide.common_doses[0]} {peptide.dose_unit}
                           </Text>
                         </TouchableOpacity>
@@ -920,33 +920,33 @@ export default function PeptideCalculatorScreen() {
             <TouchableOpacity 
               activeOpacity={1} 
               onPress={(e) => e.stopPropagation()}
-              style={styles.infoModalContent}
+              style={[styles.infoModalContent, { backgroundColor: colors.background.card }]}
             >
               {selectedPeptideInfo && (
                 <>
-                  <Text style={styles.infoTitle}>{selectedPeptideInfo.name}</Text>
-                  <Text style={styles.infoDescription}>{selectedPeptideInfo.description}</Text>
+                  <Text style={[styles.infoTitle, { color: colors.text.primary }]}>{selectedPeptideInfo.name}</Text>
+                  <Text style={[styles.infoDescription, { color: colors.text.secondary }]}>{selectedPeptideInfo.description}</Text>
                   
                   <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>Common Doses</Text>
-                    <Text style={styles.infoValue}>
+                    <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Common Doses</Text>
+                    <Text style={[styles.infoValue, { color: colors.text.primary }]}>
                       {selectedPeptideInfo.common_doses.join(', ')} {selectedPeptideInfo.dose_unit}
                     </Text>
                   </View>
                   
                   <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>Frequency</Text>
-                    <Text style={styles.infoValue}>{selectedPeptideInfo.frequency}</Text>
+                    <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Frequency</Text>
+                    <Text style={[styles.infoValue, { color: colors.text.primary }]}>{selectedPeptideInfo.frequency}</Text>
                   </View>
                   
                   <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>Duration</Text>
-                    <Text style={styles.infoValue}>{selectedPeptideInfo.typical_duration}</Text>
+                    <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Duration</Text>
+                    <Text style={[styles.infoValue, { color: colors.text.primary }]}>{selectedPeptideInfo.typical_duration}</Text>
                   </View>
                   
                   <View style={styles.infoSection}>
-                    <Text style={styles.infoLabel}>Half-Life</Text>
-                    <Text style={styles.infoValue}>{selectedPeptideInfo.half_life}</Text>
+                    <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Half-Life</Text>
+                    <Text style={[styles.infoValue, { color: colors.text.primary }]}>{selectedPeptideInfo.half_life}</Text>
                   </View>
                   
                   <View style={styles.infoSection}>
