@@ -674,47 +674,118 @@ export default function WeightTrainingScreen() {
                       </TouchableOpacity>
                     </View>
                     
-                    {day.exercises?.map((ex: any, exIndex: number) => (
-                      <View key={exIndex} style={styles.dayExerciseEditable}>
-                        <View style={styles.exerciseReorderBtns}>
-                          <TouchableOpacity 
-                            onPress={() => moveExerciseUpInDay(dayIndex, exIndex)}
-                            style={[styles.reorderBtn, exIndex === 0 && styles.reorderBtnDisabled]}
-                            disabled={exIndex === 0}
-                          >
-                            <Ionicons name="chevron-up" size={18} color={exIndex === 0 ? theme.colors.text.muted : theme.accentColors.primary} />
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            onPress={() => moveExerciseDownInDay(dayIndex, exIndex)}
-                            style={[styles.reorderBtn, exIndex === day.exercises.length - 1 && styles.reorderBtnDisabled]}
-                            disabled={exIndex === day.exercises.length - 1}
-                          >
-                            <Ionicons name="chevron-down" size={18} color={exIndex === day.exercises.length - 1 ? theme.colors.text.muted : theme.accentColors.primary} />
-                          </TouchableOpacity>
-                        </View>
+                    {day.exercises?.map((ex: any, exIndex: number) => {
+                      const exerciseKey = `${dayIndex}-${exIndex}`;
+                      const isExpanded = expandedExerciseKey === exerciseKey;
+                      
+                      return (
+                        <View key={exIndex}>
+                          <View style={styles.dayExerciseEditable}>
+                            <View style={styles.exerciseReorderBtns}>
+                              <TouchableOpacity 
+                                onPress={() => moveExerciseUpInDay(dayIndex, exIndex)}
+                                style={[styles.reorderBtn, exIndex === 0 && styles.reorderBtnDisabled]}
+                                disabled={exIndex === 0}
+                              >
+                                <Ionicons name="chevron-up" size={18} color={exIndex === 0 ? theme.colors.text.muted : theme.accentColors.primary} />
+                              </TouchableOpacity>
+                              <TouchableOpacity 
+                                onPress={() => moveExerciseDownInDay(dayIndex, exIndex)}
+                                style={[styles.reorderBtn, exIndex === day.exercises.length - 1 && styles.reorderBtnDisabled]}
+                                disabled={exIndex === day.exercises.length - 1}
+                              >
+                                <Ionicons name="chevron-down" size={18} color={exIndex === day.exercises.length - 1 ? theme.colors.text.muted : theme.accentColors.primary} />
+                              </TouchableOpacity>
+                            </View>
 
-                        <TouchableOpacity 
-                          style={styles.dayExInfo}
-                          onPress={() => openEditExercise(dayIndex, exIndex, ex)}
-                        >
-                          <Text style={styles.dayExNumber}>{exIndex + 1}</Text>
-                          <View style={styles.dayExDetails}>
-                            <Text style={styles.dayExName}>{ex.name}</Text>
-                            <Text style={styles.dayExMeta}>
-                              {ex.sets} sets × {ex.reps} • {ex.rest}s rest
-                            </Text>
+                            <TouchableOpacity 
+                              style={styles.dayExInfo}
+                              onPress={() => openEditExercise(dayIndex, exIndex, ex)}
+                            >
+                              <Text style={styles.dayExNumber}>{exIndex + 1}</Text>
+                              <View style={styles.dayExDetails}>
+                                <Text style={styles.dayExName}>{ex.name}</Text>
+                                <Text style={styles.dayExMeta}>
+                                  {ex.sets} sets × {ex.reps} • {ex.rest}s rest
+                                </Text>
+                              </View>
+                              <Ionicons name={isExpanded ? "chevron-up" : "pencil"} size={16} color={isExpanded ? theme.accentColors.primary : theme.colors.text.muted} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity 
+                              style={styles.deleteExBtn}
+                              onPress={() => deleteExerciseFromDay(dayIndex, exIndex)}
+                            >
+                              <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                            </TouchableOpacity>
                           </View>
-                          <Ionicons name="pencil" size={16} color={theme.colors.text.muted} />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity 
-                          style={styles.deleteExBtn}
-                          onPress={() => deleteExerciseFromDay(dayIndex, exIndex)}
-                        >
-                          <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+                          
+                          {/* Inline Edit Form */}
+                          {isExpanded && (
+                            <View style={styles.inlineEditForm}>
+                              <View style={styles.inlineEditRow}>
+                                <Text style={styles.inlineEditLabel}>Name</Text>
+                                <TextInput
+                                  style={styles.inlineEditInput}
+                                  value={editExName}
+                                  onChangeText={setEditExName}
+                                  placeholder="Exercise name"
+                                  placeholderTextColor={theme.colors.text.muted}
+                                />
+                              </View>
+                              <View style={styles.inlineEditGrid}>
+                                <View style={styles.inlineEditGridItem}>
+                                  <Text style={styles.inlineEditLabel}>Sets</Text>
+                                  <TextInput
+                                    style={styles.inlineEditInputSmall}
+                                    value={editExSets}
+                                    onChangeText={setEditExSets}
+                                    keyboardType="numeric"
+                                    placeholder="3"
+                                    placeholderTextColor={theme.colors.text.muted}
+                                  />
+                                </View>
+                                <View style={styles.inlineEditGridItem}>
+                                  <Text style={styles.inlineEditLabel}>Reps</Text>
+                                  <TextInput
+                                    style={styles.inlineEditInputSmall}
+                                    value={editExReps}
+                                    onChangeText={setEditExReps}
+                                    placeholder="8-12"
+                                    placeholderTextColor={theme.colors.text.muted}
+                                  />
+                                </View>
+                                <View style={styles.inlineEditGridItem}>
+                                  <Text style={styles.inlineEditLabel}>Rest</Text>
+                                  <TextInput
+                                    style={styles.inlineEditInputSmall}
+                                    value={editExRest}
+                                    onChangeText={setEditExRest}
+                                    keyboardType="numeric"
+                                    placeholder="60"
+                                    placeholderTextColor={theme.colors.text.muted}
+                                  />
+                                </View>
+                              </View>
+                              <View style={styles.inlineEditActions}>
+                                <TouchableOpacity 
+                                  style={styles.inlineEditCancel}
+                                  onPress={cancelExerciseEdit}
+                                >
+                                  <Text style={styles.inlineEditCancelText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                  style={styles.inlineEditSave}
+                                  onPress={saveExerciseEdit}
+                                >
+                                  <Text style={styles.inlineEditSaveText}>Save Changes</Text>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })}
                   </View>
                 ))}
 
