@@ -576,7 +576,7 @@ export default function DashboardScreen() {
           // Running State - Show timer and distance
           <View style={styles.runningActiveContainer}>
             <LinearGradient
-              colors={['#EC4899', '#F472B6']}
+              colors={runningButtonGradient as [string, string]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.runningActiveGradient}
@@ -590,8 +590,8 @@ export default function DashboardScreen() {
               
               <View style={styles.runningStats}>
                 <View style={styles.runningStat}>
-                  <Text style={styles.runningStatValue}>{runDistance.toFixed(2)}</Text>
-                  <Text style={styles.runningStatLabel}>miles</Text>
+                  <Text style={styles.runningStatValue}>{getDisplayDistance().value}</Text>
+                  <Text style={styles.runningStatLabel}>{getDisplayDistance().unit}</Text>
                 </View>
                 <View style={styles.runningStatDivider} />
                 <View style={styles.runningStat}>
@@ -600,20 +600,18 @@ export default function DashboardScreen() {
                 </View>
                 <View style={styles.runningStatDivider} />
                 <View style={styles.runningStat}>
-                  <Text style={styles.runningStatValue}>
-                    {runDistance > 0 ? ((runTime / 60) / runDistance).toFixed(1) : '0.0'}
-                  </Text>
-                  <Text style={styles.runningStatLabel}>min/mi</Text>
+                  <Text style={styles.runningStatValue}>{calculatePace().value}</Text>
+                  <Text style={styles.runningStatLabel}>{calculatePace().unit}</Text>
                 </View>
               </View>
 
               <View style={styles.runningActions}>
                 <TouchableOpacity 
-                  style={styles.stopRunButton}
+                  style={[styles.stopRunButton, { borderColor: runningButtonPrimary }]}
                   onPress={stopQuickRun}
                 >
-                  <Ionicons name="stop" size={20} color="#EC4899" />
-                  <Text style={styles.stopRunButtonText}>Stop Run</Text>
+                  <Ionicons name="stop" size={20} color={runningButtonPrimary} />
+                  <Text style={[styles.stopRunButtonText, { color: runningButtonPrimary }]}>Stop Run</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={styles.viewTrackerButton}
@@ -633,7 +631,7 @@ export default function DashboardScreen() {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={['#EC4899', '#F472B6']}
+              colors={runningButtonGradient as [string, string]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.startRunningGradient}
