@@ -355,27 +355,27 @@ export default function PeptideCalculatorScreen() {
               {/* Stats Summary */}
               {stats && (
                 <View style={styles.statsRow}>
-                  <View style={styles.statCard}>
-                    <Text style={styles.statValue}>{stats.total_injections}</Text>
-                    <Text style={styles.statLabel}>Total Logs</Text>
+                  <View style={[styles.statCard, { backgroundColor: colors.background.card }]}>
+                    <Text style={[styles.statValue, { color: accent.primary }]}>{stats.total_injections}</Text>
+                    <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Total Logs</Text>
                   </View>
-                  <View style={styles.statCard}>
-                    <Text style={styles.statValue}>{stats.this_week_injections}</Text>
-                    <Text style={styles.statLabel}>This Week</Text>
+                  <View style={[styles.statCard, { backgroundColor: colors.background.card }]}>
+                    <Text style={[styles.statValue, { color: accent.primary }]}>{stats.this_week_injections}</Text>
+                    <Text style={[styles.statLabel, { color: colors.text.secondary }]}>This Week</Text>
                   </View>
-                  <View style={styles.statCard}>
-                    <Text style={styles.statValue}>{stats.current_streak}</Text>
-                    <Text style={styles.statLabel}>Day Streak</Text>
+                  <View style={[styles.statCard, { backgroundColor: colors.background.card }]}>
+                    <Text style={[styles.statValue, { color: accent.primary }]}>{stats.current_streak}</Text>
+                    <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Day Streak</Text>
                   </View>
                 </View>
               )}
 
               {/* Reconstitution Calculator */}
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Reconstitution Calculator</Text>
+              <View style={[styles.card, { backgroundColor: colors.background.card }]}>
+                <Text style={[styles.cardTitle, { color: colors.text.primary }]}>Reconstitution Calculator</Text>
                 
                 <TouchableOpacity 
-                  style={styles.selectButton}
+                  style={[styles.selectButton, { backgroundColor: colors.background.input }]}
                   onPress={() => openPeptideSelector((id) => {
                     setSelectedPeptide(id);
                     const p = peptideDatabase[id];
@@ -384,94 +384,98 @@ export default function PeptideCalculatorScreen() {
                     }
                   })}
                 >
-                  <Text style={styles.selectButtonText}>
+                  <Text style={[styles.selectButtonText, { color: selectedPeptide ? colors.text.primary : colors.text.secondary }]}>
                     {selectedPeptide ? peptideDatabase[selectedPeptide]?.name : 'Select Peptide (optional)'}
                   </Text>
-                  <Ionicons name="chevron-down" size={20} color={Colors.text.secondary} />
+                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
                 </TouchableOpacity>
 
                 <View style={styles.inputRow}>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Peptide Amount</Text>
-                    <View style={styles.inputWithUnit}>
+                    <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Peptide Amount</Text>
+                    <View style={[styles.inputWithUnit, { backgroundColor: colors.background.input }]}>
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text.primary }]}
                         value={peptideAmount}
                         onChangeText={setPeptideAmount}
                         keyboardType="decimal-pad"
                         placeholder="5"
+                        placeholderTextColor={colors.text.muted}
                       />
-                      <Text style={styles.inputUnit}>mg</Text>
+                      <Text style={[styles.inputUnit, { color: colors.text.secondary }]}>mg</Text>
                     </View>
                   </View>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>BAC Water</Text>
-                    <View style={styles.inputWithUnit}>
+                    <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>BAC Water</Text>
+                    <View style={[styles.inputWithUnit, { backgroundColor: colors.background.input }]}>
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text.primary }]}
                         value={waterAmount}
                         onChangeText={setWaterAmount}
                         keyboardType="decimal-pad"
                         placeholder="2"
+                        placeholderTextColor={colors.text.muted}
                       />
-                      <Text style={styles.inputUnit}>mL</Text>
+                      <Text style={[styles.inputUnit, { color: colors.text.secondary }]}>mL</Text>
                     </View>
                   </View>
                 </View>
 
                 <View style={styles.inputRow}>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Desired Dose</Text>
-                    <View style={styles.inputWithUnit}>
+                    <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Desired Dose</Text>
+                    <View style={[styles.inputWithUnit, { backgroundColor: colors.background.input }]}>
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text.primary }]}
                         value={desiredDose}
                         onChangeText={setDesiredDose}
                         keyboardType="decimal-pad"
                         placeholder="250"
+                        placeholderTextColor={colors.text.muted}
                       />
-                      <Text style={styles.inputUnit}>mcg</Text>
+                      <Text style={[styles.inputUnit, { color: colors.text.secondary }]}>mcg</Text>
                     </View>
                   </View>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Syringe</Text>
-                    <View style={styles.inputWithUnit}>
+                    <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Syringe</Text>
+                    <View style={[styles.inputWithUnit, { backgroundColor: colors.background.input }]}>
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text.primary }]}
                         value={syringeUnits}
                         onChangeText={setSyringeUnits}
                         keyboardType="number-pad"
                         placeholder="100"
+                        placeholderTextColor={colors.text.muted}
                       />
-                      <Text style={styles.inputUnit}>units</Text>
+                      <Text style={[styles.inputUnit, { color: colors.text.secondary }]}>units</Text>
                     </View>
                   </View>
                 </View>
 
-                <TouchableOpacity style={styles.calculateButton} onPress={calculateReconstitution}>
+                <TouchableOpacity style={[styles.calculateButton, { backgroundColor: accent.primary }]} onPress={calculateReconstitution}>
                   <Ionicons name="calculator" size={20} color="#fff" />
                   <Text style={styles.calculateButtonText}>Calculate</Text>
                 </TouchableOpacity>
 
                 {calcResult && (
-                  <View style={styles.resultCard}>
-                    <View style={styles.resultMain}>
-                      <Text style={styles.resultLabel}>Draw</Text>
-                      <Text style={styles.resultValue}>{calcResult.units_for_dose} units</Text>
-                      <Text style={styles.resultSubtext}>{calcResult.syringe_marking}</Text>
+                  <View style={[styles.resultCard, { backgroundColor: `${accent.primary}15` }]}>
+                    <View style={[styles.resultMain, { borderBottomColor: `${accent.primary}30` }]}>
+                      <Text style={[styles.resultLabel, { color: colors.text.secondary }]}>Draw</Text>
+                      <Text style={[styles.resultValue, { color: accent.primary }]}>{calcResult.units_for_dose} units</Text>
+                      <Text style={[styles.resultSubtext, { color: colors.text.secondary }]}>{calcResult.syringe_marking}</Text>
                     </View>
                     <View style={styles.resultDetails}>
                       <View style={styles.resultRow}>
-                        <Text style={styles.resultDetailLabel}>Concentration</Text>
-                        <Text style={styles.resultDetailValue}>{calcResult.concentration_mcg_per_ml} mcg/mL</Text>
+                        <Text style={[styles.resultDetailLabel, { color: colors.text.secondary }]}>Concentration</Text>
+                        <Text style={[styles.resultDetailValue, { color: colors.text.primary }]}>{calcResult.concentration_mcg_per_ml} mcg/mL</Text>
                       </View>
                       <View style={styles.resultRow}>
-                        <Text style={styles.resultDetailLabel}>Per Unit</Text>
-                        <Text style={styles.resultDetailValue}>{calcResult.mcg_per_unit} mcg</Text>
+                        <Text style={[styles.resultDetailLabel, { color: colors.text.secondary }]}>Per Unit</Text>
+                        <Text style={[styles.resultDetailValue, { color: colors.text.primary }]}>{calcResult.mcg_per_unit} mcg</Text>
                       </View>
                       <View style={styles.resultRow}>
-                        <Text style={styles.resultDetailLabel}>Doses/Vial</Text>
-                        <Text style={styles.resultDetailValue}>{calcResult.doses_per_vial}</Text>
+                        <Text style={[styles.resultDetailLabel, { color: colors.text.secondary }]}>Doses/Vial</Text>
+                        <Text style={[styles.resultDetailValue, { color: colors.text.primary }]}>{calcResult.doses_per_vial}</Text>
                       </View>
                     </View>
                   </View>
@@ -480,7 +484,7 @@ export default function PeptideCalculatorScreen() {
 
               {/* Quick Peptide Reference */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Peptide Library</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Peptide Library</Text>
                 {Object.entries(categories).map(([catId, catName]) => {
                   const peptides = Object.entries(peptideDatabase).filter(([_, p]) => p.category === catId);
                   if (peptides.length === 0) return null;
@@ -498,7 +502,7 @@ export default function PeptideCalculatorScreen() {
                               style={[styles.peptideChip, { borderColor: getCategoryColor(catId) }]}
                               onPress={() => showPeptideInfo(id)}
                             >
-                              <Text style={styles.peptideChipText}>{peptide.name}</Text>
+                              <Text style={[styles.peptideChipText, { color: colors.text.primary }]}>{peptide.name}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
