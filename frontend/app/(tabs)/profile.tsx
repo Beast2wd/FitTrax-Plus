@@ -847,4 +847,132 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  // Calorie Goal Section Styles
+  calorieGoalSection: {
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
+  },
+  calorieGoalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  aiGoalCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  aiGoalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  aiGoalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  aiGoalValue: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  aiGoalNote: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  customGoalToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  customGoalToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  customGoalToggleText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  customGoalInputSection: {
+    marginBottom: 12,
+  },
+  customGoalInputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  customGoalInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  customGoalInput: {
+    flex: 1,
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  customGoalUnit: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  quickAdjustRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  quickAdjustBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  quickAdjustText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  resetGoalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  resetGoalText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  activeGoalCard: {
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  activeGoalLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  activeGoalValue: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#fff',
+    marginVertical: 4,
+  },
+  activeGoalSource: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+  },
 });
