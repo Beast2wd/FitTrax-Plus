@@ -46,6 +46,10 @@ interface Measurements {
 
 export default function BodyScanScreen() {
   const { userId, profile } = useUserStore();
+  const { theme } = useThemeStore();
+  const colors = theme.colors;
+  const accent = theme.accentColors;
+  
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
