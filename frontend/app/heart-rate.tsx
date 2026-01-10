@@ -460,29 +460,35 @@ export default function HeartRateScreen() {
         {heartRates.length > 0 && (
           <View style={[styles.card, { backgroundColor: colors.background.card }]}>
             <Text style={[styles.cardTitle, { color: colors.text.primary }]}>Recent Measurements</Text>
+            <Text style={[styles.swipeHint, { color: colors.text.muted }]}>← Swipe left to delete</Text>
             {heartRates.slice(0, 10).map((hr) => {
               const zone = getZoneForBPM(hr.bpm);
               return (
-                <View key={hr.heart_rate_id || hr.timestamp} style={[styles.historyItem, { borderBottomColor: colors.border.primary }]}>
-                  <View style={styles.historyLeft}>
-                    <View style={[styles.bpmBadge, { backgroundColor: zone?.color || '#3B82F6' }]}>
-                      <Text style={styles.bpmText}>{hr.bpm}</Text>
+                <SwipeableRow
+                  key={hr.heart_rate_id || hr.timestamp}
+                  onDelete={() => deleteHeartRateEntry(hr.heart_rate_id)}
+                >
+                  <View style={[styles.historyItem, { borderBottomColor: colors.border.primary }]}>
+                    <View style={styles.historyLeft}>
+                      <View style={[styles.bpmBadge, { backgroundColor: zone?.color || '#3B82F6' }]}>
+                        <Text style={styles.bpmText}>{hr.bpm}</Text>
+                      </View>
+                      <View>
+                        <Text style={[styles.historyZone, { color: colors.text.primary }]}>{zone?.name || 'Unknown'}</Text>
+                        <Text style={[styles.historyActivity, { color: colors.text.secondary }]}>{hr.activity_type}</Text>
+                        {hr.source === 'camera' && (
+                          <View style={styles.sourceTag}>
+                            <Ionicons name="camera" size={10} color="#fff" />
+                            <Text style={styles.sourceTagText}>Camera</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                    <View>
-                      <Text style={[styles.historyZone, { color: colors.text.primary }]}>{zone?.name || 'Unknown'}</Text>
-                      <Text style={[styles.historyActivity, { color: colors.text.secondary }]}>{hr.activity_type}</Text>
-                      {hr.source === 'camera' && (
-                        <View style={styles.sourceTag}>
-                          <Ionicons name="camera" size={10} color="#fff" />
-                          <Text style={styles.sourceTagText}>Camera</Text>
-                        </View>
-                      )}
-                    </View>
+                    <Text style={[styles.historyDate, { color: colors.text.muted }]}>
+                      {format(new Date(hr.timestamp), 'MMM d, h:mm a')}
+                    </Text>
                   </View>
-                  <Text style={[styles.historyDate, { color: colors.text.muted }]}>
-                    {format(new Date(hr.timestamp), 'MMM d, h:mm a')}
-                  </Text>
-                </View>
+                </SwipeableRow>
               );
             })}
           </View>
