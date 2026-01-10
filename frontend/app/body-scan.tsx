@@ -821,6 +821,7 @@ export default function BodyScanScreen() {
         </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
