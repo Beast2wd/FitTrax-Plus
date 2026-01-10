@@ -324,11 +324,136 @@ export default function ProfileScreen() {
               </TouchableOpacity>
 
               {profile && (
-                <View style={[styles.goalCard, { backgroundColor: `${accentColors.primary}20` }]}>
-                  <Text style={[styles.goalLabel, { color: colors.text.secondary }]}>Daily Calorie Goal</Text>
-                  <Text style={[styles.goalValue, { color: accentColors.primary }]}>
-                    {profile.daily_calorie_goal || 2000} cal
-                  </Text>
+                <View style={[styles.calorieGoalSection, { backgroundColor: colors.background.secondary }]}>
+                  <Text style={[styles.calorieGoalTitle, { color: colors.text.primary }]}>Daily Calorie Goal</Text>
+                  
+                  {/* AI Generated Goal */}
+                  <View style={[styles.aiGoalCard, { backgroundColor: `${accentColors.primary}15` }]}>
+                    <View style={styles.aiGoalHeader}>
+                      <Ionicons name="sparkles" size={18} color={accentColors.primary} />
+                      <Text style={[styles.aiGoalLabel, { color: colors.text.secondary }]}>AI Recommended</Text>
+                    </View>
+                    <Text style={[styles.aiGoalValue, { color: accentColors.primary }]}>
+                      {profile.daily_calorie_goal || 2000} cal/day
+                    </Text>
+                    <Text style={[styles.aiGoalNote, { color: colors.text.muted }]}>
+                      Based on your height, weight, goal & activity level
+                    </Text>
+                  </View>
+
+                  {/* Custom Goal Toggle */}
+                  <View style={[styles.customGoalToggle, { backgroundColor: colors.background.card }]}>
+                    <View style={styles.customGoalToggleLeft}>
+                      <Ionicons name="create-outline" size={20} color={colors.text.primary} />
+                      <Text style={[styles.customGoalToggleText, { color: colors.text.primary }]}>
+                        Use Custom Goal
+                      </Text>
+                    </View>
+                    <Switch
+                      value={isCustomCalorieGoal}
+                      onValueChange={(value) => {
+                        setIsCustomCalorieGoal(value);
+                        if (!value) {
+                          setCustomCalorieGoal('');
+                        } else {
+                          setCustomCalorieGoal((profile.daily_calorie_goal || 2000).toString());
+                        }
+                      }}
+                      trackColor={{ false: colors.border.primary, true: `${accentColors.primary}50` }}
+                      thumbColor={isCustomCalorieGoal ? accentColors.primary : colors.text.muted}
+                    />
+                  </View>
+
+                  {/* Custom Goal Input */}
+                  {isCustomCalorieGoal && (
+                    <View style={styles.customGoalInputSection}>
+                      <Text style={[styles.customGoalInputLabel, { color: colors.text.secondary }]}>
+                        Your Custom Daily Goal
+                      </Text>
+                      <View style={styles.customGoalInputRow}>
+                        <TextInput
+                          style={[styles.customGoalInput, { 
+                            backgroundColor: colors.background.input, 
+                            borderColor: accentColors.primary, 
+                            color: colors.text.primary 
+                          }]}
+                          value={customCalorieGoal}
+                          onChangeText={setCustomCalorieGoal}
+                          keyboardType="numeric"
+                          placeholder="e.g., 1800"
+                          placeholderTextColor={colors.text.muted}
+                          maxLength={5}
+                        />
+                        <Text style={[styles.customGoalUnit, { color: colors.text.secondary }]}>cal/day</Text>
+                      </View>
+                      
+                      {/* Quick Adjustment Buttons */}
+                      <View style={styles.quickAdjustRow}>
+                        <TouchableOpacity 
+                          style={[styles.quickAdjustBtn, { backgroundColor: colors.background.card }]}
+                          onPress={() => {
+                            const current = parseInt(customCalorieGoal) || 2000;
+                            setCustomCalorieGoal(Math.max(1000, current - 100).toString());
+                          }}
+                        >
+                          <Text style={[styles.quickAdjustText, { color: colors.text.primary }]}>-100</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.quickAdjustBtn, { backgroundColor: colors.background.card }]}
+                          onPress={() => {
+                            const current = parseInt(customCalorieGoal) || 2000;
+                            setCustomCalorieGoal(Math.max(1000, current - 50).toString());
+                          }}
+                        >
+                          <Text style={[styles.quickAdjustText, { color: colors.text.primary }]}>-50</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.quickAdjustBtn, { backgroundColor: colors.background.card }]}
+                          onPress={() => {
+                            const current = parseInt(customCalorieGoal) || 2000;
+                            setCustomCalorieGoal((current + 50).toString());
+                          }}
+                        >
+                          <Text style={[styles.quickAdjustText, { color: colors.text.primary }]}>+50</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.quickAdjustBtn, { backgroundColor: colors.background.card }]}
+                          onPress={() => {
+                            const current = parseInt(customCalorieGoal) || 2000;
+                            setCustomCalorieGoal((current + 100).toString());
+                          }}
+                        >
+                          <Text style={[styles.quickAdjustText, { color: colors.text.primary }]}>+100</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Reset to AI Goal Button */}
+                      <TouchableOpacity 
+                        style={[styles.resetGoalBtn, { borderColor: colors.border.primary }]}
+                        onPress={() => {
+                          setCustomCalorieGoal((profile.daily_calorie_goal || 2000).toString());
+                        }}
+                      >
+                        <Ionicons name="refresh" size={16} color={colors.text.secondary} />
+                        <Text style={[styles.resetGoalText, { color: colors.text.secondary }]}>
+                          Reset to AI Recommendation
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Active Goal Display */}
+                  <View style={[styles.activeGoalCard, { backgroundColor: accentColors.primary }]}>
+                    <Text style={styles.activeGoalLabel}>Active Daily Goal</Text>
+                    <Text style={styles.activeGoalValue}>
+                      {isCustomCalorieGoal && customCalorieGoal 
+                        ? `${customCalorieGoal} cal` 
+                        : `${profile.daily_calorie_goal || 2000} cal`}
+                    </Text>
+                    <Text style={styles.activeGoalSource}>
+                      {isCustomCalorieGoal ? '✏️ Custom' : '✨ AI Generated'}
+                    </Text>
+                  </View>
                 </View>
               )}
             </View>
