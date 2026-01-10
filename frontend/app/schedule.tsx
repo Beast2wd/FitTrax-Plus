@@ -804,6 +804,21 @@ export default function ScheduleScreen() {
                   
                   {planExpanded && (
                     <View style={localStyles.expandedOptions}>
+                      {/* Create Custom Workout Option */}
+                      <TouchableOpacity
+                        style={[localStyles.optionItem, localStyles.createCustomOption]}
+                        onPress={openCustomWorkoutModal}
+                      >
+                        <View style={localStyles.createCustomContent}>
+                          <Ionicons name="add-circle" size={20} color={accent.primary} />
+                          <Text style={[localStyles.optionText, { color: accent.primary, fontWeight: '600' }]}>
+                            Create Custom Workout
+                          </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color={accent.primary} />
+                      </TouchableOpacity>
+                      
+                      {/* Existing Plans */}
                       {allPlans.map((plan) => (
                         <TouchableOpacity
                           key={plan.plan_id}
