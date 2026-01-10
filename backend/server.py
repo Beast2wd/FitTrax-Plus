@@ -5942,9 +5942,9 @@ Current context about user's peptides:""" + peptide_info
         
         chat = LlmChat(
             api_key=emergent_key,
-            model="gpt-4o",
+            session_id=f"peptide_ai_{datetime.now().timestamp()}",
             system_message=system_prompt
-        )
+        ).with_model("openai", "gpt-4o")
         
         response = await chat.send_message_async(
             UserMessage(text=data.question)
