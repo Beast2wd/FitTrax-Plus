@@ -190,6 +190,7 @@ export default function ProfileScreen() {
       const profileData = {
         user_id: userId!,
         ...formData,
+        custom_calorie_goal: isCustomCalorieGoal && customCalorieGoal ? parseInt(customCalorieGoal) : null,
       };
       const result = await userAPI.createOrUpdateProfile(profileData);
       setProfile(result.profile);
