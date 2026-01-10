@@ -242,15 +242,21 @@ export default function DashboardScreen() {
         const runData = {
           run_id: `run_${Date.now()}`,
           user_id: userId,
-          distance: distanceKm,
+          distance: parseFloat(distanceKm.toFixed(4)),
           duration: runTime,
-          average_pace: avgPaceMinPerKm,
-          calories_burned: Math.round(runDistance * 100), // Rough estimate based on miles
-          route_data: runCoordinates,
+          average_pace: parseFloat(avgPaceMinPerKm.toFixed(2)),
+          calories_burned: parseFloat((runDistance * 100).toFixed(1)), // Rough estimate based on miles
+          route_data: runCoordinates.map(coord => ({
+            latitude: coord.latitude,
+            longitude: coord.longitude,
+            timestamp: coord.timestamp
+          })),
           notes: "",
           timestamp: new Date().toISOString(),
         };
 
+        console.log('Saving run data:', JSON.stringify(runData));
+        
         await axios.post(`${API_URL}/api/runs`, runData);
         Alert.alert(
           'Run Saved! 🏃',
@@ -259,8 +265,8 @@ export default function DashboardScreen() {
             { text: 'OK', onPress: () => loadDashboard() }
           ]
         );
-      } catch (error) {
-        console.error('Error saving run:', error);
+      } catch (error: any) {
+        console.error('Error saving run:', error?.response?.data || error);
         Alert.alert('Run Complete', `Distance: ${runDistance.toFixed(2)} mi\nTime: ${formatTime(runTime)}\n\n(Failed to save to server)`);
       }
     } else {
