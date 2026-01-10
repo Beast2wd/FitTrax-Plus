@@ -665,6 +665,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
+  swipeHint: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginBottom: 12,
+  },
   cameraDescription: {
     fontSize: 14,
     lineHeight: 20,
