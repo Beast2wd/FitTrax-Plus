@@ -258,6 +258,42 @@ backend:
         agent: "main"
         comment: "Dashboard endpoint tested and returns comprehensive data"
 
+  - task: "DELETE /api/body-scan/{scan_id} endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "DELETE body scan endpoint tested successfully - returns 200 with success message when deleting existing scan, returns 404 when scan_id doesn't exist. Verified actual deletion by attempting to retrieve deleted scan."
+
+  - task: "DELETE /api/heart-rate/{heart_rate_id} endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "DELETE heart rate endpoint tested successfully - returns 200 with success message when deleting existing entry, returns 404 when heart_rate_id doesn't exist. Fixed database collection name bug (was using 'heart_rates' instead of 'heart_rate')."
+
+  - task: "GET /api/body-scan/progress/{user_id} with scan_id field"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Body scan progress endpoint tested successfully - verified that each progress entry now includes scan_id field for deletion functionality. Endpoint returns proper structure with scan_id, date, measurements, weight, and body_fat data."
+
 frontend:
   - task: "Tab Navigation Setup"
     implemented: true
