@@ -946,6 +946,18 @@ const styles = StyleSheet.create({
   cameraBottom: {
     padding: 24,
   },
+  cancelButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   resultActions: {
     flexDirection: 'row',
     gap: 12,
