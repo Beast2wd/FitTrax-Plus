@@ -20,6 +20,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useUserStore } from '../../stores/userStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { foodAPI } from '../../services/api';
+import { router } from 'expo-router';
 
 const MEAL_CATEGORIES = [
   { value: 'breakfast', label: 'Breakfast', icon: '🌅', color: '#F59E0B' },
