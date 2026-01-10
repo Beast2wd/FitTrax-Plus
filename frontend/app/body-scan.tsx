@@ -212,7 +212,7 @@ export default function BodyScanScreen() {
   const photoLabels = ['Front View', 'Side View', 'Back View'];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -220,9 +220,9 @@ export default function BodyScanScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Body Scan</Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Body Scan</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -235,15 +235,15 @@ export default function BodyScanScreen() {
           ].map((tab) => (
             <TouchableOpacity
               key={tab.id}
-              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+              style={[styles.tab, { backgroundColor: colors.background.secondary }, activeTab === tab.id && { backgroundColor: accent.primary }]}
               onPress={() => setActiveTab(tab.id as TabType)}
             >
               <Ionicons 
                 name={tab.icon as any} 
                 size={18} 
-                color={activeTab === tab.id ? '#fff' : Colors.text.secondary} 
+                color={activeTab === tab.id ? '#fff' : colors.text.secondary} 
               />
-              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+              <Text style={[styles.tabText, { color: colors.text.secondary }, activeTab === tab.id && styles.tabTextActive]}>
                 {tab.label}
               </Text>
             </TouchableOpacity>
