@@ -42,10 +42,12 @@ export default function WeightTrainingScreen() {
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [showExerciseLibraryModal, setShowExerciseLibraryModal] = useState(false);
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
-  const [showEditExerciseModal, setShowEditExerciseModal] = useState(false);
   const [editingExercise, setEditingExercise] = useState<any>(null);
   const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
   const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
+  
+  // Inline editing state (replaces nested modal)
+  const [expandedExerciseKey, setExpandedExerciseKey] = useState<string | null>(null);
   
   // Workout logging state
   const [workoutName, setWorkoutName] = useState('');
