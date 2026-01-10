@@ -414,9 +414,9 @@ export default function ScheduleScreen() {
       transparent
       onRequestClose={onClose}
     >
-      <View style={localStyles.pickerModalOverlay}>
+      <View style={localStyles.pickerModalOverlay} pointerEvents="box-none">
         <Pressable style={localStyles.pickerModalBackdrop} onPress={onClose} />
-        <View style={localStyles.pickerModalContainer}>
+        <View style={localStyles.pickerModalContainer} pointerEvents="auto">
           <View style={localStyles.pickerModalHeader}>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Text style={localStyles.pickerCancelText}>Cancel</Text>
