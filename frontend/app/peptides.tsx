@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
+import { useThemeStore } from '../stores/themeStore';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
