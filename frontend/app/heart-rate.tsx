@@ -326,6 +326,7 @@ export default function HeartRateScreen() {
   };
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border.primary }]}>
