@@ -6580,6 +6580,89 @@ async def delete_body_scan(scan_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# MANUAL WORKOUT LOG ENDPOINTS
+# ============================================================================
+
+class ManualWorkoutLogEntry(BaseModel):
+    user_id: str
+    exercise_name: str
+    sets: list = []
+    notes: str = ""
+
+@api_router.post("/manual-workout-log")
+async def create_manual_workout_entry(entry: ManualWorkoutLogEntry):
+    """Create a new manual workout log entry"""
+    try:
+        entry_data = {
+            "entry_id": f"mwl_{datetime.utcnow().timestamp()}_{entry.user_id[:8]}",
+            "user_id": entry.user_id,
+            "exercise_name": entry.exercise_name,
+            "sets": entry.sets,
+            "notes": entry.notes,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        await db.manual_workout_logs.insert_one(entry_data)
+        return {"message": "Workout entry created", "entry": entry_data}
+    except Exception as e:
+        logger.error(f"Error creating manual workout entry: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/manual-workout-log/{user_id}")
+async def get_manual_workout_entries(user_id: str):
+    """Get all manual workout log entries for a user"""
+    try:
+        entries = await db.manual_workout_logs.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).to_list(100)
+        
+        # Remove MongoDB _id field
+        for entry in entries:
+            entry.pop('_id', None)
+        
+        return {"entries": entries}
+    except Exception as e:
+        logger.error(f"Error getting manual workout entries: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/manual-workout-log/{entry_id}")
+async def update_manual_workout_entry(entry_id: str, entry: ManualWorkoutLogEntry):
+    """Update a manual workout log entry"""
+    try:
+        update_data = {
+            "exercise_name": entry.exercise_name,
+            "sets": entry.sets,
+            "notes": entry.notes,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        result = await db.manual_workout_logs.update_one(
+            {"entry_id": entry_id},
+            {"$set": update_data}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Entry not found")
+        return {"message": "Workout entry updated", "entry_id": entry_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating manual workout entry: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/manual-workout-log/{entry_id}")
+async def delete_manual_workout_entry(entry_id: str):
+    """Delete a manual workout log entry"""
+    try:
+        result = await db.manual_workout_logs.delete_one({"entry_id": entry_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Entry not found")
+        return {"message": "Workout entry deleted", "entry_id": entry_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting manual workout entry: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
