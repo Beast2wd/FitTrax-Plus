@@ -111,7 +111,8 @@ Health Disclaimer
 FitTrax provides general wellness, fitness and nutrition information only.
 
 • We do not provide medical advice
-• Always consult a healthcare professional before starting a diet or fitness program
+• Always consult a healthcare professional before starting a diet, fitness program and peptide regiment. It's important to emphasize that peptide usage and findings are based on preclinical studies, and more research is needed to conclusively determine the effects and safety of peptides in humans. Any use of peptides should be under the guidance of a healthcare provider to ensure safety and monitor any potential side effects or contraindications.
+• The AI peptide section here within this app are for educational purposes only. Always consult with a healthcare provider
 • Do not disregard professional medical advice based on app content
 
 Use of the Services does not create a doctor-patient relationship.
