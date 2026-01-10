@@ -2928,9 +2928,82 @@ class ExercisePhaseImageRequest(BaseModel):
     equipment: Optional[List[str]] = None
     muscle_groups: Optional[List[str]] = None
 
+# Exercise-specific prompt configurations
+EXERCISE_SPECIFIC_PROMPTS = {
+    "bench press": {
+        "start": "starting position with arms fully extended, holding barbell above chest, head flat on the bench, back slightly arched, feet flat on floor",
+        "mid": "bar lowered to mid-chest level, elbows at 45 degrees, head flat on the bench",
+        "end": "SAME AS START - arms fully extended, holding barbell above chest, head flat on the bench",
+        "use_start_for_end": True
+    },
+    "incline bench press": {
+        "start": "starting position on incline bench, arms fully extended holding barbell above upper chest, head back against the inclined bench",
+        "mid": "bar lowered down to upper chest near collarbone, elbows at 45 degrees",
+        "end": "SAME AS START - arms fully extended holding barbell above upper chest on incline bench",
+        "use_start_for_end": True
+    },
+    "squat": {
+        "start": "standing position with barbell resting across upper back behind the neck, feet shoulder-width apart, chest up",
+        "mid": "lowered position with thighs parallel to ground, barbell still resting across upper back behind the neck, knees tracking over toes",
+        "end": "SAME AS START - standing position with barbell across upper back behind the neck",
+        "use_start_for_end": True
+    },
+    "tricep pushdown": {
+        "start": "starting position with rope or bar held up near chin level, elbows bent, upper arms close to body",
+        "mid": "arms at 90 degrees, halfway through the pushdown movement",
+        "end": "completion position with arms fully extended downward, triceps fully contracted, elbows locked",
+        "use_start_for_end": False  # Exception - different start and end
+    },
+    "deadlift": {
+        "start": "standing upright holding barbell at hip level with arms extended down, shoulders back",
+        "mid": "barbell at knee level, back flat, hinging at hips",
+        "end": "SAME AS START - standing upright holding barbell at hip level",
+        "use_start_for_end": True
+    },
+    "dumbbell curl": {
+        "start": "standing with dumbbells at sides, arms fully extended, palms facing forward",
+        "mid": "dumbbells at 90 degrees, elbows bent, biceps engaged",
+        "end": "SAME AS START - standing with dumbbells at sides, arms fully extended",
+        "use_start_for_end": True
+    },
+    "lat pulldown": {
+        "start": "seated with arms extended overhead gripping the bar, slight lean back",
+        "mid": "bar pulled down to upper chest level, elbows pointing down",
+        "end": "SAME AS START - arms extended overhead gripping the bar",
+        "use_start_for_end": True
+    },
+    "overhead press": {
+        "start": "standing with barbell at shoulder level, elbows bent",
+        "mid": "barbell pressed halfway up, above head level",
+        "end": "SAME AS START - barbell at shoulder level",
+        "use_start_for_end": True
+    }
+}
+
+def get_exercise_prompts(exercise_name: str, equipment_str: str, muscles_str: str):
+    """Get exercise-specific prompts or default prompts"""
+    exercise_key = exercise_name.lower()
+    specific = EXERCISE_SPECIFIC_PROMPTS.get(exercise_key, None)
+    
+    if specific:
+        return {
+            "start": specific["start"],
+            "mid": specific["mid"],
+            "end": specific["end"],
+            "use_start_for_end": specific.get("use_start_for_end", True)
+        }
+    
+    # Default prompts for exercises not specifically defined
+    return {
+        "start": f"starting position, ready to begin the movement, proper grip and stance with {equipment_str}",
+        "mid": f"range position, halfway through the movement, muscles engaged, controlled form",
+        "end": f"SAME AS START - returning to starting position after completing the rep",
+        "use_start_for_end": True
+    }
+
 @api_router.post("/exercises/generate-phase-images")
 async def generate_exercise_phase_images(request: ExercisePhaseImageRequest):
-    """Generate 3 AI images showing exercise phases: start, mid-range, and completion"""
+    """Generate 3 AI images showing exercise phases: start, range, and completion"""
     try:
         exercise_key = request.exercise_name.lower().replace(" ", "_")
         
@@ -2952,45 +3025,60 @@ async def generate_exercise_phase_images(request: ExercisePhaseImageRequest):
         equipment_str = ", ".join(request.equipment) if request.equipment else "gym equipment"
         muscles_str = ", ".join(request.muscle_groups) if request.muscle_groups else "target muscles"
         
-        # Define the 3 phases with specific prompts
+        # Get exercise-specific prompts
+        exercise_prompts = get_exercise_prompts(request.exercise_name, equipment_str, muscles_str)
+        
+        # Define the 3 phases with updated labels
         phases = [
             {
                 "name": "start",
                 "label": "Starting Position",
-                "description": f"starting position, ready to begin the movement, proper grip and stance"
+                "description": exercise_prompts["start"]
             },
             {
                 "name": "mid",
-                "label": "Mid-Range",
-                "description": f"mid-range position, halfway through the movement, muscles engaged"
+                "label": "Range",  # Changed from Mid-Range to Range
+                "description": exercise_prompts["mid"]
             },
             {
                 "name": "end",
                 "label": "Completion",
-                "description": f"completion position, full range of motion achieved, peak contraction"
+                "description": exercise_prompts["end"]
             }
         ]
         
         generated_phases = []
+        start_image_base64 = None  # Store start image to reuse for completion
         
         for phase in phases:
+            # If this is the end phase and we should use start image
+            if phase["name"] == "end" and exercise_prompts["use_start_for_end"] and start_image_base64:
+                generated_phases.append({
+                    "phase": phase["name"],
+                    "label": phase["label"],
+                    "image_base64": start_image_base64
+                })
+                continue
+            
             prompt = f"""Create a professional fitness instruction photograph showing:
 
 Exercise: {request.exercise_name}
-Phase: {phase['label']} - {phase['description']}
+Phase: {phase['label']}
+Position: {phase['description']}
 Equipment: {equipment_str}
 Target Muscles: {muscles_str}
 
-Requirements:
+CRITICAL Requirements:
 - Clean, well-lit gym environment with professional lighting
-- Athletic person demonstrating EXACTLY the {phase['name']} position
+- Athletic person demonstrating EXACTLY this position: {phase['description']}
 - Crystal clear demonstration of proper form and posture
 - Realistic photographic style, not cartoon or illustration
 - Side angle view to show full body mechanics
 - Person wearing athletic workout clothing
 - NO text, labels, or watermarks on the image
 - High quality, sharp focus on the person
-- Natural skin tones and realistic proportions"""
+- Natural skin tones and realistic proportions
+- Proper exercise form as described above"""
 
             logger.info(f"Generating {phase['name']} phase image for: {request.exercise_name}")
             
@@ -3003,6 +3091,11 @@ Requirements:
                 
                 if images and len(images) > 0:
                     image_base64 = base64.b64encode(images[0]).decode('utf-8')
+                    
+                    # Store start image for potential reuse
+                    if phase["name"] == "start":
+                        start_image_base64 = image_base64
+                    
                     generated_phases.append({
                         "phase": phase["name"],
                         "label": phase["label"],
