@@ -13,6 +13,8 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -23,6 +25,7 @@ import { router } from 'expo-router';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function WeightTrainingScreen() {
   const { theme } = useThemeStore();
