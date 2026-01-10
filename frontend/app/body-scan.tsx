@@ -16,6 +16,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -23,6 +24,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
 import { useThemeStore } from '../stores/themeStore';
+import { SwipeableRow } from '../components/SwipeableRow';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
