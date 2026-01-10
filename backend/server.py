@@ -508,29 +508,33 @@ async def create_or_update_profile(profile_data: UserProfileCreate):
             profile_data.weight
         )
         
-        daily_calories = calculate_daily_calories(
+        ai_daily_calories = calculate_daily_calories(
             bmr,
             profile_data.activity_level,
             profile_data.goal_weight,
             profile_data.weight
         )
         
-        # Create profile object
-        profile = UserProfile(
-            **profile_data.dict(),
-            daily_calorie_goal=daily_calories
-        )
+        # Determine effective daily calorie goal
+        # Use custom goal if provided, otherwise use AI-calculated goal
+        effective_calorie_goal = profile_data.custom_calorie_goal if profile_data.custom_calorie_goal else ai_daily_calories
+        
+        # Create profile dict with all data
+        profile_dict = profile_data.dict()
+        profile_dict['daily_calorie_goal'] = ai_daily_calories  # Always store AI goal
+        profile_dict['effective_calorie_goal'] = effective_calorie_goal  # Store active goal
+        profile_dict['created_at'] = datetime.utcnow().isoformat()
         
         # Upsert to database
         await db.users.update_one(
-            {"user_id": profile.user_id},
-            {"$set": profile.dict()},
+            {"user_id": profile_data.user_id},
+            {"$set": profile_dict},
             upsert=True
         )
         
         return {
             "message": "Profile saved successfully",
-            "profile": profile.dict()
+            "profile": profile_dict
         }
     
     except Exception as e:
