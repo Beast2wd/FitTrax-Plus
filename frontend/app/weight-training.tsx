@@ -577,7 +577,7 @@ export default function WeightTrainingScreen() {
               renderItem={({ item }) => (
                 <TouchableOpacity 
                   style={styles.exerciseItem}
-                  onPress={() => selectExerciseFromLibrary(item.name)}
+                  onPress={() => viewExerciseDetail(item)}
                 >
                   <View style={styles.exerciseItemLeft}>
                     <View style={styles.exerciseIconContainer}>
@@ -597,7 +597,7 @@ export default function WeightTrainingScreen() {
                       </View>
                     </View>
                   </View>
-                  <Ionicons name="add-circle" size={28} color={theme.accentColors.primary} />
+                  <Ionicons name="chevron-forward" size={24} color={theme.colors.text.muted} />
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
