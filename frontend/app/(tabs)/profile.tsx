@@ -1008,4 +1008,42 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.9)',
   },
+  // TOS Status Card Styles
+  tosStatusCard: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+  },
+  tosStatusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  tosStatusInfo: {
+    flex: 1,
+  },
+  tosStatusTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  tosStatusText: {
+    fontSize: 13,
+  },
+  tosAcceptedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  viewTosButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  viewTosButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
