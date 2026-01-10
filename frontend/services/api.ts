@@ -84,6 +84,10 @@ export const heartRateAPI = {
     const response = await api.get(`/heart-rate/zones/${userId}`);
     return response.data;
   },
+  deleteHeartRate: async (heartRateId: string) => {
+    const response = await api.delete(`/heart-rate/${heartRateId}`);
+    return response.data;
+  },
 };
 
 // Workout Plans APIs
