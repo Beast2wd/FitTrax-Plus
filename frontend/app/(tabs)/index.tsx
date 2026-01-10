@@ -518,29 +518,85 @@ export default function DashboardScreen() {
         </TouchableOpacity>
 
         {/* Start Running Button */}
-        <TouchableOpacity 
-          style={styles.startRunningButton}
-          onPress={() => router.push('/running')}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={['#EC4899', '#F472B6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.startRunningGradient}
+        {isRunning ? (
+          // Running State - Show timer and distance
+          <View style={styles.runningActiveContainer}>
+            <LinearGradient
+              colors={['#EC4899', '#F472B6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.runningActiveGradient}
+            >
+              <View style={styles.runningActiveHeader}>
+                <View style={styles.runningPulse}>
+                  <Ionicons name="walk" size={24} color="#fff" />
+                </View>
+                <Text style={styles.runningActiveLabel}>Running...</Text>
+              </View>
+              
+              <View style={styles.runningStats}>
+                <View style={styles.runningStat}>
+                  <Text style={styles.runningStatValue}>{runDistance.toFixed(2)}</Text>
+                  <Text style={styles.runningStatLabel}>miles</Text>
+                </View>
+                <View style={styles.runningStatDivider} />
+                <View style={styles.runningStat}>
+                  <Text style={styles.runningStatValue}>{formatTime(runTime)}</Text>
+                  <Text style={styles.runningStatLabel}>time</Text>
+                </View>
+                <View style={styles.runningStatDivider} />
+                <View style={styles.runningStat}>
+                  <Text style={styles.runningStatValue}>
+                    {runDistance > 0 ? ((runTime / 60) / runDistance).toFixed(1) : '0.0'}
+                  </Text>
+                  <Text style={styles.runningStatLabel}>min/mi</Text>
+                </View>
+              </View>
+
+              <View style={styles.runningActions}>
+                <TouchableOpacity 
+                  style={styles.stopRunButton}
+                  onPress={stopQuickRun}
+                >
+                  <Ionicons name="stop" size={20} color="#EC4899" />
+                  <Text style={styles.stopRunButtonText}>Stop Run</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.viewTrackerButton}
+                  onPress={() => router.push('/running')}
+                >
+                  <Text style={styles.viewTrackerButtonText}>View Map</Text>
+                  <Ionicons name="chevron-forward" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        ) : (
+          // Idle State - Start Running button
+          <TouchableOpacity 
+            style={styles.startRunningButton}
+            onPress={startQuickRun}
+            activeOpacity={0.9}
           >
-            <View style={styles.startRunningContent}>
-              <View style={styles.startRunningIconContainer}>
-                <Ionicons name="walk" size={28} color="#fff" />
+            <LinearGradient
+              colors={['#EC4899', '#F472B6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.startRunningGradient}
+            >
+              <View style={styles.startRunningContent}>
+                <View style={styles.startRunningIconContainer}>
+                  <Ionicons name="walk" size={28} color="#fff" />
+                </View>
+                <View style={styles.startRunningTextContainer}>
+                  <Text style={styles.startRunningTitle}>Start Running</Text>
+                  <Text style={styles.startRunningSubtitle}>Track your outdoor run with GPS</Text>
+                </View>
               </View>
-              <View style={styles.startRunningTextContainer}>
-                <Text style={styles.startRunningTitle}>Start Running</Text>
-                <Text style={styles.startRunningSubtitle}>Track your outdoor run with GPS</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#fff" />
-          </LinearGradient>
-        </TouchableOpacity>
+              <Ionicons name="play-circle" size={32} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
 
         {/* Quick Actions */}
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
