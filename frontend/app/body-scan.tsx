@@ -1304,6 +1304,11 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginTop: 4,
   },
+  swipeHint: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
   progressEntry: {
     backgroundColor: Colors.background.card,
     borderRadius: 12,
