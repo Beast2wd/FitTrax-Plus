@@ -583,7 +583,7 @@ export default function ProfileScreen() {
                 </View>
                 <TouchableOpacity 
                   style={[styles.viewTosButton, { borderColor: accentColors.primary }]}
-                  onPress={() => Alert.alert('Terms of Service', 'You can view the full Terms of Service in the app settings.')}
+                  onPress={() => router.push('/terms-of-service')}
                 >
                   <Text style={[styles.viewTosButtonText, { color: accentColors.primary }]}>View Terms</Text>
                 </TouchableOpacity>
