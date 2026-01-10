@@ -69,6 +69,7 @@ export default function ScheduleScreen() {
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
+  const [customWorkoutModalVisible, setCustomWorkoutModalVisible] = useState(false);
   const [allPlans, setAllPlans] = useState<any[]>([]);
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [selectedPlan, setSelectedPlan] = useState('');
@@ -78,6 +79,12 @@ export default function ScheduleScreen() {
   const [reminderMinutes, setReminderMinutes] = useState(30);
   const [workoutToReschedule, setWorkoutToReschedule] = useState<any>(null);
   const [newScheduleDate, setNewScheduleDate] = useState('');
+  
+  // Custom workout state
+  const [customWorkoutName, setCustomWorkoutName] = useState('');
+  const [customExercises, setCustomExercises] = useState<{name: string, sets: string, reps: string}[]>([
+    { name: '', sets: '3', reps: '10' }
+  ]);
   
   // Expanded picker states (inline expansion instead of separate modals)
   const [planExpanded, setPlanExpanded] = useState(false);
