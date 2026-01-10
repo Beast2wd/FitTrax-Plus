@@ -148,14 +148,28 @@ export default function WeightTrainingScreen() {
     setShowExerciseLibraryModal(true);
   };
 
+  const closeExerciseLibrary = () => {
+    setShowExerciseLibraryModal(false);
+    setSelectedMuscleGroup(null);
+  };
+
   const selectExerciseFromLibrary = (exerciseName: string) => {
     setCurrentExercise(exerciseName);
-    setShowExerciseLibraryModal(false);
+    closeExerciseLibrary();
   };
 
   const viewExerciseDetail = (exercise: any) => {
+    // Close the exercise library first, then open detail after delay
+    setShowExerciseLibraryModal(false);
     setSelectedExerciseDetail(exercise);
-    setShowExerciseDetailModal(true);
+    setTimeout(() => {
+      setShowExerciseDetailModal(true);
+    }, 350);
+  };
+
+  const closeExerciseDetail = () => {
+    setShowExerciseDetailModal(false);
+    setSelectedExerciseDetail(null);
   };
 
   const addSet = () => {
