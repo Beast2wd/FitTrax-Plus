@@ -1196,8 +1196,10 @@ export default function WeightTrainingScreen() {
               <TouchableOpacity 
                 style={styles.addToWorkoutFullBtn}
                 onPress={() => {
-                  selectExerciseFromLibrary(selectedExerciseDetail.name);
-                  setShowExerciseDetailModal(false);
+                  if (selectedExerciseDetail) {
+                    setCurrentExercise(selectedExerciseDetail.name);
+                    closeExerciseDetail();
+                  }
                 }}
               >
                 <Ionicons name="add-circle" size={24} color="#fff" />
