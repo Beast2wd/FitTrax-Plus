@@ -38,7 +38,7 @@ Eligibility
 
 You must be 18 years of age or older to use FitTrax.
 
-We do not knowingly collect personal information from individuals under 18. If we learn that an underage user has provided information, we will take appropriate steps to remove such data and close the associated account. FitTrax will not sale personal data to a third party.
+We do not knowingly collect personal information from individuals under 18. If we learn that an underage user has provided information, we will take appropriate steps to remove such data and close the associated account. FitTrax will not sell or willingly distribute personal data to a third party.
 
 You are responsible for ensuring your use of the Services complies with applicable laws in your jurisdiction.
 
