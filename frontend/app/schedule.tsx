@@ -11,7 +11,6 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
@@ -80,10 +79,10 @@ export default function ScheduleScreen() {
   const [workoutToReschedule, setWorkoutToReschedule] = useState<any>(null);
   const [newScheduleDate, setNewScheduleDate] = useState('');
   
-  // Picker modal states
-  const [planPickerVisible, setPlanPickerVisible] = useState(false);
-  const [dayPickerVisible, setDayPickerVisible] = useState(false);
-  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  // Expanded picker states (inline expansion instead of separate modals)
+  const [planExpanded, setPlanExpanded] = useState(false);
+  const [dayExpanded, setDayExpanded] = useState(false);
+  const [timeExpanded, setTimeExpanded] = useState(false);
 
   const colors = theme.colors;
   const accent = theme.accentColors;
@@ -165,7 +164,6 @@ export default function ScheduleScreen() {
             seconds: secondsFromNow,
           },
         });
-        console.log('Notification scheduled:', identifier);
         return identifier;
       }
     } catch (error) {
@@ -179,6 +177,9 @@ export default function ScheduleScreen() {
     setSelectedPlan('');
     setSelectedDay('1');
     setTime('08:00');
+    setPlanExpanded(false);
+    setDayExpanded(false);
+    setTimeExpanded(false);
     setModalVisible(true);
   };
 
@@ -313,7 +314,7 @@ export default function ScheduleScreen() {
   };
 
   const getSelectedPlanName = () => {
-    if (!selectedPlan) return 'Select a plan...';
+    if (!selectedPlan) return 'Tap to select...';
     const plan = allPlans.find(p => p.plan_id === selectedPlan);
     return plan?.name || 'Unknown Plan';
   };
@@ -399,66 +400,24 @@ export default function ScheduleScreen() {
 
   const localStyles = createStyles(theme);
 
-  // Selection Picker Modal Component - Inline for better touch handling
-  const renderSelectionModal = (
-    visible: boolean,
-    onClose: () => void,
-    title: string,
-    options: { value: string; label: string }[],
-    selectedValue: string,
-    onSelect: (value: string) => void
-  ) => (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <View style={localStyles.pickerModalOverlay} pointerEvents="box-none">
-        <Pressable style={localStyles.pickerModalBackdrop} onPress={onClose} />
-        <View style={localStyles.pickerModalContainer} pointerEvents="auto">
-          <View style={localStyles.pickerModalHeader}>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Text style={localStyles.pickerCancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={localStyles.pickerModalTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Text style={localStyles.pickerDoneText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView 
-            style={localStyles.pickerScrollView}
-            showsVerticalScrollIndicator={true}
-            bounces={true}
-          >
-            {options.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  localStyles.pickerOptionItem,
-                  selectedValue === option.value && localStyles.pickerOptionItemSelected
-                ]}
-                onPress={() => {
-                  onSelect(option.value);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  localStyles.pickerOptionText,
-                  selectedValue === option.value && localStyles.pickerOptionTextSelected
-                ]}>
-                  {option.label}
-                </Text>
-                {selectedValue === option.value && (
-                  <Ionicons name="checkmark-circle" size={22} color="#fff" />
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
+  // Toggle picker expansion (collapse others when one opens)
+  const togglePlanPicker = () => {
+    setPlanExpanded(!planExpanded);
+    setDayExpanded(false);
+    setTimeExpanded(false);
+  };
+
+  const toggleDayPicker = () => {
+    setDayExpanded(!dayExpanded);
+    setPlanExpanded(false);
+    setTimeExpanded(false);
+  };
+
+  const toggleTimePicker = () => {
+    setTimeExpanded(!timeExpanded);
+    setPlanExpanded(false);
+    setDayExpanded(false);
+  };
 
   if (loading) {
     return (
@@ -629,16 +588,6 @@ export default function ScheduleScreen() {
                             />
                             <Text style={localStyles.workoutTime}>{formatTime(workout.scheduled_time)}</Text>
                           </View>
-                          {!workout.completed && (
-                            <View style={localStyles.workoutActions}>
-                              <TouchableOpacity
-                                onPress={() => openRescheduleModal(workout)}
-                                style={localStyles.workoutActionBtn}
-                              >
-                                <Ionicons name="swap-horizontal" size={18} color={colors.text.secondary} />
-                              </TouchableOpacity>
-                            </View>
-                          )}
                         </View>
                         <Text style={localStyles.workoutPlan}>
                           {planDetails?.name || 'Workout Plan'}
@@ -681,10 +630,6 @@ export default function ScheduleScreen() {
                     <Text style={localStyles.workoutDay}>
                       {workout.exercises?.length || 0} exercises • {workout.duration_minutes || 0} min
                     </Text>
-                    <View style={localStyles.completedBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                      <Text style={localStyles.completedText}>Workout Completed</Text>
-                    </View>
                   </View>
                 ))}
               </>
@@ -692,64 +637,67 @@ export default function ScheduleScreen() {
           </View>
         </ScrollView>
 
-        {/* Add Workout Modal */}
+        {/* Add Workout Modal - With Inline Expandable Pickers */}
         <Modal
           visible={modalVisible}
           animationType="slide"
-          transparent
+          presentationStyle="pageSheet"
           onRequestClose={() => setModalVisible(false)}
         >
-          <View style={localStyles.modalOverlay} pointerEvents="box-none">
-            <Pressable style={localStyles.modalBackdrop} onPress={() => setModalVisible(false)} />
-            <View style={localStyles.modalContent} pointerEvents="auto">
-              <View style={localStyles.modalHeader}>
-                <Text style={localStyles.modalTitle}>Schedule Workout</Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <Ionicons name="close" size={24} color={colors.text.primary} />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView style={localStyles.modalScroll} showsVerticalScrollIndicator={false}>
-                {/* Quick Date Selection */}
-                <Text style={localStyles.label}>Date</Text>
-                <View style={localStyles.quickDates}>
-                  {quickDateOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.date}
-                      style={[
-                        localStyles.quickDateBtn,
-                        selectedDate === option.date && localStyles.quickDateBtnActive
-                      ]}
-                      onPress={() => setSelectedDate(option.date)}
-                    >
-                      <Text style={[
-                        localStyles.quickDateText,
-                        selectedDate === option.date && localStyles.quickDateTextActive
-                      ]}>
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                
-                <Text style={localStyles.selectedDateLabel}>
-                  Selected: {formatDateLabel(selectedDate)}
+          <SafeAreaView style={[localStyles.modalContainer, { backgroundColor: colors.background.primary }]}>
+            <View style={localStyles.modalHeader}>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={[localStyles.modalCancelText, { color: colors.text.secondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[localStyles.modalTitle, { color: colors.text.primary }]}>Schedule Workout</Text>
+              <TouchableOpacity onPress={handleScheduleWorkout} disabled={!selectedPlan}>
+                <Text style={[localStyles.modalDoneText, { color: selectedPlan ? accent.primary : colors.text.muted }]}>
+                  Done
                 </Text>
+              </TouchableOpacity>
+            </View>
 
-                {/* Plan Selection */}
-                <Text style={localStyles.label}>Select Plan</Text>
-                {allPlans.length === 0 ? (
-                  <View style={localStyles.noPlansBanner}>
-                    <Ionicons name="information-circle" size={20} color="#F59E0B" />
-                    <Text style={localStyles.noPlansText}>
-                      No workout plans available. Go to Plans tab to start or create a workout plan first.
+            <ScrollView style={localStyles.modalScroll} showsVerticalScrollIndicator={false}>
+              {/* Quick Date Selection */}
+              <Text style={localStyles.label}>Date</Text>
+              <View style={localStyles.quickDates}>
+                {quickDateOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.date}
+                    style={[
+                      localStyles.quickDateBtn,
+                      selectedDate === option.date && localStyles.quickDateBtnActive
+                    ]}
+                    onPress={() => setSelectedDate(option.date)}
+                  >
+                    <Text style={[
+                      localStyles.quickDateText,
+                      selectedDate === option.date && localStyles.quickDateTextActive
+                    ]}>
+                      {option.label}
                     </Text>
-                  </View>
-                ) : (
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
+              <Text style={localStyles.selectedDateLabel}>
+                Selected: {formatDateLabel(selectedDate)}
+              </Text>
+
+              {/* Plan Selection - Expandable */}
+              <Text style={localStyles.label}>Select Plan</Text>
+              {allPlans.length === 0 ? (
+                <View style={localStyles.noPlansBanner}>
+                  <Ionicons name="information-circle" size={20} color="#F59E0B" />
+                  <Text style={localStyles.noPlansText}>
+                    No workout plans available. Go to Plans tab to create one first.
+                  </Text>
+                </View>
+              ) : (
+                <View style={localStyles.expandableContainer}>
                   <TouchableOpacity 
                     style={localStyles.pickerButton}
-                    onPress={() => setPlanPickerVisible(true)}
-                    activeOpacity={0.7}
+                    onPress={togglePlanPicker}
                   >
                     <View style={localStyles.pickerButtonContent}>
                       <MaterialCommunityIcons name="dumbbell" size={20} color={accent.primary} />
@@ -760,185 +708,244 @@ export default function ScheduleScreen() {
                         {getSelectedPlanName()}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                    <Ionicons name={planExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.text.secondary} />
                   </TouchableOpacity>
-                )}
+                  
+                  {planExpanded && (
+                    <View style={localStyles.expandedOptions}>
+                      {allPlans.map((plan) => (
+                        <TouchableOpacity
+                          key={plan.plan_id}
+                          style={[
+                            localStyles.optionItem,
+                            selectedPlan === plan.plan_id && localStyles.optionItemSelected
+                          ]}
+                          onPress={() => {
+                            setSelectedPlan(plan.plan_id);
+                            setPlanExpanded(false);
+                          }}
+                        >
+                          <Text style={[
+                            localStyles.optionText,
+                            selectedPlan === plan.plan_id && localStyles.optionTextSelected
+                          ]}>
+                            {plan.name}
+                          </Text>
+                          {selectedPlan === plan.plan_id && (
+                            <Ionicons name="checkmark" size={20} color="#fff" />
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
 
-                {/* Workout Day */}
-                <Text style={localStyles.label}>Workout Day</Text>
+              {/* Workout Day - Expandable */}
+              <Text style={localStyles.label}>Workout Day</Text>
+              <View style={localStyles.expandableContainer}>
                 <TouchableOpacity 
                   style={localStyles.pickerButton}
-                  onPress={() => setDayPickerVisible(true)}
-                  activeOpacity={0.7}
+                  onPress={toggleDayPicker}
                 >
                   <View style={localStyles.pickerButtonContent}>
                     <Ionicons name="calendar" size={20} color={accent.primary} />
                     <Text style={localStyles.pickerButtonText}>Day {selectedDay}</Text>
                   </View>
-                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                  <Ionicons name={dayExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.text.secondary} />
                 </TouchableOpacity>
+                
+                {dayExpanded && (
+                  <View style={localStyles.expandedOptions}>
+                    {DAY_OPTIONS.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          localStyles.optionItem,
+                          selectedDay === option.value && localStyles.optionItemSelected
+                        ]}
+                        onPress={() => {
+                          setSelectedDay(option.value);
+                          setDayExpanded(false);
+                        }}
+                      >
+                        <Text style={[
+                          localStyles.optionText,
+                          selectedDay === option.value && localStyles.optionTextSelected
+                        ]}>
+                          {option.label}
+                        </Text>
+                        {selectedDay === option.value && (
+                          <Ionicons name="checkmark" size={20} color="#fff" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
 
-                {/* Time */}
-                <Text style={localStyles.label}>Time</Text>
+              {/* Time - Expandable */}
+              <Text style={localStyles.label}>Time</Text>
+              <View style={localStyles.expandableContainer}>
                 <TouchableOpacity 
                   style={localStyles.pickerButton}
-                  onPress={() => setTimePickerVisible(true)}
-                  activeOpacity={0.7}
+                  onPress={toggleTimePicker}
                 >
                   <View style={localStyles.pickerButtonContent}>
                     <Ionicons name="time" size={20} color={accent.primary} />
                     <Text style={localStyles.pickerButtonText}>{formatTime(time)}</Text>
                   </View>
-                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                  <Ionicons name={timeExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.text.secondary} />
                 </TouchableOpacity>
-
-                {/* Reminder Toggle */}
-                <View style={localStyles.switchRow}>
-                  <View>
-                    <Text style={localStyles.label}>Reminder</Text>
-                    <Text style={localStyles.switchSubtext}>Get notified before workout</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={[localStyles.switch, reminderEnabled && localStyles.switchActive]}
-                    onPress={() => setReminderEnabled(!reminderEnabled)}
-                  >
-                    <Text style={[localStyles.switchText, reminderEnabled && localStyles.switchTextActive]}>
-                      {reminderEnabled ? 'ON' : 'OFF'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {reminderEnabled && (
-                  <View style={localStyles.reminderOptions}>
-                    {[15, 30, 60].map((mins) => (
+                
+                {timeExpanded && (
+                  <ScrollView style={localStyles.expandedOptionsScroll} nestedScrollEnabled={true}>
+                    {TIME_OPTIONS.map((option) => (
                       <TouchableOpacity
-                        key={mins}
+                        key={option.value}
                         style={[
-                          localStyles.reminderOption,
-                          reminderMinutes === mins && localStyles.reminderOptionActive
+                          localStyles.optionItem,
+                          time === option.value && localStyles.optionItemSelected
                         ]}
-                        onPress={() => setReminderMinutes(mins)}
+                        onPress={() => {
+                          setTime(option.value);
+                          setTimeExpanded(false);
+                        }}
                       >
                         <Text style={[
-                          localStyles.reminderOptionText,
-                          reminderMinutes === mins && localStyles.reminderOptionTextActive
+                          localStyles.optionText,
+                          time === option.value && localStyles.optionTextSelected
                         ]}>
-                          {mins < 60 ? `${mins} min` : '1 hour'}
+                          {option.label}
                         </Text>
+                        {time === option.value && (
+                          <Ionicons name="checkmark" size={20} color="#fff" />
+                        )}
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 )}
-              </ScrollView>
+              </View>
 
+              {/* Reminder Toggle */}
+              <View style={localStyles.switchRow}>
+                <View>
+                  <Text style={localStyles.label}>Reminder</Text>
+                  <Text style={localStyles.switchSubtext}>Get notified before workout</Text>
+                </View>
+                <TouchableOpacity
+                  style={[localStyles.switch, reminderEnabled && localStyles.switchActive]}
+                  onPress={() => setReminderEnabled(!reminderEnabled)}
+                >
+                  <Text style={[localStyles.switchText, reminderEnabled && localStyles.switchTextActive]}>
+                    {reminderEnabled ? 'ON' : 'OFF'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {reminderEnabled && (
+                <View style={localStyles.reminderOptions}>
+                  {[15, 30, 60].map((mins) => (
+                    <TouchableOpacity
+                      key={mins}
+                      style={[
+                        localStyles.reminderOption,
+                        reminderMinutes === mins && localStyles.reminderOptionActive
+                      ]}
+                      onPress={() => setReminderMinutes(mins)}
+                    >
+                      <Text style={[
+                        localStyles.reminderOptionText,
+                        reminderMinutes === mins && localStyles.reminderOptionTextActive
+                      ]}>
+                        {mins < 60 ? `${mins} min` : '1 hour'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Schedule Button */}
               <TouchableOpacity 
                 style={[localStyles.scheduleButton, !selectedPlan && localStyles.scheduleButtonDisabled]} 
                 onPress={handleScheduleWorkout}
                 disabled={!selectedPlan}
               >
-                <Text style={localStyles.scheduleButtonText}>Schedule for {formatDateLabel(selectedDate)}</Text>
+                <Text style={localStyles.scheduleButtonText}>
+                  Schedule for {formatDateLabel(selectedDate)}
+                </Text>
               </TouchableOpacity>
-            </View>
-          </View>
+            </ScrollView>
+          </SafeAreaView>
         </Modal>
-
-        {/* Plan Picker Modal */}
-        {renderSelectionModal(
-          planPickerVisible,
-          () => setPlanPickerVisible(false),
-          'Select Plan',
-          allPlans.map(p => ({ value: p.plan_id, label: p.name })),
-          selectedPlan,
-          setSelectedPlan
-        )}
-
-        {/* Day Picker Modal */}
-        {renderSelectionModal(
-          dayPickerVisible,
-          () => setDayPickerVisible(false),
-          'Workout Day',
-          DAY_OPTIONS,
-          selectedDay,
-          setSelectedDay
-        )}
-
-        {/* Time Picker Modal */}
-        {renderSelectionModal(
-          timePickerVisible,
-          () => setTimePickerVisible(false),
-          'Workout Time',
-          TIME_OPTIONS,
-          time,
-          setTime
-        )}
 
         {/* Reschedule Modal */}
         <Modal
           visible={rescheduleModalVisible}
           animationType="slide"
-          transparent
+          presentationStyle="pageSheet"
           onRequestClose={() => setRescheduleModalVisible(false)}
         >
-          <View style={localStyles.modalOverlay} pointerEvents="box-none">
-            <Pressable style={localStyles.modalBackdrop} onPress={() => setRescheduleModalVisible(false)} />
-            <View style={localStyles.modalContent} pointerEvents="auto">
-              <View style={localStyles.modalHeader}>
-                <Text style={localStyles.modalTitle}>Move Workout</Text>
-                <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
-                  <Ionicons name="close" size={24} color={colors.text.primary} />
-                </TouchableOpacity>
+          <SafeAreaView style={[localStyles.modalContainer, { backgroundColor: colors.background.primary }]}>
+            <View style={localStyles.modalHeader}>
+              <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
+                <Text style={[localStyles.modalCancelText, { color: colors.text.secondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[localStyles.modalTitle, { color: colors.text.primary }]}>Move Workout</Text>
+              <TouchableOpacity onPress={handleRescheduleWorkout}>
+                <Text style={[localStyles.modalDoneText, { color: accent.primary }]}>Done</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={localStyles.modalScroll}>
+              <Text style={localStyles.rescheduleInfo}>
+                Moving workout from {formatDateLabel(workoutToReschedule?.scheduled_date || '')}
+              </Text>
+
+              <Text style={localStyles.label}>New Date</Text>
+              <View style={localStyles.quickDates}>
+                {quickDateOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.date}
+                    style={[
+                      localStyles.quickDateBtn,
+                      newScheduleDate === option.date && localStyles.quickDateBtnActive
+                    ]}
+                    onPress={() => setNewScheduleDate(option.date)}
+                  >
+                    <Text style={[
+                      localStyles.quickDateText,
+                      newScheduleDate === option.date && localStyles.quickDateTextActive
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
 
-              <ScrollView style={localStyles.modalScroll}>
-                <Text style={localStyles.rescheduleInfo}>
-                  Moving workout from {formatDateLabel(workoutToReschedule?.scheduled_date || '')}
-                </Text>
-
-                <Text style={localStyles.label}>New Date</Text>
-                <View style={localStyles.quickDates}>
-                  {quickDateOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.date}
-                      style={[
-                        localStyles.quickDateBtn,
-                        newScheduleDate === option.date && localStyles.quickDateBtnActive
-                      ]}
-                      onPress={() => setNewScheduleDate(option.date)}
-                    >
-                      <Text style={[
-                        localStyles.quickDateText,
-                        newScheduleDate === option.date && localStyles.quickDateTextActive
-                      ]}>
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                <View style={localStyles.miniCalendarContainer}>
-                  <Calendar
-                    onDayPress={(day: any) => setNewScheduleDate(day.dateString)}
-                    markedDates={{
-                      [newScheduleDate]: {
-                        selected: true,
-                        selectedColor: accent.primary,
-                      }
-                    }}
-                    theme={{
-                      calendarBackground: colors.background.secondary,
-                      textSectionTitleColor: colors.text.secondary,
-                      dayTextColor: colors.text.primary,
-                      todayTextColor: accent.primary,
-                      selectedDayBackgroundColor: accent.primary,
-                      selectedDayTextColor: '#ffffff',
-                      arrowColor: accent.primary,
-                      monthTextColor: colors.text.primary,
-                      textDisabledColor: colors.text.muted,
-                    }}
-                    style={localStyles.miniCalendar}
-                  />
-                </View>
-              </ScrollView>
+              <View style={localStyles.miniCalendarContainer}>
+                <Calendar
+                  onDayPress={(day: any) => setNewScheduleDate(day.dateString)}
+                  markedDates={{
+                    [newScheduleDate]: {
+                      selected: true,
+                      selectedColor: accent.primary,
+                    }
+                  }}
+                  theme={{
+                    calendarBackground: colors.background.secondary,
+                    textSectionTitleColor: colors.text.secondary,
+                    dayTextColor: colors.text.primary,
+                    todayTextColor: accent.primary,
+                    selectedDayBackgroundColor: accent.primary,
+                    selectedDayTextColor: '#ffffff',
+                    arrowColor: accent.primary,
+                    monthTextColor: colors.text.primary,
+                    textDisabledColor: colors.text.muted,
+                  }}
+                  style={localStyles.miniCalendar}
+                />
+              </View>
 
               <TouchableOpacity 
                 style={localStyles.scheduleButton} 
@@ -946,8 +953,8 @@ export default function ScheduleScreen() {
               >
                 <Text style={localStyles.scheduleButtonText}>Move to {formatDateLabel(newScheduleDate)}</Text>
               </TouchableOpacity>
-            </View>
-          </View>
+            </ScrollView>
+          </SafeAreaView>
         </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
@@ -1129,11 +1136,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
   },
   emptyState: {
     alignItems: 'center',
@@ -1182,13 +1184,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: theme.colors.text.primary,
-  },
-  workoutActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  workoutActionBtn: {
-    padding: 6,
   },
   workoutPlan: {
     fontSize: 15,
@@ -1248,38 +1243,33 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
-  modalOverlay: {
+  // Modal Styles
+  modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  modalContent: {
-    backgroundColor: theme.colors.background.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
+  },
+  modalCancelText: {
+    fontSize: 16,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalDoneText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   modalScroll: {
-    maxHeight: 450,
+    flex: 1,
+    padding: 16,
   },
   label: {
     fontSize: 14,
@@ -1331,6 +1321,10 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 13,
     color: '#92400E',
   },
+  // Expandable Picker Styles
+  expandableContainer: {
+    marginBottom: 8,
+  },
   pickerButton: {
     backgroundColor: theme.colors.background.secondary,
     borderRadius: 12,
@@ -1349,73 +1343,41 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.text.primary,
     fontWeight: '500',
   },
-  // Picker Modal Styles
-  pickerModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  pickerModalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  pickerModalContainer: {
+  expandedOptions: {
     backgroundColor: theme.colors.background.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '70%',
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    overflow: 'hidden',
   },
-  pickerModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.primary,
+  expandedOptionsScroll: {
+    backgroundColor: theme.colors.background.card,
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    maxHeight: 200,
   },
-  pickerModalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-  },
-  pickerCancelText: {
-    fontSize: 16,
-    color: theme.colors.text.secondary,
-  },
-  pickerDoneText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.accentColors.primary,
-  },
-  pickerScrollView: {
-    maxHeight: 350,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  pickerOptionItem: {
+  optionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    backgroundColor: theme.colors.background.secondary,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
   },
-  pickerOptionItemSelected: {
+  optionItemSelected: {
     backgroundColor: theme.accentColors.primary,
   },
-  pickerOptionText: {
+  optionText: {
     fontSize: 16,
-    fontWeight: '500',
     color: theme.colors.text.primary,
   },
-  pickerOptionTextSelected: {
+  optionTextSelected: {
     color: '#fff',
-    fontWeight: '700',
+    fontWeight: '600',
   },
   switchRow: {
     flexDirection: 'row',
@@ -1473,7 +1435,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
+    marginBottom: 40,
   },
   scheduleButtonDisabled: {
     opacity: 0.5,
