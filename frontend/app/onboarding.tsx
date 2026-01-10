@@ -132,4 +132,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
+  tosStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 6,
+  },
+  tosStatusText: {
+    fontSize: 13,
+  },
 });
