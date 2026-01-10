@@ -879,9 +879,9 @@ export default function ScheduleScreen() {
           transparent
           onRequestClose={() => setRescheduleModalVisible(false)}
         >
-          <View style={localStyles.modalOverlay}>
+          <View style={localStyles.modalOverlay} pointerEvents="box-none">
             <Pressable style={localStyles.modalBackdrop} onPress={() => setRescheduleModalVisible(false)} />
-            <View style={localStyles.modalContent}>
+            <View style={localStyles.modalContent} pointerEvents="auto">
               <View style={localStyles.modalHeader}>
                 <Text style={localStyles.modalTitle}>Move Workout</Text>
                 <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
