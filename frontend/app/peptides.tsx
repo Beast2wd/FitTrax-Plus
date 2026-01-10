@@ -763,18 +763,18 @@ export default function PeptideCalculatorScreen() {
             <TouchableOpacity 
               activeOpacity={1} 
               onPress={(e) => e.stopPropagation()}
-              style={styles.modalContent}
+              style={[styles.modalContent, { backgroundColor: colors.background.card }]}
             >
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Log Injection</Text>
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
+                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Log Injection</Text>
                 <TouchableOpacity onPress={() => setLogModalVisible(false)}>
-                  <Ionicons name="close" size={24} color={Colors.text.primary} />
+                  <Ionicons name="close" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
               </View>
 
               <ScrollView style={styles.modalScroll}>
                 <TouchableOpacity 
-                  style={styles.selectButton}
+                  style={[styles.selectButton, { backgroundColor: colors.background.input }]}
                   onPress={() => {
                     setLogModalVisible(false);
                     setTimeout(() => {
@@ -789,34 +789,37 @@ export default function PeptideCalculatorScreen() {
                     }, 300);
                   }}
                 >
-                  <Text style={styles.selectButtonText}>
+                  <Text style={[styles.selectButtonText, { color: logPeptide ? colors.text.primary : colors.text.secondary }]}>
                     {logPeptide ? peptideDatabase[logPeptide]?.name : 'Select Peptide *'}
                   </Text>
-                  <Ionicons name="chevron-down" size={20} color={Colors.text.secondary} />
+                  <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
                 </TouchableOpacity>
 
-                <Text style={styles.inputLabel}>Dose (mcg) *</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Dose (mcg) *</Text>
                 <TextInput
-                  style={styles.modalInput}
+                  style={[styles.modalInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                   value={logDose}
                   onChangeText={setLogDose}
                   keyboardType="decimal-pad"
                   placeholder="250"
+                  placeholderTextColor={colors.text.muted}
                 />
 
-                <Text style={styles.inputLabel}>Injection Site *</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Injection Site *</Text>
                 <View style={styles.siteOptions}>
                   {siteRotation.slice(0, 6).map(site => (
                     <TouchableOpacity
                       key={site.id}
                       style={[
                         styles.siteOption,
-                        logSite === site.id && styles.siteOptionSelected
+                        { backgroundColor: colors.background.input },
+                        logSite === site.id && [styles.siteOptionSelected, { backgroundColor: accent.primary }]
                       ]}
                       onPress={() => setLogSite(site.id)}
                     >
                       <Text style={[
                         styles.siteOptionText,
+                        { color: colors.text.primary },
                         logSite === site.id && styles.siteOptionTextSelected
                       ]}>
                         {site.name}
@@ -825,26 +828,28 @@ export default function PeptideCalculatorScreen() {
                   ))}
                 </View>
 
-                <Text style={styles.inputLabel}>Notes</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Notes</Text>
                 <TextInput
-                  style={[styles.modalInput, styles.textArea]}
+                  style={[styles.modalInput, styles.textArea, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                   value={logNotes}
                   onChangeText={setLogNotes}
                   placeholder="Any notes..."
+                  placeholderTextColor={colors.text.muted}
                   multiline
                 />
 
-                <Text style={styles.inputLabel}>Side Effects</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Side Effects</Text>
                 <TextInput
-                  style={[styles.modalInput, styles.textArea]}
+                  style={[styles.modalInput, styles.textArea, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                   value={logSideEffects}
                   onChangeText={setLogSideEffects}
                   placeholder="Any side effects..."
+                  placeholderTextColor={colors.text.muted}
                   multiline
                 />
               </ScrollView>
 
-              <TouchableOpacity style={styles.modalButton} onPress={logInjection}>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: accent.primary }]} onPress={logInjection}>
                 <Text style={styles.modalButtonText}>Log Injection</Text>
               </TouchableOpacity>
             </TouchableOpacity>
@@ -866,7 +871,7 @@ export default function PeptideCalculatorScreen() {
             <TouchableOpacity 
               activeOpacity={1} 
               onPress={(e) => e.stopPropagation()}
-              style={[styles.modalContent, { maxHeight: '80%' }]}
+              style={[styles.modalContent, { maxHeight: '80%', backgroundColor: colors.background.card }]}
             >
               <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
                 <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Select Peptide</Text>
