@@ -109,6 +109,39 @@ export default function BodyScanScreen() {
     setRefreshing(false);
   };
 
+  // Delete a body scan entry
+  const deleteScanEntry = async (scanId: string) => {
+    Alert.alert(
+      'Delete Entry',
+      'Are you sure you want to delete this measurement entry? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/body-scan/${scanId}`);
+              // Update local state
+              if (progressData?.progress) {
+                setProgressData({
+                  ...progressData,
+                  progress: progressData.progress.filter((p: any) => p.scan_id !== scanId),
+                  total_scans: (progressData.total_scans || 1) - 1,
+                });
+              }
+              setScanHistory(scanHistory.filter(s => s.scan_id !== scanId));
+              Alert.alert('Deleted', 'Measurement entry removed successfully');
+            } catch (error) {
+              console.error('Error deleting scan:', error);
+              Alert.alert('Error', 'Failed to delete entry. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const pickImage = async (index: number) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
