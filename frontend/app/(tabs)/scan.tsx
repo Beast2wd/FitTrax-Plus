@@ -238,8 +238,19 @@ export default function ScanScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      {/* Header with Back Button */}
+      <View style={[styles.headerBar, { borderBottomColor: colors.border.primary }]}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={28} color={accent.primary} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.text.primary }]}>AI Food Scanner</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.title, { color: colors.text.primary }]}>AI Food Scanner</Text>
         <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           Capture or upload a photo of your food for instant nutrition analysis
         </Text>
