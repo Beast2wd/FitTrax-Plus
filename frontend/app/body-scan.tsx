@@ -712,49 +712,57 @@ export default function BodyScanScreen() {
               {progressData?.has_data ? (
                 <>
                   <View style={styles.progressSummary}>
-                    <Text style={styles.progressTitle}>Measurement History</Text>
-                    <Text style={styles.progressSubtitle}>
+                    <Text style={[styles.progressTitle, { color: colors.text.primary }]}>Measurement History</Text>
+                    <Text style={[styles.progressSubtitle, { color: colors.text.secondary }]}>
                       {progressData.total_scans} scans recorded
+                    </Text>
+                    <Text style={[styles.swipeHint, { color: colors.text.muted }]}>
+                      ← Swipe left to delete entries
                     </Text>
                   </View>
 
                   {progressData.progress?.map((entry: any, i: number) => (
-                    <View key={i} style={styles.progressEntry}>
-                      <Text style={styles.progressDate}>{entry.date}</Text>
-                      <View style={styles.progressMeasurements}>
-                        {entry.weight && (
-                          <View style={styles.progressItem}>
-                            <Text style={styles.progressLabel}>Weight</Text>
-                            <Text style={styles.progressValue}>{entry.weight} lbs</Text>
-                          </View>
-                        )}
-                        {entry.body_fat && (
-                          <View style={styles.progressItem}>
-                            <Text style={styles.progressLabel}>Body Fat</Text>
-                            <Text style={styles.progressValue}>{entry.body_fat}%</Text>
-                          </View>
-                        )}
-                        {entry.measurements?.waist && (
-                          <View style={styles.progressItem}>
-                            <Text style={styles.progressLabel}>Waist</Text>
-                            <Text style={styles.progressValue}>{entry.measurements.waist}"</Text>
-                          </View>
-                        )}
-                        {entry.measurements?.chest && (
-                          <View style={styles.progressItem}>
-                            <Text style={styles.progressLabel}>Chest</Text>
-                            <Text style={styles.progressValue}>{entry.measurements.chest}"</Text>
-                          </View>
-                        )}
+                    <SwipeableRow
+                      key={entry.scan_id || i}
+                      onDelete={() => deleteScanEntry(entry.scan_id)}
+                    >
+                      <View style={[styles.progressEntry, { backgroundColor: colors.background.card }]}>
+                        <Text style={[styles.progressDate, { color: accent.primary }]}>{entry.date}</Text>
+                        <View style={styles.progressMeasurements}>
+                          {entry.weight && (
+                            <View style={styles.progressItem}>
+                              <Text style={[styles.progressLabel, { color: colors.text.secondary }]}>Weight</Text>
+                              <Text style={[styles.progressValue, { color: colors.text.primary }]}>{entry.weight} lbs</Text>
+                            </View>
+                          )}
+                          {entry.body_fat && (
+                            <View style={styles.progressItem}>
+                              <Text style={[styles.progressLabel, { color: colors.text.secondary }]}>Body Fat</Text>
+                              <Text style={[styles.progressValue, { color: colors.text.primary }]}>{entry.body_fat}%</Text>
+                            </View>
+                          )}
+                          {entry.measurements?.waist && (
+                            <View style={styles.progressItem}>
+                              <Text style={[styles.progressLabel, { color: colors.text.secondary }]}>Waist</Text>
+                              <Text style={[styles.progressValue, { color: colors.text.primary }]}>{entry.measurements.waist}"</Text>
+                            </View>
+                          )}
+                          {entry.measurements?.chest && (
+                            <View style={styles.progressItem}>
+                              <Text style={[styles.progressLabel, { color: colors.text.secondary }]}>Chest</Text>
+                              <Text style={[styles.progressValue, { color: colors.text.primary }]}>{entry.measurements.chest}"</Text>
+                            </View>
+                          )}
+                        </View>
                       </View>
-                    </View>
+                    </SwipeableRow>
                   ))}
                 </>
               ) : (
                 <View style={styles.emptyProgress}>
                   <Ionicons name="trending-up" size={64} color={Colors.text.muted} />
-                  <Text style={styles.emptyProgressTitle}>Track Your Progress</Text>
-                  <Text style={styles.emptyProgressText}>
+                  <Text style={[styles.emptyProgressTitle, { color: colors.text.primary }]}>Track Your Progress</Text>
+                  <Text style={[styles.emptyProgressText, { color: colors.text.secondary }]}>
                     Complete multiple body scans over time to see your progress
                   </Text>
                 </View>
