@@ -234,16 +234,21 @@ export default function DashboardScreen() {
     // Save the run to the backend
     if (runDistance > 0.01 && userId) {
       try {
+        // Convert miles to kilometers for backend
+        const distanceKm = runDistance * 1.60934;
+        // Calculate pace in min/km
+        const avgPaceMinPerKm = runTime > 0 && distanceKm > 0 ? (runTime / 60) / distanceKm : 0;
+        
         const runData = {
           run_id: `run_${Date.now()}`,
           user_id: userId,
-          start_time: runStartTime.current?.toISOString(),
-          end_time: new Date().toISOString(),
-          distance_miles: runDistance,
-          duration_seconds: runTime,
-          avg_pace: runTime > 0 ? (runTime / 60) / runDistance : 0,
-          coordinates: runCoordinates,
-          calories_burned: Math.round(runDistance * 100), // Rough estimate
+          distance: distanceKm,
+          duration: runTime,
+          average_pace: avgPaceMinPerKm,
+          calories_burned: Math.round(runDistance * 100), // Rough estimate based on miles
+          route_data: runCoordinates,
+          notes: "",
+          timestamp: new Date().toISOString(),
         };
 
         await axios.post(`${API_URL}/api/runs`, runData);
