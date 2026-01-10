@@ -535,7 +535,7 @@ export default function DashboardScreen() {
             <Text style={[styles.statValue, { color: colors.text.primary }]}>
               {Math.round(today.avg_heart_rate || 0)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>BPM</Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Heart Rate</Text>
           </TouchableOpacity>
         </View>
 
