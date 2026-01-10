@@ -1045,7 +1045,17 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 16,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
     fontSize: 28,
