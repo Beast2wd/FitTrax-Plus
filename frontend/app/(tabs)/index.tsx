@@ -23,13 +23,15 @@ import { AchievementModal } from '../../components/AchievementModal';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as Location from 'expo-location';
+import i18next from 'i18next';
+import { AccentColors } from '../../constants/Colors';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const { userId, profile } = useUserStore();
-  const { theme } = useThemeStore();
+  const { theme, accent } = useThemeStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,6 +45,13 @@ export default function DashboardScreen() {
   const [runTime, setRunTime] = useState(0); // in seconds
   const [runDistance, setRunDistance] = useState(0); // in miles
   const [runCoordinates, setRunCoordinates] = useState<any[]>([]);
+  
+  // Get accent color gradient for running button
+  const runningButtonGradient = AccentColors[accent]?.gradient || ['#EC4899', '#BE185D'];
+  const runningButtonPrimary = AccentColors[accent]?.primary || '#EC4899';
+  
+  // Check if using English for pace display
+  const isEnglish = i18next.language?.startsWith('en') || i18next.language === 'en';
   const [lastPosition, setLastPosition] = useState<any>(null);
   const locationSubscription = useRef<any>(null);
   const timerRef = useRef<any>(null);
