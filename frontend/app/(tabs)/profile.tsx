@@ -170,7 +170,13 @@ export default function ProfileScreen() {
         weight: profile.weight || 160,
         goal_weight: profile.goal_weight || 155,
         activity_level: profile.activity_level || 'moderate',
+        custom_calorie_goal: profile.custom_calorie_goal || null,
       });
+      // Check if user has a custom calorie goal set
+      if (profile.custom_calorie_goal) {
+        setIsCustomCalorieGoal(true);
+        setCustomCalorieGoal(profile.custom_calorie_goal.toString());
+      }
     }
   }, [profile]);
 
