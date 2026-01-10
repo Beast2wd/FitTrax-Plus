@@ -1227,6 +1227,20 @@ async def get_heart_rate_zones(user_id: str):
     zones = calculate_heart_rate_zones(profile['age'])
     return zones
 
+@api_router.delete("/heart-rate/{heart_rate_id}")
+async def delete_heart_rate(heart_rate_id: str):
+    """Delete a heart rate entry"""
+    try:
+        result = await db.heart_rates.delete_one({"heart_rate_id": heart_rate_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Heart rate entry not found")
+        return {"message": "Heart rate entry deleted successfully", "heart_rate_id": heart_rate_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting heart rate: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # WORKOUT PLANS ENDPOINTS
 # ============================================================================
