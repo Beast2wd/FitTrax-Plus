@@ -14,6 +14,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -21,6 +22,7 @@ import * as Haptics from 'expo-haptics';
 import { useUserStore } from '../stores/userStore';
 import { useThemeStore } from '../stores/themeStore';
 import { heartRateAPI } from '../services/api';
+import { SwipeableRow } from '../components/SwipeableRow';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
 
