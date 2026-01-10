@@ -1764,10 +1764,10 @@ async def get_dashboard(user_id: str):
 class RunCreate(BaseModel):
     run_id: str
     user_id: str
-    distance: float  # in kilometers
-    duration: int  # in seconds
-    average_pace: float  # min/km
-    calories_burned: float
+    distance: float = 0.0  # in kilometers
+    duration: int = 0  # in seconds
+    average_pace: float = 0.0  # min/km
+    calories_burned: float = 0.0
     route_data: Optional[list] = []  # GPS coordinates
     notes: Optional[str] = ""
     timestamp: str
