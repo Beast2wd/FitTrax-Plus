@@ -944,6 +944,89 @@ export default function WeightTrainingScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Past Workout Detail Modal */}
+      <Modal
+        visible={showPastWorkoutModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPastWorkoutModal(false)}
+      >
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+          <View style={styles.pastWorkoutHeader}>
+            <TouchableOpacity onPress={() => setShowPastWorkoutModal(false)}>
+              <Ionicons name="close" size={28} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.pastWorkoutTitle}>Workout Details</Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          {selectedPastWorkout && (
+            <ScrollView style={styles.pastWorkoutContent}>
+              {/* Workout Header */}
+              <View style={styles.pastWorkoutInfo}>
+                <Text style={styles.pastWorkoutName}>{selectedPastWorkout.workout_name}</Text>
+                <Text style={styles.pastWorkoutDate}>
+                  {new Date(selectedPastWorkout.timestamp).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </Text>
+                <View style={styles.pastWorkoutStats}>
+                  <View style={styles.pastWorkoutStat}>
+                    <MaterialCommunityIcons name="dumbbell" size={20} color={theme.accentColors.primary} />
+                    <Text style={styles.pastWorkoutStatValue}>{selectedPastWorkout.exercises?.length || 0}</Text>
+                    <Text style={styles.pastWorkoutStatLabel}>Exercises</Text>
+                  </View>
+                  <View style={styles.pastWorkoutStat}>
+                    <Ionicons name="time-outline" size={20} color={theme.accentColors.primary} />
+                    <Text style={styles.pastWorkoutStatValue}>{selectedPastWorkout.duration_minutes || 0}</Text>
+                    <Text style={styles.pastWorkoutStatLabel}>Minutes</Text>
+                  </View>
+                  <View style={styles.pastWorkoutStat}>
+                    <Ionicons name="barbell-outline" size={20} color={theme.accentColors.primary} />
+                    <Text style={styles.pastWorkoutStatValue}>
+                      {selectedPastWorkout.exercises?.reduce((acc: number, ex: any) => 
+                        acc + (ex.sets?.reduce((setAcc: number, set: any) => 
+                          setAcc + ((parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0)), 0) || 0), 0
+                      ).toLocaleString() || 0}
+                    </Text>
+                    <Text style={styles.pastWorkoutStatLabel}>Volume (lbs)</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Exercises List */}
+              <Text style={styles.pastWorkoutSectionTitle}>Exercises Performed</Text>
+              {selectedPastWorkout.exercises?.map((exercise: any, index: number) => (
+                <View key={index} style={styles.pastExerciseCard}>
+                  <Text style={styles.pastExerciseName}>{exercise.name}</Text>
+                  <View style={styles.pastExerciseSets}>
+                    {exercise.sets?.map((set: any, setIndex: number) => (
+                      <View key={setIndex} style={styles.pastSetRow}>
+                        <Text style={styles.pastSetNumber}>Set {setIndex + 1}</Text>
+                        <Text style={styles.pastSetWeight}>{set.weight} lbs</Text>
+                        <Text style={styles.pastSetReps}>× {set.reps} reps</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ))}
+
+              {selectedPastWorkout.notes && (
+                <View style={styles.pastWorkoutNotes}>
+                  <Text style={styles.pastWorkoutNotesLabel}>Notes</Text>
+                  <Text style={styles.pastWorkoutNotesText}>{selectedPastWorkout.notes}</Text>
+                </View>
+              )}
+
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
