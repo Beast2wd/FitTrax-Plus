@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Alert,
   ScrollView,
   Modal,
   Dimensions,
   Platform,
   ActivityIndicator,
-  FlatList,
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,55 +59,6 @@ const DAY_OPTIONS = Array.from({ length: 7 }, (_, i) => ({
   value: (i + 1).toString(),
   label: `Day ${i + 1}`,
 }));
-
-// Custom Scrollable Picker Component
-const ScrollPicker = ({ 
-  options, 
-  selectedValue, 
-  onValueChange, 
-  theme 
-}: { 
-  options: { value: string; label: string }[];
-  selectedValue: string;
-  onValueChange: (value: string) => void;
-  theme: any;
-}) => {
-  const colors = theme.colors;
-  const accent = theme.accentColors;
-  
-  return (
-    <ScrollView 
-      style={{ maxHeight: 250 }}
-      showsVerticalScrollIndicator={false}
-    >
-      {options.map((option) => (
-        <TouchableOpacity
-          key={option.value}
-          style={[
-            styles.pickerOption,
-            { backgroundColor: colors.background.secondary },
-            selectedValue === option.value && { 
-              backgroundColor: accent.primary,
-              borderColor: accent.primary,
-            }
-          ]}
-          onPress={() => onValueChange(option.value)}
-        >
-          <Text style={[
-            styles.pickerOptionText,
-            { color: colors.text.primary },
-            selectedValue === option.value && { color: '#fff', fontWeight: '700' }
-          ]}>
-            {option.label}
-          </Text>
-          {selectedValue === option.value && (
-            <Ionicons name="checkmark" size={20} color="#fff" />
-          )}
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  );
-};
 
 export default function ScheduleScreen() {
   const { theme } = useThemeStore();
@@ -448,6 +399,67 @@ export default function ScheduleScreen() {
 
   const localStyles = createStyles(theme);
 
+  // Selection Picker Modal Component - Inline for better touch handling
+  const renderSelectionModal = (
+    visible: boolean,
+    onClose: () => void,
+    title: string,
+    options: { value: string; label: string }[],
+    selectedValue: string,
+    onSelect: (value: string) => void
+  ) => (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <View style={localStyles.pickerModalOverlay}>
+        <Pressable style={localStyles.pickerModalBackdrop} onPress={onClose} />
+        <View style={localStyles.pickerModalContainer}>
+          <View style={localStyles.pickerModalHeader}>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={localStyles.pickerCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={localStyles.pickerModalTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={localStyles.pickerDoneText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView 
+            style={localStyles.pickerScrollView}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
+          >
+            {options.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  localStyles.pickerOptionItem,
+                  selectedValue === option.value && localStyles.pickerOptionItemSelected
+                ]}
+                onPress={() => {
+                  onSelect(option.value);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  localStyles.pickerOptionText,
+                  selectedValue === option.value && localStyles.pickerOptionTextSelected
+                ]}>
+                  {option.label}
+                </Text>
+                {selectedValue === option.value && (
+                  <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
   if (loading) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -687,15 +699,9 @@ export default function ScheduleScreen() {
           transparent
           onRequestClose={() => setModalVisible(false)}
         >
-          <TouchableOpacity 
-            style={localStyles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setModalVisible(false)}
-          >
-            <View 
-              style={localStyles.modalContent}
-              onStartShouldSetResponder={() => true}
-            >
+          <View style={localStyles.modalOverlay}>
+            <Pressable style={localStyles.modalBackdrop} onPress={() => setModalVisible(false)} />
+            <View style={localStyles.modalContent}>
               <View style={localStyles.modalHeader}>
                 <Text style={localStyles.modalTitle}>Schedule Workout</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
@@ -743,6 +749,7 @@ export default function ScheduleScreen() {
                   <TouchableOpacity 
                     style={localStyles.pickerButton}
                     onPress={() => setPlanPickerVisible(true)}
+                    activeOpacity={0.7}
                   >
                     <View style={localStyles.pickerButtonContent}>
                       <MaterialCommunityIcons name="dumbbell" size={20} color={accent.primary} />
@@ -762,6 +769,7 @@ export default function ScheduleScreen() {
                 <TouchableOpacity 
                   style={localStyles.pickerButton}
                   onPress={() => setDayPickerVisible(true)}
+                  activeOpacity={0.7}
                 >
                   <View style={localStyles.pickerButtonContent}>
                     <Ionicons name="calendar" size={20} color={accent.primary} />
@@ -775,6 +783,7 @@ export default function ScheduleScreen() {
                 <TouchableOpacity 
                   style={localStyles.pickerButton}
                   onPress={() => setTimePickerVisible(true)}
+                  activeOpacity={0.7}
                 >
                   <View style={localStyles.pickerButtonContent}>
                     <Ionicons name="time" size={20} color={accent.primary} />
@@ -830,113 +839,38 @@ export default function ScheduleScreen() {
                 <Text style={localStyles.scheduleButtonText}>Schedule for {formatDateLabel(selectedDate)}</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         </Modal>
 
         {/* Plan Picker Modal */}
-        <Modal
-          visible={planPickerVisible}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setPlanPickerVisible(false)}
-        >
-          <TouchableOpacity 
-            style={localStyles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setPlanPickerVisible(false)}
-          >
-            <View 
-              style={localStyles.pickerModalContent}
-              onStartShouldSetResponder={() => true}
-            >
-              <View style={localStyles.pickerModalHeader}>
-                <TouchableOpacity onPress={() => setPlanPickerVisible(false)}>
-                  <Text style={localStyles.pickerCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={localStyles.pickerModalTitle}>Select Plan</Text>
-                <TouchableOpacity onPress={() => setPlanPickerVisible(false)}>
-                  <Text style={localStyles.pickerDoneText}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <ScrollPicker
-                options={allPlans.map(p => ({ value: p.plan_id, label: p.name }))}
-                selectedValue={selectedPlan}
-                onValueChange={setSelectedPlan}
-                theme={theme}
-              />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        {renderSelectionModal(
+          planPickerVisible,
+          () => setPlanPickerVisible(false),
+          'Select Plan',
+          allPlans.map(p => ({ value: p.plan_id, label: p.name })),
+          selectedPlan,
+          setSelectedPlan
+        )}
 
         {/* Day Picker Modal */}
-        <Modal
-          visible={dayPickerVisible}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setDayPickerVisible(false)}
-        >
-          <TouchableOpacity 
-            style={localStyles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setDayPickerVisible(false)}
-          >
-            <View 
-              style={localStyles.pickerModalContent}
-              onStartShouldSetResponder={() => true}
-            >
-              <View style={localStyles.pickerModalHeader}>
-                <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
-                  <Text style={localStyles.pickerCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={localStyles.pickerModalTitle}>Workout Day</Text>
-                <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
-                  <Text style={localStyles.pickerDoneText}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <ScrollPicker
-                options={DAY_OPTIONS}
-                selectedValue={selectedDay}
-                onValueChange={setSelectedDay}
-                theme={theme}
-              />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        {renderSelectionModal(
+          dayPickerVisible,
+          () => setDayPickerVisible(false),
+          'Workout Day',
+          DAY_OPTIONS,
+          selectedDay,
+          setSelectedDay
+        )}
 
         {/* Time Picker Modal */}
-        <Modal
-          visible={timePickerVisible}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setTimePickerVisible(false)}
-        >
-          <TouchableOpacity 
-            style={localStyles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setTimePickerVisible(false)}
-          >
-            <View 
-              style={localStyles.pickerModalContent}
-              onStartShouldSetResponder={() => true}
-            >
-              <View style={localStyles.pickerModalHeader}>
-                <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
-                  <Text style={localStyles.pickerCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={localStyles.pickerModalTitle}>Workout Time</Text>
-                <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
-                  <Text style={localStyles.pickerDoneText}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <ScrollPicker
-                options={TIME_OPTIONS}
-                selectedValue={time}
-                onValueChange={setTime}
-                theme={theme}
-              />
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        {renderSelectionModal(
+          timePickerVisible,
+          () => setTimePickerVisible(false),
+          'Workout Time',
+          TIME_OPTIONS,
+          time,
+          setTime
+        )}
 
         {/* Reschedule Modal */}
         <Modal
@@ -945,15 +879,9 @@ export default function ScheduleScreen() {
           transparent
           onRequestClose={() => setRescheduleModalVisible(false)}
         >
-          <TouchableOpacity 
-            style={localStyles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setRescheduleModalVisible(false)}
-          >
-            <View 
-              style={localStyles.modalContent}
-              onStartShouldSetResponder={() => true}
-            >
+          <View style={localStyles.modalOverlay}>
+            <Pressable style={localStyles.modalBackdrop} onPress={() => setRescheduleModalVisible(false)} />
+            <View style={localStyles.modalContent}>
               <View style={localStyles.modalHeader}>
                 <Text style={localStyles.modalTitle}>Move Workout</Text>
                 <TouchableOpacity onPress={() => setRescheduleModalVisible(false)}>
@@ -1019,29 +947,12 @@ export default function ScheduleScreen() {
                 <Text style={localStyles.scheduleButtonText}>Move to {formatDateLabel(newScheduleDate)}</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  pickerOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginVertical: 4,
-    marginHorizontal: 8,
-    borderRadius: 10,
-  },
-  pickerOptionText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-});
 
 const createStyles = (theme: any) => StyleSheet.create({
   container: {
@@ -1342,6 +1253,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   modalContent: {
     backgroundColor: theme.colors.background.card,
     borderTopLeftRadius: 24,
@@ -1431,12 +1349,24 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.text.primary,
     fontWeight: '500',
   },
-  pickerModalContent: {
+  // Picker Modal Styles
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  pickerModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  pickerModalContainer: {
     backgroundColor: theme.colors.background.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: 40,
-    maxHeight: '60%',
+    maxHeight: '70%',
   },
   pickerModalHeader: {
     flexDirection: 'row',
@@ -1459,6 +1389,33 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.accentColors.primary,
+  },
+  pickerScrollView: {
+    maxHeight: 350,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  pickerOptionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 12,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  pickerOptionItemSelected: {
+    backgroundColor: theme.accentColors.primary,
+  },
+  pickerOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.text.primary,
+  },
+  pickerOptionTextSelected: {
+    color: '#fff',
+    fontWeight: '700',
   },
   switchRow: {
     flexDirection: 'row',
