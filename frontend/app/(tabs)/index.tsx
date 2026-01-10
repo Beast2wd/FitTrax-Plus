@@ -139,6 +139,145 @@ export default function DashboardScreen() {
     }
   };
 
+  // Quick Run functions
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const formatTime = (seconds: number): string => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const startQuickRun = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Location permission is needed to track your run');
+        return;
+      }
+
+      // Reset state
+      setRunTime(0);
+      setRunDistance(0);
+      setRunCoordinates([]);
+      setLastPosition(null);
+      runStartTime.current = new Date();
+      setIsRunning(true);
+
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setRunTime(prev => prev + 1);
+      }, 1000);
+
+      // Start location tracking
+      locationSubscription.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation,
+          timeInterval: 1000,
+          distanceInterval: 5,
+        },
+        (location) => {
+          const { latitude, longitude } = location.coords;
+          const newPoint = { latitude, longitude, timestamp: new Date().toISOString() };
+          
+          setRunCoordinates(prev => {
+            const updated = [...prev, newPoint];
+            return updated;
+          });
+
+          setLastPosition(prev => {
+            if (prev) {
+              const dist = calculateDistance(prev.latitude, prev.longitude, latitude, longitude);
+              if (dist < 0.5) { // Filter out GPS jumps > 0.5 miles
+                setRunDistance(d => d + dist);
+              }
+            }
+            return { latitude, longitude };
+          });
+        }
+      );
+    } catch (error) {
+      console.error('Error starting run:', error);
+      Alert.alert('Error', 'Failed to start run tracking');
+    }
+  };
+
+  const stopQuickRun = async () => {
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Stop location tracking
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+      locationSubscription.current = null;
+    }
+
+    setIsRunning(false);
+
+    // Save the run to the backend
+    if (runDistance > 0.01 && userId) {
+      try {
+        const runData = {
+          run_id: `run_${Date.now()}`,
+          user_id: userId,
+          start_time: runStartTime.current?.toISOString(),
+          end_time: new Date().toISOString(),
+          distance_miles: runDistance,
+          duration_seconds: runTime,
+          avg_pace: runTime > 0 ? (runTime / 60) / runDistance : 0,
+          coordinates: runCoordinates,
+          calories_burned: Math.round(runDistance * 100), // Rough estimate
+        };
+
+        await axios.post(`${API_URL}/api/runs`, runData);
+        Alert.alert(
+          'Run Saved! 🏃',
+          `Distance: ${runDistance.toFixed(2)} mi\nTime: ${formatTime(runTime)}`,
+          [
+            { text: 'OK', onPress: () => loadDashboard() }
+          ]
+        );
+      } catch (error) {
+        console.error('Error saving run:', error);
+        Alert.alert('Run Complete', `Distance: ${runDistance.toFixed(2)} mi\nTime: ${formatTime(runTime)}\n\n(Failed to save to server)`);
+      }
+    } else {
+      // Reset without saving if distance is too small
+      Alert.alert('Run Too Short', 'Run was not saved because the distance was too short.');
+    }
+
+    // Reset state
+    setRunTime(0);
+    setRunDistance(0);
+    setRunCoordinates([]);
+    setLastPosition(null);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (locationSubscription.current) locationSubscription.current.remove();
+    };
+  }, []);
+
   // Onboarding view
   if (!userId || !profile) {
     return (
