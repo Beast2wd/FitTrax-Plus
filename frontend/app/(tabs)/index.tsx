@@ -236,28 +236,34 @@ export default function DashboardScreen() {
       try {
         // Convert miles to kilometers for backend
         const distanceKm = runDistance * 1.60934;
-        // Calculate pace in min/km
-        const avgPaceMinPerKm = runTime > 0 && distanceKm > 0 ? (runTime / 60) / distanceKm : 0;
+        // Calculate pace in min/km (avoid division by zero)
+        let avgPaceMinPerKm = 0;
+        if (runTime > 0 && distanceKm > 0) {
+          avgPaceMinPerKm = (runTime / 60) / distanceKm;
+        }
+        
+        // Ensure all values are valid numbers
+        const safeDistance = isNaN(distanceKm) || !isFinite(distanceKm) ? 0 : distanceKm;
+        const safePace = isNaN(avgPaceMinPerKm) || !isFinite(avgPaceMinPerKm) ? 0 : avgPaceMinPerKm;
+        const safeCalories = isNaN(runDistance * 100) ? 0 : runDistance * 100;
         
         const runData = {
           run_id: `run_${Date.now()}`,
           user_id: userId,
-          distance: parseFloat(distanceKm.toFixed(4)),
-          duration: runTime,
-          average_pace: parseFloat(avgPaceMinPerKm.toFixed(2)),
-          calories_burned: parseFloat((runDistance * 100).toFixed(1)), // Rough estimate based on miles
-          route_data: runCoordinates.map(coord => ({
-            latitude: coord.latitude,
-            longitude: coord.longitude,
-            timestamp: coord.timestamp
-          })),
+          distance: parseFloat(safeDistance.toFixed(4)),
+          duration: runTime || 0,
+          average_pace: parseFloat(safePace.toFixed(2)),
+          calories_burned: parseFloat(safeCalories.toFixed(1)),
+          route_data: [],
           notes: "",
           timestamp: new Date().toISOString(),
         };
 
         console.log('Saving run data:', JSON.stringify(runData));
         
-        await axios.post(`${API_URL}/api/runs`, runData);
+        const response = await axios.post(`${API_URL}/api/runs`, runData);
+        console.log('Run saved successfully:', response.data);
+        
         Alert.alert(
           'Run Saved! 🏃',
           `Distance: ${runDistance.toFixed(2)} mi\nTime: ${formatTime(runTime)}`,
@@ -266,7 +272,7 @@ export default function DashboardScreen() {
           ]
         );
       } catch (error: any) {
-        console.error('Error saving run:', error?.response?.data || error);
+        console.error('Error saving run:', error?.response?.data || error?.message || error);
         Alert.alert('Run Complete', `Distance: ${runDistance.toFixed(2)} mi\nTime: ${formatTime(runTime)}\n\n(Failed to save to server)`);
       }
     } else {
