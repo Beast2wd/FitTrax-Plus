@@ -1530,7 +1530,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: Colors.text.primary,
+    color: '#1F2937',
     marginBottom: 16,
   },
   textArea: {
