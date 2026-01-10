@@ -151,6 +151,11 @@ export default function WeightTrainingScreen() {
     setShowExerciseLibraryModal(false);
   };
 
+  const viewExerciseDetail = (exercise: any) => {
+    setSelectedExerciseDetail(exercise);
+    setShowExerciseDetailModal(true);
+  };
+
   const addSet = () => {
     setCurrentSets([...currentSets, { weight: '', reps: '', rpe: '' }]);
   };
