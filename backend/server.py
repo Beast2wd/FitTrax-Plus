@@ -6532,6 +6532,7 @@ async def get_body_scan_progress(user_id: str):
         for scan in scans:
             if scan.get("measurements"):
                 progress_data.append({
+                    "scan_id": scan.get("scan_id"),
                     "date": scan["created_at"][:10],
                     "measurements": scan["measurements"],
                     "weight": scan.get("user_info", {}).get("weight_lbs"),
@@ -6545,6 +6546,20 @@ async def get_body_scan_progress(user_id: str):
         }
     except Exception as e:
         logger.error(f"Error getting body scan progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/body-scan/{scan_id}")
+async def delete_body_scan(scan_id: str):
+    """Delete a body scan entry"""
+    try:
+        result = await db.body_scans.delete_one({"scan_id": scan_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Scan not found")
+        return {"message": "Body scan deleted successfully", "scan_id": scan_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting body scan: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
