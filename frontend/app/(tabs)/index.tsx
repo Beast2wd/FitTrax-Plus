@@ -366,6 +366,31 @@ export default function DashboardScreen() {
           </View>
         </TouchableOpacity>
 
+        {/* Start Running Button */}
+        <TouchableOpacity 
+          style={styles.startRunningButton}
+          onPress={() => router.push('/running')}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={['#EC4899', '#F472B6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.startRunningGradient}
+          >
+            <View style={styles.startRunningContent}>
+              <View style={styles.startRunningIconContainer}>
+                <Ionicons name="walk" size={28} color="#fff" />
+              </View>
+              <View style={styles.startRunningTextContainer}>
+                <Text style={styles.startRunningTitle}>Start Running</Text>
+                <Text style={styles.startRunningSubtitle}>Track your outdoor run with GPS</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
+
         {/* Quick Actions */}
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
