@@ -151,6 +151,7 @@ export default function HeartRateScreen() {
     setCountdown(15);
     setFingerDetected(false);
     setSignalStrength(0);
+    setTorchOn(true); // Turn on flashlight immediately
     redValues.current = [];
     timestamps.current = [];
   };
