@@ -288,7 +288,7 @@ export default function PeptideCalculatorScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -296,15 +296,15 @@ export default function PeptideCalculatorScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Peptide Calculator</Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Peptide Calculator</Text>
           <TouchableOpacity onPress={() => setLogModalVisible(true)} style={styles.addButton}>
-            <Ionicons name="add-circle" size={28} color={Colors.brand.primary} />
+            <Ionicons name="add-circle" size={28} color={accent.primary} />
           </TouchableOpacity>
         </View>
 
-        {/* Tabs */}
+        {/* Tabs - Improved styling */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -320,15 +320,23 @@ export default function PeptideCalculatorScreen() {
           ].map((tab) => (
             <TouchableOpacity
               key={tab.id}
-              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+              style={[
+                styles.tab, 
+                { backgroundColor: colors.background.input },
+                activeTab === tab.id && { backgroundColor: accent.primary }
+              ]}
               onPress={() => setActiveTab(tab.id as TabType)}
             >
               <Ionicons 
                 name={tab.icon as any} 
                 size={18} 
-                color={activeTab === tab.id ? '#fff' : Colors.text.secondary} 
+                color={activeTab === tab.id ? '#fff' : colors.text.secondary} 
               />
-              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+              <Text style={[
+                styles.tabText, 
+                { color: colors.text.secondary },
+                activeTab === tab.id && styles.tabTextActive
+              ]}>
                 {tab.label}
               </Text>
             </TouchableOpacity>
