@@ -556,6 +556,38 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
+
+              {/* Terms of Service Status */}
+              <Text style={[styles.fieldLabel, { color: colors.text.secondary, marginTop: 24 }]}>
+                Legal
+              </Text>
+              <View style={[styles.tosStatusCard, { backgroundColor: colors.background.input, borderColor: colors.border.primary }]}>
+                <View style={styles.tosStatusHeader}>
+                  <Ionicons name="document-text" size={24} color={accentColors.primary} />
+                  <View style={styles.tosStatusInfo}>
+                    <Text style={[styles.tosStatusTitle, { color: colors.text.primary }]}>Terms of Service</Text>
+                    {tosAccepted?.accepted ? (
+                      <View style={styles.tosAcceptedRow}>
+                        <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+                        <Text style={[styles.tosStatusText, { color: '#22C55E' }]}>
+                          Accepted on {new Date(tosAccepted.acceptedAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.tosAcceptedRow}>
+                        <Ionicons name="alert-circle" size={16} color="#F59E0B" />
+                        <Text style={[styles.tosStatusText, { color: '#F59E0B' }]}>Not yet accepted</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={[styles.viewTosButton, { borderColor: accentColors.primary }]}
+                  onPress={() => Alert.alert('Terms of Service', 'You can view the full Terms of Service in the app settings.')}
+                >
+                  <Text style={[styles.viewTosButtonText, { color: accentColors.primary }]}>View Terms</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
 
