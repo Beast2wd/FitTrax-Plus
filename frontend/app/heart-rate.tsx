@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { useUserStore } from '../stores/userStore';
 import { useThemeStore } from '../stores/themeStore';
 import { heartRateAPI } from '../services/api';
@@ -47,6 +48,7 @@ export default function HeartRateScreen() {
   const [fingerDetected, setFingerDetected] = useState(false);
   const [pulseAnimation] = useState(new Animated.Value(1));
   const [signalStrength, setSignalStrength] = useState(0);
+  const [torchOn, setTorchOn] = useState(false);
   
   // Heart rate calculation state
   const redValues = useRef<number[]>([]);
