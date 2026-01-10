@@ -1071,12 +1071,12 @@ export default function WeightTrainingScreen() {
         visible={showExerciseDetailModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowExerciseDetailModal(false)}
+        onRequestClose={closeExerciseDetail}
       >
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
           <View style={styles.exerciseDetailHeader}>
             <TouchableOpacity 
-              onPress={() => setShowExerciseDetailModal(false)}
+              onPress={closeExerciseDetail}
               style={styles.closeButtonContainer}
             >
               <Ionicons name="close-circle" size={32} color={theme.colors.text.primary} />
@@ -1087,8 +1087,8 @@ export default function WeightTrainingScreen() {
             <TouchableOpacity 
               onPress={() => {
                 if (selectedExerciseDetail) {
-                  selectExerciseFromLibrary(selectedExerciseDetail.name);
-                  setShowExerciseDetailModal(false);
+                  setCurrentExercise(selectedExerciseDetail.name);
+                  closeExerciseDetail();
                 }
               }}
               style={styles.addToWorkoutBtn}
