@@ -72,6 +72,11 @@ export default function WeightTrainingScreen() {
   // Exercise detail view state
   const [showExerciseDetailModal, setShowExerciseDetailModal] = useState(false);
   const [selectedExerciseDetail, setSelectedExerciseDetail] = useState<any>(null);
+  
+  // Exercise phase images state
+  const [exercisePhaseImages, setExercisePhaseImages] = useState<any[]>([]);
+  const [loadingPhaseImages, setLoadingPhaseImages] = useState(false);
+  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
   useEffect(() => {
     loadData();
