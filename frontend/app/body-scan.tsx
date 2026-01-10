@@ -247,6 +247,7 @@ export default function BodyScanScreen() {
   const photoLabels = ['Front View', 'Side View', 'Back View'];
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
