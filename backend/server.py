@@ -5950,9 +5950,12 @@ Current context about user's peptides:""" + peptide_info
             UserMessage(text=data.question)
         )
         
+        # Response is a string directly
+        response_text = response if isinstance(response, str) else str(response)
+        
         return {
             "question": data.question,
-            "response": response.text,
+            "response": response_text,
             "disclaimer": "This information is for educational purposes only. Always consult with a healthcare provider before using any peptides."
         }
     except HTTPException:
