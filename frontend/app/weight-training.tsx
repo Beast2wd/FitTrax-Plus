@@ -1880,4 +1880,245 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text.muted,
   },
+  // Past Workout Modal Styles
+  pastWorkoutHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
+  },
+  closeButtonContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pastWorkoutTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+  },
+  pastWorkoutContent: {
+    flex: 1,
+    padding: 16,
+  },
+  pastWorkoutInfo: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+  },
+  pastWorkoutName: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  pastWorkoutDate: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  pastWorkoutStats: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  pastWorkoutStat: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+  },
+  pastWorkoutStatValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  pastWorkoutStatLabel: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  pastWorkoutSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  pastExerciseCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  pastExerciseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  pastExerciseSets: {
+    gap: 8,
+  },
+  pastSetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    gap: 12,
+  },
+  pastSetNumber: {
+    fontSize: 13,
+    fontWeight: '500',
+    width: 50,
+  },
+  pastSetWeight: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+  },
+  pastSetReps: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pastWorkoutNotes: {
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  pastWorkoutNotesLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  pastWorkoutNotesText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  historyRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  // Exercise Detail Modal Styles
+  exerciseDetailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
+  },
+  exerciseDetailTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  addToWorkoutBtn: {
+    backgroundColor: '#7C3AED',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  addToWorkoutBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  exerciseDetailContent: {
+    flex: 1,
+    padding: 16,
+  },
+  exerciseDetailTop: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  exerciseDetailIconLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#7C3AED20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  exerciseDetailName: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  exerciseDetailSection: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  exerciseDetailSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  muscleGroupList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  muscleGroupChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  muscleGroupChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  equipmentList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  equipmentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  equipmentChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  instructionsList: {
+    gap: 12,
+  },
+  instructionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  instructionNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  instructionNumberText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#7C3AED',
+  },
+  addToWorkoutFullBtn: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 8,
+  },
+  addToWorkoutFullBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
