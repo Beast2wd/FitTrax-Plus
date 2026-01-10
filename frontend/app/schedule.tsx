@@ -190,6 +190,88 @@ export default function ScheduleScreen() {
     setModalVisible(true);
   };
 
+  const openCustomWorkoutModal = () => {
+    setPlanExpanded(false);
+    setCustomWorkoutName('');
+    setCustomExercises([{ name: '', sets: '3', reps: '10' }]);
+    setCustomWorkoutModalVisible(true);
+  };
+
+  const addExercise = () => {
+    setCustomExercises([...customExercises, { name: '', sets: '3', reps: '10' }]);
+  };
+
+  const removeExercise = (index: number) => {
+    if (customExercises.length > 1) {
+      setCustomExercises(customExercises.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateExercise = (index: number, field: 'name' | 'sets' | 'reps', value: string) => {
+    const updated = [...customExercises];
+    updated[index][field] = value;
+    setCustomExercises(updated);
+  };
+
+  const handleCreateCustomWorkout = async () => {
+    if (!customWorkoutName.trim()) {
+      Alert.alert('Error', 'Please enter a workout name');
+      return;
+    }
+
+    const validExercises = customExercises.filter(e => e.name.trim());
+    if (validExercises.length === 0) {
+      Alert.alert('Error', 'Please add at least one exercise');
+      return;
+    }
+
+    try {
+      // Create a custom plan
+      const customPlanId = `custom_${Date.now()}`;
+      const customPlan = {
+        plan_id: customPlanId,
+        name: customWorkoutName.trim(),
+        type: 'custom',
+        exercises: validExercises.map(e => ({
+          name: e.name.trim(),
+          sets: parseInt(e.sets) || 3,
+          reps: parseInt(e.reps) || 10,
+        })),
+      };
+
+      // Save to backend
+      await fetch(`${API_URL}/api/custom-workout-plans`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          plan_id: customPlanId,
+          name: customWorkoutName.trim(),
+          exercises: customPlan.exercises,
+        }),
+      });
+
+      // Add to local plans list and select it
+      setAllPlans([...allPlans, customPlan]);
+      setSelectedPlan(customPlanId);
+      setCustomWorkoutModalVisible(false);
+      
+      Alert.alert('Success', 'Custom workout created!');
+    } catch (error) {
+      console.error('Error creating custom workout:', error);
+      // Even if backend fails, add locally
+      const customPlanId = `custom_${Date.now()}`;
+      const customPlan = {
+        plan_id: customPlanId,
+        name: customWorkoutName.trim(),
+        type: 'custom',
+      };
+      setAllPlans([...allPlans, customPlan]);
+      setSelectedPlan(customPlanId);
+      setCustomWorkoutModalVisible(false);
+    }
+  };
+
   const handleScheduleWorkout = async () => {
     if (!selectedPlan) {
       Alert.alert('Error', 'Please select a workout plan');
