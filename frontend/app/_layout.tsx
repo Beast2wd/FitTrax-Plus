@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useUserStore } from '../stores/userStore';
@@ -8,10 +8,12 @@ import { CustomSplashScreen } from '../components/CustomSplashScreen';
 import '../services/i18n'; // Initialize i18n
 
 export default function RootLayout() {
-  const { setUserId, setProfile, setTosAccepted } = useUserStore();
+  const { setUserId, setProfile, setTosAccepted, tosAccepted, profile } = useUserStore();
   const { theme } = useThemeStore();
   const [showSplash, setShowSplash] = useState(true);
   const [isReady, setIsReady] = useState(false);
+  const router = useRouter();
+  const segments = useSegments();
 
   const colors = theme.colors;
 
@@ -20,11 +22,11 @@ export default function RootLayout() {
     const loadUserData = async () => {
       try {
         const userId = await storage.getUserId();
-        const profile = await storage.getUserProfile();
+        const userProfile = await storage.getUserProfile();
         const tosAcceptance = await getTosAcceptance();
         
         if (userId) setUserId(userId);
-        if (profile) setProfile(profile);
+        if (userProfile) setProfile(userProfile);
         if (tosAcceptance) setTosAccepted(tosAcceptance);
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -34,6 +36,37 @@ export default function RootLayout() {
     };
     loadUserData();
   }, []);
+
+  // Handle navigation based on TOS and onboarding status
+  useEffect(() => {
+    if (!isReady || showSplash) return;
+
+    const inTosScreen = segments[0] === 'terms-of-service';
+    const inOnboardingScreen = segments[0] === 'onboarding';
+    
+    // Check if TOS has been accepted
+    const hasTosAccepted = tosAccepted?.accepted === true;
+    // Check if profile has been set up (onboarding complete)
+    const hasProfile = profile !== null && profile.name;
+    
+    // User needs to accept TOS first
+    if (!hasTosAccepted && !inTosScreen) {
+      router.replace('/terms-of-service');
+      return;
+    }
+    
+    // User has accepted TOS but hasn't set up profile yet
+    if (hasTosAccepted && !hasProfile && !inOnboardingScreen && !inTosScreen) {
+      router.replace('/onboarding');
+      return;
+    }
+    
+    // User has completed both TOS and onboarding, but is still on those screens
+    if (hasTosAccepted && hasProfile && (inTosScreen || inOnboardingScreen)) {
+      router.replace('/(tabs)');
+      return;
+    }
+  }, [isReady, showSplash, tosAccepted, profile, segments]);
 
   // Show splash screen on app load
   if (showSplash) {
