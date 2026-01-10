@@ -6593,8 +6593,9 @@ class ManualWorkoutLogEntry(BaseModel):
 async def create_manual_workout_entry(entry: ManualWorkoutLogEntry):
     """Create a new manual workout log entry"""
     try:
+        entry_id = f"mwl_{datetime.utcnow().timestamp()}_{entry.user_id[:8]}"
         entry_data = {
-            "entry_id": f"mwl_{datetime.utcnow().timestamp()}_{entry.user_id[:8]}",
+            "entry_id": entry_id,
             "user_id": entry.user_id,
             "exercise_name": entry.exercise_name,
             "sets": entry.sets,
@@ -6603,9 +6604,16 @@ async def create_manual_workout_entry(entry: ManualWorkoutLogEntry):
             "updated_at": datetime.utcnow().isoformat(),
         }
         await db.manual_workout_logs.insert_one(entry_data)
-        # Return without _id
-        entry_data.pop('_id', None)
-        return {"message": "Workout entry created", "entry": entry_data}
+        # Return a clean response without MongoDB _id
+        return {
+            "message": "Workout entry created", 
+            "entry": {
+                "entry_id": entry_id,
+                "exercise_name": entry.exercise_name,
+                "sets": entry.sets,
+                "notes": entry.notes
+            }
+        }
     except Exception as e:
         logger.error(f"Error creating manual workout entry: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
