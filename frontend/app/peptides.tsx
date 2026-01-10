@@ -1035,9 +1035,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.text.secondary,
+    letterSpacing: 0.3,
   },
   tabTextActive: {
     color: '#fff',
+    fontWeight: '700',
   },
   scrollContent: {
     padding: 16,
