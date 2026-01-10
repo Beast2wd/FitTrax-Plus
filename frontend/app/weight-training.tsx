@@ -2341,4 +2341,109 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
+  // Phase Image Styles
+  imageLoadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageLoadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  imageLoadingSubtext: {
+    fontSize: 13,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  phaseTabs: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 8,
+  },
+  phaseTab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+  },
+  phaseTabActive: {
+    backgroundColor: '#7C3AED',
+  },
+  phaseTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+  },
+  phaseTabTextActive: {
+    color: '#fff',
+  },
+  phaseImageContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.background.secondary,
+  },
+  phaseImage: {
+    width: '100%',
+    height: SCREEN_WIDTH - 64,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  phaseIndicator: {
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+  },
+  phaseIndicatorText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7C3AED',
+  },
+  phaseNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  phaseNavBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    gap: 4,
+  },
+  phaseNavBtnDisabled: {
+    opacity: 0.5,
+  },
+  phaseNavText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7C3AED',
+  },
+  imagePlaceholder: {
+    padding: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: 12,
+  },
+  imagePlaceholderText: {
+    fontSize: 14,
+    marginTop: 12,
+  },
+  generateImagesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#7C3AED',
+    padding: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  generateImagesBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
