@@ -1062,6 +1062,110 @@ export default function ScheduleScreen() {
             </ScrollView>
           </SafeAreaView>
         </Modal>
+
+        {/* Custom Workout Modal */}
+        <Modal
+          visible={customWorkoutModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setCustomWorkoutModalVisible(false)}
+        >
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            <SafeAreaView style={[localStyles.modalContainer, { backgroundColor: colors.background.primary }]}>
+              <View style={localStyles.modalHeader}>
+                <TouchableOpacity onPress={() => setCustomWorkoutModalVisible(false)}>
+                  <Text style={[localStyles.modalCancelText, { color: colors.text.secondary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={[localStyles.modalTitle, { color: colors.text.primary }]}>Create Workout</Text>
+                <TouchableOpacity onPress={handleCreateCustomWorkout}>
+                  <Text style={[localStyles.modalDoneText, { color: accent.primary }]}>Create</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={localStyles.modalScroll} showsVerticalScrollIndicator={false}>
+                {/* Workout Name */}
+                <Text style={localStyles.label}>Workout Name</Text>
+                <TextInput
+                  style={localStyles.textInput}
+                  placeholder="e.g., Morning Push Day"
+                  placeholderTextColor={colors.text.muted}
+                  value={customWorkoutName}
+                  onChangeText={setCustomWorkoutName}
+                />
+
+                {/* Exercises */}
+                <View style={localStyles.exercisesHeader}>
+                  <Text style={localStyles.label}>Exercises</Text>
+                  <TouchableOpacity onPress={addExercise} style={localStyles.addExerciseBtn}>
+                    <Ionicons name="add-circle" size={24} color={accent.primary} />
+                  </TouchableOpacity>
+                </View>
+
+                {customExercises.map((exercise, index) => (
+                  <View key={index} style={localStyles.exerciseRow}>
+                    <View style={localStyles.exerciseNameContainer}>
+                      <TextInput
+                        style={localStyles.exerciseNameInput}
+                        placeholder="Exercise name"
+                        placeholderTextColor={colors.text.muted}
+                        value={exercise.name}
+                        onChangeText={(text) => updateExercise(index, 'name', text)}
+                      />
+                    </View>
+                    <View style={localStyles.exerciseSetsReps}>
+                      <View style={localStyles.setsRepsInput}>
+                        <Text style={localStyles.setsRepsLabel}>Sets</Text>
+                        <TextInput
+                          style={localStyles.setsRepsValue}
+                          keyboardType="numeric"
+                          value={exercise.sets}
+                          onChangeText={(text) => updateExercise(index, 'sets', text)}
+                        />
+                      </View>
+                      <View style={localStyles.setsRepsInput}>
+                        <Text style={localStyles.setsRepsLabel}>Reps</Text>
+                        <TextInput
+                          style={localStyles.setsRepsValue}
+                          keyboardType="numeric"
+                          value={exercise.reps}
+                          onChangeText={(text) => updateExercise(index, 'reps', text)}
+                        />
+                      </View>
+                      {customExercises.length > 1 && (
+                        <TouchableOpacity 
+                          onPress={() => removeExercise(index)}
+                          style={localStyles.removeExerciseBtn}
+                        >
+                          <Ionicons name="trash-outline" size={20} color={colors.status.error} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                ))}
+
+                <TouchableOpacity 
+                  style={localStyles.addMoreExerciseBtn}
+                  onPress={addExercise}
+                >
+                  <Ionicons name="add" size={20} color={accent.primary} />
+                  <Text style={[localStyles.addMoreText, { color: accent.primary }]}>Add Another Exercise</Text>
+                </TouchableOpacity>
+
+                {/* Create Button */}
+                <TouchableOpacity 
+                  style={[localStyles.scheduleButton, !customWorkoutName.trim() && localStyles.scheduleButtonDisabled]}
+                  onPress={handleCreateCustomWorkout}
+                  disabled={!customWorkoutName.trim()}
+                >
+                  <Text style={localStyles.scheduleButtonText}>Create & Select Workout</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </SafeAreaView>
+          </KeyboardAvoidingView>
+        </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
