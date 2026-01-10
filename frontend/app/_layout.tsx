@@ -3,12 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useUserStore } from '../stores/userStore';
 import { useThemeStore } from '../stores/themeStore';
-import { storage } from '../services/storage';
+import { storage, getTosAcceptance } from '../services/storage';
 import { CustomSplashScreen } from '../components/CustomSplashScreen';
 import '../services/i18n'; // Initialize i18n
 
 export default function RootLayout() {
-  const { setUserId, setProfile } = useUserStore();
+  const { setUserId, setProfile, setTosAccepted } = useUserStore();
   const { theme } = useThemeStore();
   const [showSplash, setShowSplash] = useState(true);
   const [isReady, setIsReady] = useState(false);
@@ -21,8 +21,11 @@ export default function RootLayout() {
       try {
         const userId = await storage.getUserId();
         const profile = await storage.getUserProfile();
+        const tosAcceptance = await getTosAcceptance();
+        
         if (userId) setUserId(userId);
         if (profile) setProfile(profile);
+        if (tosAcceptance) setTosAccepted(tosAcceptance);
       } catch (error) {
         console.error('Error loading user data:', error);
       } finally {
