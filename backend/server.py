@@ -353,23 +353,38 @@ async def analyze_food_with_ai(image_base64: str) -> FoodAnalysis:
         chat = LlmChat(
             api_key=api_key,
             session_id=f"food_analysis_{datetime.now().timestamp()}",
-            system_message="You are a nutrition expert. Analyze food images and provide accurate nutritional information."
+            system_message="You are a nutrition expert. Analyze food images and provide accurate nutritional information. Always respond with valid JSON."
         ).with_model("openai", "gpt-4o")
         
         # Create image content
         image_content = ImageContent(image_base64=image_base64)
         
         # Create user message with structured output request
-        prompt = """Analyze this food image and provide nutritional information in JSON format.
+        prompt = """Analyze this food image and provide nutritional information.
 
-Return ONLY a valid JSON object with these exact fields:
+IMPORTANT: You MUST respond with ONLY a valid JSON object, no other text.
+
+If you can identify food in the image, return:
 {
   "food_name": "name of the food",
   "calories": numeric value,
   "protein": numeric value in grams,
   "carbs": numeric value in grams,
   "fat": numeric value in grams,
-  "portion_size": "description like '1 cup' or '200g'"
+  "portion_size": "description like '1 cup' or '200g'",
+  "is_food": true
+}
+
+If the image does NOT contain food, return:
+{
+  "food_name": "Not a food item",
+  "calories": 0,
+  "protein": 0,
+  "carbs": 0,
+  "fat": 0,
+  "portion_size": "N/A",
+  "is_food": false,
+  "message": "This image does not appear to contain food"
 }
 
 Provide your best estimate for the portion shown in the image."""
@@ -385,24 +400,83 @@ Provide your best estimate for the portion shown in the image."""
         
         # Parse response
         import json
-        # Extract JSON from response (handle markdown code blocks)
-        response_text = response.strip()
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0].strip()
+        import re
         
-        data = json.loads(response_text)
+        response_text = response.strip()
+        
+        # Try to extract JSON from the response
+        json_data = None
+        
+        # Method 1: Check for markdown code blocks
+        if "```json" in response_text:
+            try:
+                json_str = response_text.split("```json")[1].split("```")[0].strip()
+                json_data = json.loads(json_str)
+            except:
+                pass
+        elif "```" in response_text:
+            try:
+                json_str = response_text.split("```")[1].split("```")[0].strip()
+                json_data = json.loads(json_str)
+            except:
+                pass
+        
+        # Method 2: Try to find JSON object in response
+        if json_data is None:
+            try:
+                # Find JSON object pattern
+                json_match = re.search(r'\{[^{}]*\}', response_text, re.DOTALL)
+                if json_match:
+                    json_data = json.loads(json_match.group())
+            except:
+                pass
+        
+        # Method 3: Try parsing entire response as JSON
+        if json_data is None:
+            try:
+                json_data = json.loads(response_text)
+            except:
+                pass
+        
+        # If still no JSON, check if AI said it's not food
+        if json_data is None:
+            lower_response = response_text.lower()
+            if "not a food" in lower_response or "not food" in lower_response or "unable to" in lower_response or "cannot" in lower_response:
+                return FoodAnalysis(
+                    food_name="Not a food item",
+                    calories=0,
+                    protein=0,
+                    carbs=0,
+                    fat=0,
+                    portion_size="N/A"
+                )
+            else:
+                # Fallback - return unknown
+                logger.warning(f"Could not parse AI response as JSON: {response_text[:200]}")
+                raise HTTPException(status_code=400, detail="Could not identify food in image. Please try again with a clearer photo of food.")
+        
+        # Check if it's a food item
+        if not json_data.get("is_food", True):
+            return FoodAnalysis(
+                food_name="Not a food item",
+                calories=0,
+                protein=0,
+                carbs=0,
+                fat=0,
+                portion_size="N/A"
+            )
         
         return FoodAnalysis(
-            food_name=data.get("food_name", "Unknown Food"),
-            calories=float(data.get("calories", 0)),
-            protein=float(data.get("protein", 0)),
-            carbs=float(data.get("carbs", 0)),
-            fat=float(data.get("fat", 0)),
-            portion_size=data.get("portion_size", "1 serving")
+            food_name=json_data.get("food_name", "Unknown Food"),
+            calories=float(json_data.get("calories", 0)),
+            protein=float(json_data.get("protein", 0)),
+            carbs=float(json_data.get("carbs", 0)),
+            fat=float(json_data.get("fat", 0)),
+            portion_size=json_data.get("portion_size", "1 serving")
         )
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error analyzing food: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to analyze food image: {str(e)}")
