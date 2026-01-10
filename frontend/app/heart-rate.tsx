@@ -277,6 +277,7 @@ export default function HeartRateScreen() {
 
   const closeCameraModal = () => {
     stopDetection();
+    setTorchOn(false); // Turn off flashlight
     setShowCameraModal(false);
     setFingerDetected(false);
     setDetectedBPM(null);
