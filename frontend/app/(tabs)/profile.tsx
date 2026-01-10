@@ -116,7 +116,7 @@ const PickerModal: React.FC<PickerModalProps> = ({
 };
 
 export default function ProfileScreen() {
-  const { userId, profile, setUserId, setProfile } = useUserStore();
+  const { userId, profile, setUserId, setProfile, tosAccepted } = useUserStore();
   const { theme, mode, accent, setMode, setAccent } = useThemeStore();
   const { language, setLanguage } = useLanguageStore();
   const { t } = useTranslation();
