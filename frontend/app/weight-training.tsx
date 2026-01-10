@@ -380,8 +380,14 @@ export default function WeightTrainingScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Weight Training</Text>
-          <Text style={styles.subtitle}>Build strength & track progress</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>Weight Training</Text>
+            <Text style={styles.subtitle}>Build strength & track progress</Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
 
         {/* Quick Log Button */}
