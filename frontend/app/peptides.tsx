@@ -536,10 +536,10 @@ export default function PeptideCalculatorScreen() {
               )}
 
               {/* Site Rotation */}
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Injection Site Rotation</Text>
-                <Text style={styles.recommendedSite}>
-                  Recommended: <Text style={styles.recommendedSiteValue}>
+              <View style={[styles.card, { backgroundColor: colors.background.card }]}>
+                <Text style={[styles.cardTitle, { color: colors.text.primary }]}>Injection Site Rotation</Text>
+                <Text style={[styles.recommendedSite, { color: colors.text.primary }]}>
+                  Recommended: <Text style={[styles.recommendedSiteValue, { color: accent.primary }]}>
                     {siteRotation.find(s => s.id === recommendedSite)?.name || 'Abdomen (Left)'}
                   </Text>
                 </Text>
@@ -549,15 +549,16 @@ export default function PeptideCalculatorScreen() {
                       key={site.id}
                       style={[
                         styles.siteCard,
-                        site.id === recommendedSite && styles.siteCardRecommended
+                        { backgroundColor: colors.background.input },
+                        site.id === recommendedSite && [styles.siteCardRecommended, { borderColor: accent.primary }]
                       ]}
                       onPress={() => {
                         setLogSite(site.id);
                         setLogModalVisible(true);
                       }}
                     >
-                      <Text style={styles.siteName}>{site.name}</Text>
-                      <Text style={styles.siteCount}>{site.recent_count} recent</Text>
+                      <Text style={[styles.siteName, { color: colors.text.primary }]}>{site.name}</Text>
+                      <Text style={[styles.siteCount, { color: colors.text.secondary }]}>{site.recent_count} recent</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -565,13 +566,13 @@ export default function PeptideCalculatorScreen() {
 
               {/* Recent Injections */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Recent Injections</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recent Injections</Text>
                 {injectionHistory.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="medical" size={48} color={Colors.text.muted} />
-                    <Text style={styles.emptyText}>No injections logged yet</Text>
+                  <View style={[styles.emptyState, { backgroundColor: colors.background.card }]}>
+                    <Ionicons name="medical" size={48} color={colors.text.muted} />
+                    <Text style={[styles.emptyText, { color: colors.text.primary }]}>No injections logged yet</Text>
                     <TouchableOpacity 
-                      style={styles.emptyButton}
+                      style={[styles.emptyButton, { backgroundColor: accent.primary }]}
                       onPress={() => setLogModalVisible(true)}
                     >
                       <Text style={styles.emptyButtonText}>Log Your First Injection</Text>
@@ -584,20 +585,20 @@ export default function PeptideCalculatorScreen() {
                       renderRightActions={() => renderRightActions(inj.injection_id)}
                       overshootRight={false}
                     >
-                      <View style={styles.injectionCard}>
+                      <View style={[styles.injectionCard, { backgroundColor: colors.background.card }]}>
                         <View style={styles.injectionHeader}>
-                          <Text style={styles.injectionPeptide}>{inj.peptide_name}</Text>
-                          <Text style={styles.injectionDose}>{inj.dose_mcg} mcg</Text>
+                          <Text style={[styles.injectionPeptide, { color: colors.text.primary }]}>{inj.peptide_name}</Text>
+                          <Text style={[styles.injectionDose, { color: accent.primary }]}>{inj.dose_mcg} mcg</Text>
                         </View>
                         <View style={styles.injectionDetails}>
                           <View style={styles.injectionDetail}>
-                            <Ionicons name="location" size={14} color={Colors.text.secondary} />
-                            <Text style={styles.injectionDetailText}>
+                            <Ionicons name="location" size={14} color={colors.text.secondary} />
+                            <Text style={[styles.injectionDetailText, { color: colors.text.secondary }]}>
                               {siteRotation.find(s => s.id === inj.injection_site)?.name || inj.injection_site}
                             </Text>
                           </View>
                           <View style={styles.injectionDetail}>
-                            <Ionicons name="time" size={14} color={Colors.text.secondary} />
+                            <Ionicons name="time" size={14} color={colors.text.secondary} />
                             <Text style={styles.injectionDetailText}>{formatDate(inj.injection_time)}</Text>
                           </View>
                         </View>
