@@ -734,40 +734,46 @@ export default function BodyScanScreen() {
         <Modal
           visible={workoutModalVisible}
           animationType="slide"
-          transparent
+          presentationStyle="pageSheet"
           onRequestClose={() => setWorkoutModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{selectedDay?.name}</Text>
-                <TouchableOpacity onPress={() => setWorkoutModalVisible(false)}>
-                  <Ionicons name="close" size={24} color={Colors.text.primary} />
-                </TouchableOpacity>
-              </View>
+          <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
+              <TouchableOpacity 
+                onPress={() => setWorkoutModalVisible(false)}
+                style={styles.modalBackButton}
+              >
+                <Ionicons name="chevron-back" size={28} color={accent.primary} />
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>{selectedDay?.name}</Text>
+              <View style={{ width: 40 }} />
+            </View>
 
-              <ScrollView style={styles.modalScroll}>
-                <Text style={styles.modalFocus}>
+            <ScrollView style={styles.modalScroll} contentContainerStyle={{ padding: 16 }}>
+              <View style={[styles.focusCard, { backgroundColor: `${accent.primary}15` }]}>
+                <Ionicons name="fitness" size={20} color={accent.primary} />
+                <Text style={[styles.modalFocus, { color: accent.primary }]}>
                   Focus: {selectedDay?.focus?.join(', ')}
                 </Text>
+              </View>
 
-                {selectedDay?.exercises?.map((exercise: any, i: number) => (
-                  <View key={i} style={styles.exerciseCard}>
-                    <View style={styles.exerciseNumber}>
-                      <Text style={styles.exerciseNumberText}>{i + 1}</Text>
-                    </View>
-                    <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseName}>{exercise.name}</Text>
-                      <Text style={styles.exerciseSets}>{exercise.sets_reps}</Text>
-                      {exercise.notes && (
-                        <Text style={styles.exerciseNotes}>{exercise.notes}</Text>
-                      )}
-                    </View>
+              {selectedDay?.exercises?.map((exercise: any, i: number) => (
+                <View key={i} style={[styles.exerciseCard, { backgroundColor: colors.background.card }]}>
+                  <View style={[styles.exerciseNumber, { backgroundColor: accent.primary }]}>
+                    <Text style={styles.exerciseNumberText}>{i + 1}</Text>
                   </View>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
+                  <View style={styles.exerciseInfo}>
+                    <Text style={[styles.exerciseName, { color: colors.text.primary }]}>{exercise.name}</Text>
+                    <Text style={[styles.exerciseSets, { color: colors.text.secondary }]}>{exercise.sets_reps}</Text>
+                    {exercise.notes && (
+                      <Text style={[styles.exerciseNotes, { color: colors.text.muted }]}>{exercise.notes}</Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </SafeAreaView>
         </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
