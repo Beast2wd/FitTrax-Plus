@@ -2955,9 +2955,15 @@ EXERCISE_SPECIFIC_PROMPTS = {
         "use_start_for_end": False  # Exception - different start and end
     },
     "deadlift": {
-        "start": "standing upright holding barbell at hip level with arms extended down, shoulders back",
-        "mid": "barbell at knee level, back flat, hinging at hips",
-        "end": "SAME AS START - standing upright holding barbell at hip level",
+        "start": "starting position bent over with barbell on the ground or at shin level, back flat, hips hinged back, knees slightly bent, gripping the bar with arms extended",
+        "mid": "standing upright holding barbell at hip level with arms extended down, shoulders back, chest up, lockout position",
+        "end": "SAME AS START - bent over position with barbell at shin level, back flat, hips hinged",
+        "use_start_for_end": True
+    },
+    "skull crushers": {
+        "start": "lying flat on bench with head flat, holding EZ-curl bar or dumbbells with arms bent, weight lowered down near forehead/behind head, elbows pointing up",
+        "mid": "arms fully extended straight up toward the ceiling, holding EZ-curl bar or dumbbells directly above chest, elbows locked",
+        "end": "SAME AS START - arms bent with weight lowered near forehead/behind head",
         "use_start_for_end": True
     },
     "dumbbell curl": {
