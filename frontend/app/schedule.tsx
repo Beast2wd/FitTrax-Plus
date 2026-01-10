@@ -193,10 +193,18 @@ export default function ScheduleScreen() {
   };
 
   const openCustomWorkoutModal = () => {
+    // Close all pickers first
     setPlanExpanded(false);
+    setDayExpanded(false);
+    setTimeExpanded(false);
+    // Reset custom workout form
     setCustomWorkoutName('');
     setCustomExercises([{ name: '', sets: '3', reps: '10' }]);
-    setCustomWorkoutModalVisible(true);
+    // Close main modal first, then open custom workout modal after a delay
+    setModalVisible(false);
+    setTimeout(() => {
+      setCustomWorkoutModalVisible(true);
+    }, 350);
   };
 
   const addExercise = () => {
