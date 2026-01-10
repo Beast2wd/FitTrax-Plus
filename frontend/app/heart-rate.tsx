@@ -621,6 +621,7 @@ export default function HeartRateScreen() {
         </View>
       </Modal>
     </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
