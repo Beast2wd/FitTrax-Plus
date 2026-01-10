@@ -13,7 +13,7 @@ from typing import Dict, Any
 import os
 
 # Configuration
-BASE_URL = "https://fitbugsolve.preview.emergentagent.com/api"
+BASE_URL = "https://exercise-companion-11.preview.emergentagent.com/api"
 TEST_USER_ID = "test_user_fittraxx"
 
 class FitTraxxAPITester:
