@@ -338,20 +338,20 @@ export default function BodyScanScreen() {
                     { key: 'neck', label: 'Neck', icon: 'body' },
                   ].map(({ key, label }) => (
                     <View key={key} style={styles.measurementItem}>
-                      <Text style={styles.measurementLabel}>{label}</Text>
+                      <Text style={[styles.measurementLabel, { color: colors.text.secondary }]}>{label}</Text>
                       <TextInput
-                        style={styles.measurementInput}
+                        style={[styles.measurementInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                         value={measurements[key as keyof Measurements]}
                         onChangeText={(v) => updateMeasurement(key as keyof Measurements, v)}
                         keyboardType="decimal-pad"
                         placeholder="0"
-                        placeholderTextColor={Colors.text.muted}
+                        placeholderTextColor={colors.text.muted}
                       />
                     </View>
                   ))}
                 </View>
 
-                <Text style={styles.subSectionTitle}>Arms & Legs</Text>
+                <Text style={[styles.subSectionTitle, { color: colors.text.primary }]}>Arms & Legs</Text>
                 <View style={styles.measurementGrid}>
                   {[
                     { key: 'left_arm', label: 'L Arm' },
@@ -362,52 +362,52 @@ export default function BodyScanScreen() {
                     { key: 'right_calf', label: 'R Calf' },
                   ].map(({ key, label }) => (
                     <View key={key} style={styles.measurementItemSmall}>
-                      <Text style={styles.measurementLabelSmall}>{label}</Text>
+                      <Text style={[styles.measurementLabelSmall, { color: colors.text.secondary }]}>{label}</Text>
                       <TextInput
-                        style={styles.measurementInputSmall}
+                        style={[styles.measurementInputSmall, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                         value={measurements[key as keyof Measurements]}
                         onChangeText={(v) => updateMeasurement(key as keyof Measurements, v)}
                         keyboardType="decimal-pad"
                         placeholder="0"
-                        placeholderTextColor={Colors.text.muted}
+                        placeholderTextColor={colors.text.muted}
                       />
                     </View>
                   ))}
                 </View>
 
-                <Text style={styles.subSectionTitle}>Body Stats</Text>
+                <Text style={[styles.subSectionTitle, { color: colors.text.primary }]}>Body Stats</Text>
                 <View style={styles.bodyStatsRow}>
                   <View style={styles.bodyStatItem}>
-                    <Text style={styles.measurementLabel}>Weight (lbs)</Text>
+                    <Text style={[styles.measurementLabel, { color: colors.text.secondary }]}>Weight (lbs)</Text>
                     <TextInput
-                      style={styles.measurementInput}
+                      style={[styles.measurementInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                       value={weight}
                       onChangeText={setWeight}
                       keyboardType="decimal-pad"
                       placeholder="0"
-                      placeholderTextColor={Colors.text.muted}
+                      placeholderTextColor={colors.text.muted}
                     />
                   </View>
                   <View style={styles.bodyStatItem}>
-                    <Text style={styles.measurementLabel}>Height (in)</Text>
+                    <Text style={[styles.measurementLabel, { color: colors.text.secondary }]}>Height (in)</Text>
                     <TextInput
-                      style={styles.measurementInput}
+                      style={[styles.measurementInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                       value={heightInches}
                       onChangeText={setHeightInches}
                       keyboardType="decimal-pad"
                       placeholder="0"
-                      placeholderTextColor={Colors.text.muted}
+                      placeholderTextColor={colors.text.muted}
                     />
                   </View>
                   <View style={styles.bodyStatItem}>
-                    <Text style={styles.measurementLabel}>Body Fat %</Text>
+                    <Text style={[styles.measurementLabel, { color: colors.text.secondary }]}>Body Fat %</Text>
                     <TextInput
-                      style={styles.measurementInput}
+                      style={[styles.measurementInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                       value={bodyFat}
                       onChangeText={setBodyFat}
                       keyboardType="decimal-pad"
                       placeholder="0"
-                      placeholderTextColor={Colors.text.muted}
+                      placeholderTextColor={colors.text.muted}
                     />
                   </View>
                 </View>
