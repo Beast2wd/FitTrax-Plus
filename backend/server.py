@@ -1439,6 +1439,34 @@ async def update_user_plan(
 # SCHEDULED WORKOUTS ENDPOINTS
 # ============================================================================
 
+@api_router.post("/custom-workout-plans")
+async def create_custom_workout_plan(plan: dict = Body(...)):
+    """Create a custom workout plan for scheduling"""
+    user_id = plan.get('user_id')
+    plan_id = plan.get('plan_id')
+    name = plan.get('name')
+    exercises = plan.get('exercises', [])
+    
+    custom_plan = {
+        "plan_id": plan_id,
+        "user_id": user_id,
+        "name": name,
+        "exercises": exercises,
+        "type": "custom",
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    await db.custom_workout_plans.insert_one(custom_plan)
+    return {"message": "Custom workout plan created", "plan": custom_plan}
+
+@api_router.get("/custom-workout-plans/{user_id}")
+async def get_custom_workout_plans(user_id: str):
+    """Get user's custom workout plans"""
+    plans = await db.custom_workout_plans.find({"user_id": user_id}).to_list(length=100)
+    for plan in plans:
+        plan.pop('_id', None)
+    return {"plans": plans}
+
 @api_router.post("/scheduled-workouts")
 async def schedule_workout(scheduled: ScheduledWorkoutCreate):
     """Schedule a workout"""
