@@ -1,16 +1,29 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useThemeStore } from '../stores/themeStore';
+import { useUserStore } from '../stores/userStore';
 import FitTraxLogo from '../components/FitTraxLogo';
 
 export default function OnboardingScreen() {
   const { theme } = useThemeStore();
+  const { tosAccepted } = useUserStore();
   const colors = theme.colors;
   const accent = theme.accentColors;
+
+  const handleContinue = () => {
+    // Ensure TOS was accepted before allowing profile setup
+    if (!tosAccepted?.accepted) {
+      Alert.alert('Error', 'Please accept the Terms of Service first.');
+      router.replace('/terms-of-service');
+      return;
+    }
+    // Navigate to profile tab for setup
+    router.replace('/(tabs)/profile');
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
@@ -42,11 +55,19 @@ export default function OnboardingScreen() {
 
         <TouchableOpacity
           style={[styles.continueButton, { backgroundColor: accent.primary }]}
-          onPress={() => router.replace('/(tabs)/profile')}
+          onPress={handleContinue}
         >
           <Text style={styles.continueButtonText}>Create My Profile</Text>
           <Ionicons name="arrow-forward" size={20} color="#fff" />
         </TouchableOpacity>
+        
+        {/* TOS Acceptance Status */}
+        <View style={styles.tosStatus}>
+          <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+          <Text style={[styles.tosStatusText, { color: colors.text.muted }]}>
+            Terms of Service accepted
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
