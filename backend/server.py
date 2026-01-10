@@ -5946,7 +5946,7 @@ Current context about user's peptides:""" + peptide_info
             system_message=system_prompt
         ).with_model("openai", "gpt-4o")
         
-        response = await chat.send_message_async(
+        response = await chat.send_message(
             UserMessage(text=data.question)
         )
         
