@@ -6676,6 +6676,56 @@ async def delete_manual_workout_entry(entry_id: str):
         logger.error(f"Error deleting manual workout entry: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class WorkoutCompleteData(BaseModel):
+    user_id: str
+    workout_date: str
+    exercises: list
+    completed_at: str
+
+@api_router.post("/manual-workout-log/complete")
+async def complete_workout(data: WorkoutCompleteData):
+    """Mark workout as complete and sync to schedule calendar"""
+    try:
+        # Get all unsynced entries for today for this user
+        today = data.workout_date
+        
+        # Create a scheduled workout entry for the calendar
+        workout_id = f"completed_{datetime.utcnow().timestamp()}_{data.user_id[:8]}"
+        
+        # Build exercise summary for the calendar
+        exercise_names = [e.get('name', 'Unknown') for e in data.exercises]
+        
+        # Create calendar entry
+        calendar_entry = {
+            "workout_id": workout_id,
+            "user_id": data.user_id,
+            "workout_type": "manual_log",
+            "title": f"Workout Log - {len(data.exercises)} exercises",
+            "description": ", ".join(exercise_names),
+            "exercises": data.exercises,
+            "scheduled_date": today,
+            "completed": True,
+            "completed_at": data.completed_at,
+            "created_at": datetime.utcnow().isoformat(),
+        }
+        
+        await db.scheduled_workouts.insert_one(calendar_entry)
+        
+        # Mark all entries as synced
+        await db.manual_workout_logs.update_many(
+            {"user_id": data.user_id, "synced_to_calendar": False},
+            {"$set": {"synced_to_calendar": True}}
+        )
+        
+        return {
+            "message": "Workout completed and synced to calendar",
+            "workout_id": workout_id,
+            "exercises_count": len(data.exercises)
+        }
+    except Exception as e:
+        logger.error(f"Error completing workout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
