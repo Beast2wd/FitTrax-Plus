@@ -170,6 +170,160 @@ If you have questions or feedback, contact FitTrax Support at:
 
 FitTrax, Inc.
 Attn: Legal & Support
+Email: support@fittrax.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FitTrax Privacy Policy
+
+Last Updated: 1/09/26
+
+FitTrax ("FitTrax," "we," "us," or "our") values your privacy. This Privacy Policy explains how we collect, use, disclose, and protect your information when you access or use the FitTrax website, mobile applications, and related services (collectively, the "Services").
+
+By using the Services, you agree to the practices described in this Privacy Policy.
+
+1. Information We Collect
+
+A. Information You Provide Directly
+
+We may collect information you voluntarily provide, including:
+
+• Account registration details (name, email address, login credentials)
+• Profile information (age range, height, weight, goals, preferences)
+• Food, nutrition, and activity logs
+• Subscription and billing information (processed by third-party providers)
+• Communications with support or feedback submissions
+
+B. Information Collected Automatically
+
+When you use the Services, we may automatically collect:
+
+• Device information (device type, operating system, app version)
+• Usage data (features used, screens viewed, session duration)
+• Log data (IP address, time zone, crash reports)
+• Cookies and similar technologies (for web-based services)
+
+C. Information from Third Parties
+
+We may receive information from:
+
+• App stores (Apple App Store, Google Play)
+• Connected devices or fitness platforms (if you choose to link them)
+• Payment processors (confirmation of subscription status only)
+
+We do not receive or store full payment card numbers.
+
+2. How We Use Your Information
+
+We use your information to:
+
+• Provide and operate the Services
+• Personalize nutrition and activity tracking
+• Display progress, goals, and insights
+• Process subscriptions and payments
+• Improve features, performance, and user experience
+• Communicate service updates and support responses
+• Detect fraud, misuse, or security issues
+• Comply with legal obligations
+
+3. Health & Nutrition Data
+
+FitTrax allows users to enter nutrition, fitness, and wellness information. This data:
+
+• Is used solely to provide app functionality and insights
+• Is not medical data under HIPAA
+• Is not shared with advertisers for targeting medical conditions
+
+You control what information you enter and may delete it at any time.
+
+4. How We Share Information
+
+We do not sell your personal information.
+
+We may share information only in the following circumstances:
+
+A. Service Providers
+
+With trusted vendors who help us operate the Services, such as:
+
+• Cloud hosting providers
+• Payment processors
+• Analytics and crash-reporting services
+
+These providers are contractually required to protect your data.
+
+B. Legal & Safety Requirements
+
+We may disclose information if required to:
+
+• Comply with laws, regulations, or legal processes
+• Respond to lawful government requests
+• Protect the rights, safety, or security of users or FitTrax
+
+C. Business Transfers
+
+If FitTrax is involved in a merger, acquisition, or asset sale, your information may be transferred as part of that transaction.
+
+5. Cookies & Tracking Technologies
+
+FitTrax may use cookies, SDKs, and similar technologies to:
+
+• Remember preferences
+• Analyze usage trends
+• Improve performance and reliability
+
+You can control cookie preferences through your browser or device settings.
+
+6. Data Retention
+
+We retain personal information only as long as necessary to:
+
+• Provide the Services
+• Comply with legal obligations
+• Resolve disputes and enforce agreements
+
+You may request deletion of your data by deleting your account or contacting support.
+
+7. Your Privacy Choices & Rights
+
+Depending on your location, you may have the right to:
+
+• Access your personal information
+• Correct inaccurate data
+• Delete your information
+• Object to certain processing
+• Request data portability
+
+You can manage most information directly within the app.
+
+8. Children's Privacy
+
+FitTrax is not intended for individuals under 18.
+
+We do not knowingly collect personal information from children. If we become aware that such information has been collected, we will promptly delete it.
+
+9. Data Security
+
+We implement reasonable administrative, technical, and physical safeguards to protect your information. However, no system is completely secure, and we cannot guarantee absolute security.
+
+10. International Users
+
+If you access FitTrax from outside the United States, you consent to the transfer, storage, and processing of your information in the U.S. and other countries where our service providers operate.
+
+11. Third-Party Links & Integrations
+
+The Services may contain links to third-party websites or integrate with third-party services. We are not responsible for their privacy practices. Please review their policies independently.
+
+12. Changes to This Privacy Policy
+
+We may update this Privacy Policy periodically. If changes are material, we will notify you through the Services or by other appropriate means. Continued use after updates constitutes acceptance.
+
+13. Contact Us
+
+If you have questions, concerns, or requests regarding this Privacy Policy, contact us at:
+
+FitTrax, Inc.
+Attn: Privacy Team
 Email: support@fittrax.com`;
 
 export default function TermsOfServiceScreen() {
