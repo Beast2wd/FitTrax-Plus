@@ -6644,7 +6644,8 @@ async def update_manual_workout_entry(entry_id: str, entry: ManualWorkoutLogEntr
     try:
         update_data = {
             "exercise_name": entry.exercise_name,
-            "sets": entry.sets,
+            "reps": entry.reps,
+            "weight": entry.weight,
             "notes": entry.notes,
             "updated_at": datetime.utcnow().isoformat(),
         }
