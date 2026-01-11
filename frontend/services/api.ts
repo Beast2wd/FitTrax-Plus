@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 60000, // 60 second timeout for large requests
 });
 
 // User Profile APIs
@@ -25,8 +26,20 @@ export const userAPI = {
 // Food/Meal APIs
 export const foodAPI = {
   analyzeFood: async (data: { user_id: string; image_base64: string; meal_category: string }) => {
-    const response = await api.post('/analyze-food', data);
-    return response.data;
+    try {
+      const response = await api.post('/analyze-food', data, {
+        timeout: 90000, // 90 second timeout for AI analysis
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('Analysis timed out. Please try again with a smaller image.');
+      }
+      if (error.response?.status === 500) {
+        throw new Error('Server error analyzing food. Please try again.');
+      }
+      throw error;
+    }
   },
   getMeals: async (userId: string, days: number = 7) => {
     const response = await api.get(`/meals/${userId}?days=${days}`);
