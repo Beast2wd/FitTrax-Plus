@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for FitTrax - New Endpoints
-Testing the following new endpoints:
-1. DELETE /api/body-scan/{scan_id} - Delete a body scan entry
-2. DELETE /api/heart-rate/{heart_rate_id} - Delete a heart rate entry  
-3. GET /api/body-scan/progress/{user_id} - Verify it returns scan_id in each progress entry
+Backend API Testing for AI Food Scanner
+Testing the /api/analyze-food endpoint as requested
 """
 
 import requests
 import json
-import uuid
 from datetime import datetime
-import base64
 
-# Backend URL from environment
-BACKEND_URL = "https://health-hub-136.preview.emergentagent.com/api"
+# Backend URL from frontend .env
+BACKEND_URL = "https://health-hub-136.preview.emergentagent.com"
 
 def test_health_check():
     """Test if backend is running"""
