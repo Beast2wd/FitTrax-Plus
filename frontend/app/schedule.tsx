@@ -1311,30 +1311,52 @@ export default function ScheduleScreen() {
                         {exercise.name}
                       </Text>
                       
-                      {/* Show reps/weight data if available */}
+                      {/* Show full reps/weight data table */}
                       {exercise.reps && Object.keys(exercise.reps).length > 0 && (
-                        <View style={localStyles.exerciseStats}>
-                          <View style={localStyles.exerciseStatRow}>
-                            <Text style={[localStyles.exerciseStatLabel, { color: colors.text.secondary }]}>Days logged:</Text>
-                            <Text style={[localStyles.exerciseStatValue, { color: accent.primary }]}>
-                              {Object.keys(exercise.reps).filter(k => exercise.reps[k]).length}
-                            </Text>
+                        <View style={localStyles.exerciseDataTable}>
+                          {/* Table Header */}
+                          <View style={localStyles.tableHeaderRow}>
+                            <Text style={[localStyles.tableHeaderCell, localStyles.dayHeaderCell, { color: colors.text.secondary }]}>Day</Text>
+                            <Text style={[localStyles.tableHeaderCell, { color: colors.text.secondary }]}>Reps</Text>
+                            <Text style={[localStyles.tableHeaderCell, { color: colors.text.secondary }]}>Weight</Text>
                           </View>
-                          {exercise.weight && (
-                            <View style={localStyles.exerciseStatRow}>
-                              <Text style={[localStyles.exerciseStatLabel, { color: colors.text.secondary }]}>Max weight:</Text>
-                              <Text style={[localStyles.exerciseStatValue, { color: accent.primary }]}>
-                                {Math.max(...Object.values(exercise.weight).map((w: any) => parseFloat(w) || 0))} lbs
+                          
+                          {/* Data Rows */}
+                          {Object.keys(exercise.reps).filter(day => exercise.reps[day]).map((day) => (
+                            <View key={day} style={[localStyles.tableDataRow, { borderBottomColor: colors.border.primary }]}>
+                              <Text style={[localStyles.tableDataCell, localStyles.dayCell, { color: colors.text.secondary }]}>
+                                Day {day}
+                              </Text>
+                              <Text style={[localStyles.tableDataCell, { color: colors.text.primary }]}>
+                                {exercise.reps[day] || '-'}
+                              </Text>
+                              <Text style={[localStyles.tableDataCell, { color: accent.primary, fontWeight: '600' }]}>
+                                {exercise.weight?.[day] ? `${exercise.weight[day]} lbs` : '-'}
                               </Text>
                             </View>
-                          )}
+                          ))}
+                          
+                          {/* Summary Row */}
+                          <View style={[localStyles.tableSummaryRow, { backgroundColor: `${accent.primary}10` }]}>
+                            <Text style={[localStyles.tableSummaryLabel, { color: colors.text.secondary }]}>
+                              Max Weight:
+                            </Text>
+                            <Text style={[localStyles.tableSummaryValue, { color: accent.primary }]}>
+                              {exercise.weight 
+                                ? Math.max(...Object.values(exercise.weight).map((w: any) => parseFloat(w) || 0)) 
+                                : 0} lbs
+                            </Text>
+                          </View>
                         </View>
                       )}
                       
                       {exercise.notes && (
-                        <Text style={[localStyles.exerciseDetailNotes, { color: colors.text.muted }]}>
-                          {exercise.notes}
-                        </Text>
+                        <View style={[localStyles.exerciseNotesContainer, { backgroundColor: colors.background.input }]}>
+                          <Ionicons name="document-text-outline" size={16} color={colors.text.muted} />
+                          <Text style={[localStyles.exerciseDetailNotes, { color: colors.text.secondary }]}>
+                            {exercise.notes}
+                          </Text>
+                        </View>
                       )}
                     </View>
                   ))}
