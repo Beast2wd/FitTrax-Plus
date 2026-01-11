@@ -563,6 +563,86 @@ export default function ScanScreen() {
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Quantity Adjustment Modal */}
+      <Modal
+        visible={quantityModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setQuantityModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity 
+            style={{ flex: 1 }} 
+            activeOpacity={1} 
+            onPress={() => setQuantityModalVisible(false)}
+          />
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.editModalContainer, { backgroundColor: colors.background.card }]}
+          >
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
+              <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
+                <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Adjust Quantity</Text>
+              <TouchableOpacity onPress={applyQuantity}>
+                <Text style={[styles.modalDone, { color: accent.primary }]}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.quantityForm}>
+              <Text style={[styles.quantityDescription, { color: colors.text.secondary }]}>
+                Enter the number of servings you consumed. The nutrition values will be multiplied by this amount.
+              </Text>
+              
+              <View style={styles.quantityInputContainer}>
+                <TouchableOpacity 
+                  style={[styles.quantityAdjustButton, { backgroundColor: colors.background.elevated }]}
+                  onPress={() => {
+                    const current = parseFloat(servingQuantity) || 1;
+                    if (current > 0.5) setServingQuantity((current - 0.5).toString());
+                  }}
+                >
+                  <Ionicons name="remove" size={24} color={accent.primary} />
+                </TouchableOpacity>
+                
+                <TextInput
+                  style={[styles.quantityInput, { 
+                    backgroundColor: colors.background.input, 
+                    borderColor: colors.border.primary, 
+                    color: colors.text.primary 
+                  }]}
+                  value={servingQuantity}
+                  onChangeText={setServingQuantity}
+                  keyboardType="decimal-pad"
+                  placeholder="1"
+                  placeholderTextColor={colors.text.muted}
+                  textAlign="center"
+                />
+                
+                <TouchableOpacity 
+                  style={[styles.quantityAdjustButton, { backgroundColor: colors.background.elevated }]}
+                  onPress={() => {
+                    const current = parseFloat(servingQuantity) || 1;
+                    setServingQuantity((current + 0.5).toString());
+                  }}
+                >
+                  <Ionicons name="add" size={24} color={accent.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.quantityHint, { color: colors.text.muted }]}>
+                Example: Enter "2" if you ate 2 donuts from a bag
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
