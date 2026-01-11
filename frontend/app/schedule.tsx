@@ -2004,8 +2004,66 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 12,
   },
   exerciseDetailName: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  exerciseDataTable: {
+    marginTop: 8,
+  },
+  tableHeaderRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: '#E5E7EB',
+  },
+  tableHeaderCell: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  dayHeaderCell: {
+    flex: 0.6,
+    textAlign: 'left',
+  },
+  tableDataRow: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  tableDataCell: {
+    flex: 1,
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  dayCell: {
+    flex: 0.6,
+    textAlign: 'left',
+  },
+  tableSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 8,
+  },
+  tableSummaryLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tableSummaryValue: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  exerciseNotesContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 8,
   },
   exerciseStats: {
     marginTop: 10,
@@ -2023,9 +2081,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '600',
   },
   exerciseDetailNotes: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    marginTop: 8,
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
   },
   deleteWorkoutButton: {
     flexDirection: 'row',
