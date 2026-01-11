@@ -444,16 +444,19 @@ export default function ScheduleScreen() {
     
     scheduledWorkouts.forEach(workout => {
       const date = workout.scheduled_date;
+      if (!date) return; // Skip if no date
       if (!marks[date]) {
         marks[date] = { dots: [] };
       }
+      const workoutKey = workout.scheduled_id || workout.workout_id || `workout_${Math.random()}`;
       marks[date].dots.push({
         color: workout.completed ? colors.status.success : accent.primary,
-        key: `scheduled_${workout.scheduled_id}`
+        key: `scheduled_${workoutKey}`
       });
     });
 
     completedWorkouts.forEach(workout => {
+      if (!workout.timestamp) return; // Skip if no timestamp
       const date = format(new Date(workout.timestamp), 'yyyy-MM-dd');
       if (!marks[date]) {
         marks[date] = { dots: [] };
@@ -462,7 +465,7 @@ export default function ScheduleScreen() {
       if (!alreadyMarked) {
         marks[date].dots.push({
           color: '#10B981',
-          key: `completed_${workout.workout_id}`
+          key: `completed_${workout.workout_id || Math.random()}`
         });
       }
     });
