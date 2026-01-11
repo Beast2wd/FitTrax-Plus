@@ -575,10 +575,15 @@ export default function ScheduleScreen() {
               <Text style={localStyles.sectionTitle}>Upcoming</Text>
               {upcomingWorkouts.map((workout) => {
                 const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
+                const workoutKey = workout.scheduled_id || workout.workout_id || `upcoming_${Math.random()}`;
+                
+                // Skip manual_log entries in upcoming (they're already completed)
+                if (workout.workout_type === 'manual_log') return null;
+                
                 return (
                   <Swipeable
-                    key={workout.scheduled_id}
-                    ref={(ref) => { swipeableRefs.current[workout.scheduled_id] = ref; }}
+                    key={workoutKey}
+                    ref={(ref) => { swipeableRefs.current[workoutKey] = ref; }}
                     renderRightActions={() => renderRightActions(workout.scheduled_id)}
                     overshootRight={false}
                   >
