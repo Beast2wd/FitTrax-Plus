@@ -1618,8 +1618,14 @@ async def update_scheduled_workout(
 
 @api_router.delete("/scheduled-workouts/{scheduled_id}")
 async def delete_scheduled_workout(scheduled_id: str):
-    """Delete scheduled workout"""
+    """Delete scheduled workout - handles both scheduled_id and workout_id"""
+    # Try to delete by scheduled_id first
     result = await db.scheduled_workouts.delete_one({"scheduled_id": scheduled_id})
+    
+    # If not found, try workout_id (for manual workout log entries)
+    if result.deleted_count == 0:
+        result = await db.scheduled_workouts.delete_one({"workout_id": scheduled_id})
+    
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Scheduled workout not found")
     
