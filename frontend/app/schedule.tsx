@@ -405,11 +405,16 @@ export default function ScheduleScreen() {
     }
   };
 
-  const formatTime = (timeStr: string) => {
-    const [h, m] = timeStr.split(':').map(Number);
-    const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-    const period = h >= 12 ? 'PM' : 'AM';
-    return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+  const formatTime = (timeStr: string | undefined) => {
+    if (!timeStr) return '';
+    try {
+      const [h, m] = timeStr.split(':').map(Number);
+      const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      const period = h >= 12 ? 'PM' : 'AM';
+      return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+    } catch {
+      return timeStr;
+    }
   };
 
   const getSelectedPlanName = () => {
