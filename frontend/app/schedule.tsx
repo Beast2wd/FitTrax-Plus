@@ -72,6 +72,8 @@ export default function ScheduleScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
   const [customWorkoutModalVisible, setCustomWorkoutModalVisible] = useState(false);
+  const [completedWorkoutModalVisible, setCompletedWorkoutModalVisible] = useState(false);
+  const [selectedCompletedWorkout, setSelectedCompletedWorkout] = useState<any>(null);
   const [allPlans, setAllPlans] = useState<any[]>([]);
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [selectedPlan, setSelectedPlan] = useState('');
