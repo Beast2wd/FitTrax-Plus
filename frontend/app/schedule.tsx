@@ -667,10 +667,32 @@ export default function ScheduleScreen() {
                 {/* Scheduled Workouts */}
                 {workoutsForSelectedDate.map((workout) => {
                   const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
+                  const workoutKey = workout.scheduled_id || workout.workout_id || `workout_${Math.random()}`;
+                  
+                  // Handle manual workout log entries (from "Workout Complete" button)
+                  if (workout.workout_type === 'manual_log') {
+                    return (
+                      <View key={workoutKey} style={[localStyles.workoutCard, localStyles.workoutCardCompleted]}>
+                        <View style={localStyles.workoutHeader}>
+                          <View style={localStyles.workoutTimeContainer}>
+                            <Ionicons name="checkmark-circle" size={20} color={colors.status.success} />
+                            <Text style={localStyles.workoutTime}>Completed</Text>
+                          </View>
+                        </View>
+                        <Text style={localStyles.workoutPlan}>{workout.title || 'Manual Workout'}</Text>
+                        <Text style={localStyles.workoutDay}>{workout.description}</Text>
+                        <View style={localStyles.completedBadge}>
+                          <Ionicons name="clipboard" size={16} color={colors.status.success} />
+                          <Text style={localStyles.completedText}>Logged from Workout Log</Text>
+                        </View>
+                      </View>
+                    );
+                  }
+                  
                   return (
                     <Swipeable
-                      key={workout.scheduled_id}
-                      ref={(ref) => { swipeableRefs.current[`date_${workout.scheduled_id}`] = ref; }}
+                      key={workoutKey}
+                      ref={(ref) => { swipeableRefs.current[`date_${workoutKey}`] = ref; }}
                       renderRightActions={() => renderRightActions(workout.scheduled_id)}
                       overshootRight={false}
                     >
