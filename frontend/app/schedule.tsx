@@ -393,6 +393,40 @@ export default function ScheduleScreen() {
     }
   };
 
+  // Delete a completed workout from calendar
+  const handleDeleteCompletedWorkout = async (workoutId: string) => {
+    Alert.alert(
+      'Delete Workout',
+      'Are you sure you want to remove this completed workout from your calendar?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await fetch(`${API_URL}/api/scheduled-workouts/${workoutId}`, {
+                method: 'DELETE',
+              });
+              setScheduledWorkouts(scheduledWorkouts.filter(w => 
+                w.workout_id !== workoutId && w.scheduled_id !== workoutId
+              ));
+              Alert.alert('Deleted', 'Workout removed from calendar');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete workout');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // View completed workout details
+  const viewCompletedWorkout = (workout: any) => {
+    setSelectedCompletedWorkout(workout);
+    setCompletedWorkoutModalVisible(true);
+  };
+
   const formatDateLabel = (dateString: string) => {
     if (!dateString) return 'Select date';
     try {
