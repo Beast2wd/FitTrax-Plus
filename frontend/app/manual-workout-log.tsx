@@ -24,27 +24,19 @@ import { format } from 'date-fns';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
-// Days of the week for columns
+// Days of the week for columns (1-7)
 const DAYS = ['1', '2', '3', '4', '5', '6', '7'];
 
 interface WorkoutEntry {
   entry_id: string;
   user_id: string;
   exercise_name: string;
-  sets: SetData[];
+  reps: { [key: string]: string };
+  weight: { [key: string]: string };
   notes: string;
   created_at: string;
   updated_at: string;
-}
-
-interface SetData {
-  set_number: number;
-  days: {
-    [key: string]: {
-      reps: string;
-      weight: string;
-    };
-  };
+  synced_to_calendar?: boolean;
 }
 
 export default function ManualWorkoutLogScreen() {
@@ -59,13 +51,10 @@ export default function ManualWorkoutLogScreen() {
   const [editingEntry, setEditingEntry] = useState<WorkoutEntry | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Form state for new/edit entry
+  // Form state - simplified to single reps/weight row across 7 days
   const [exerciseName, setExerciseName] = useState('');
-  const [sets, setSets] = useState<SetData[]>([
-    { set_number: 1, days: {} },
-    { set_number: 2, days: {} },
-    { set_number: 3, days: {} },
-  ]);
+  const [reps, setReps] = useState<{ [key: string]: string }>({});
+  const [weight, setWeight] = useState<{ [key: string]: string }>({});
   const [notes, setNotes] = useState('');
 
   const loadEntries = useCallback(async () => {
@@ -92,33 +81,11 @@ export default function ManualWorkoutLogScreen() {
 
   const resetForm = () => {
     setExerciseName('');
-    setSets([
-      { set_number: 1, days: {} },
-      { set_number: 2, days: {} },
-      { set_number: 3, days: {} },
-    ]);
+    setReps({});
+    setWeight({});
     setNotes('');
     setEditingEntry(null);
     setIsEditing(false);
-  };
-
-  const addSet = () => {
-    setSets([...sets, { set_number: sets.length + 1, days: {} }]);
-  };
-
-  const removeSet = () => {
-    if (sets.length > 1) {
-      setSets(sets.slice(0, -1));
-    }
-  };
-
-  const updateSetData = (setIndex: number, day: string, field: 'reps' | 'weight', value: string) => {
-    const newSets = [...sets];
-    if (!newSets[setIndex].days[day]) {
-      newSets[setIndex].days[day] = { reps: '', weight: '' };
-    }
-    newSets[setIndex].days[day][field] = value;
-    setSets(newSets);
   };
 
   const saveEntry = async () => {
@@ -131,20 +98,18 @@ export default function ManualWorkoutLogScreen() {
       const entryData = {
         user_id: userId,
         exercise_name: exerciseName,
-        sets: sets,
+        reps: reps,
+        weight: weight,
         notes: notes,
       };
 
       const savedExerciseName = exerciseName;
 
       if (editingEntry) {
-        // Update existing entry
         await axios.put(`${API_URL}/api/manual-workout-log/${editingEntry.entry_id}`, entryData);
         Alert.alert('Updated!', `${savedExerciseName} has been updated.`);
       } else {
-        // Create new entry
         await axios.post(`${API_URL}/api/manual-workout-log`, entryData);
-        // Show brief confirmation, form resets immediately for next entry
         Alert.alert(
           'Saved!', 
           `${savedExerciseName} added. Ready for next exercise.`,
@@ -153,9 +118,7 @@ export default function ManualWorkoutLogScreen() {
         );
       }
 
-      // Reset form immediately for next entry
       resetForm();
-      // Reload entries list to show the new one
       loadEntries();
     } catch (error) {
       console.error('Error saving workout entry:', error);
@@ -166,7 +129,8 @@ export default function ManualWorkoutLogScreen() {
   const editEntry = (entry: WorkoutEntry) => {
     setEditingEntry(entry);
     setExerciseName(entry.exercise_name);
-    setSets(entry.sets.length > 0 ? entry.sets : [{ set_number: 1, days: {} }]);
+    setReps(entry.reps || {});
+    setWeight(entry.weight || {});
     setNotes(entry.notes || '');
     setIsEditing(true);
   };
@@ -193,6 +157,64 @@ export default function ManualWorkoutLogScreen() {
         },
       ]
     );
+  };
+
+  const completeWorkout = async () => {
+    if (entries.length === 0) {
+      Alert.alert('No Entries', 'Add some exercises before completing your workout.');
+      return;
+    }
+
+    Alert.alert(
+      'Complete Workout',
+      'This will sync all today\'s workout entries to your schedule calendar. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Complete',
+          onPress: async () => {
+            try {
+              // Sync workout to calendar
+              const workoutSummary = {
+                user_id: userId,
+                workout_date: new Date().toISOString().split('T')[0],
+                exercises: entries.map(e => ({
+                  name: e.exercise_name,
+                  reps: e.reps,
+                  weight: e.weight,
+                  notes: e.notes
+                })),
+                completed_at: new Date().toISOString(),
+              };
+
+              await axios.post(`${API_URL}/api/manual-workout-log/complete`, workoutSummary);
+              
+              Alert.alert(
+                'Workout Complete! 💪',
+                `Great job! ${entries.length} exercises have been synced to your schedule calendar.`,
+                [{ text: 'OK' }]
+              );
+              
+              // Reload entries to show synced status
+              loadEntries();
+            } catch (error) {
+              console.error('Error completing workout:', error);
+              Alert.alert('Error', 'Failed to sync workout to calendar');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Get summary of an entry for display
+  const getEntrySummary = (entry: WorkoutEntry) => {
+    const filledDays = Object.keys(entry.reps || {}).filter(d => entry.reps[d]);
+    const maxWeight = Math.max(...Object.values(entry.weight || {}).map(w => parseFloat(w) || 0));
+    return {
+      days: filledDays.length,
+      maxWeight: maxWeight > 0 ? maxWeight : null
+    };
   };
 
   if (loading) {
@@ -238,7 +260,7 @@ export default function ManualWorkoutLogScreen() {
             {/* Workout Entry Form */}
             <View style={[styles.card, { backgroundColor: colors.background.card }]}>
               <Text style={[styles.cardTitle, { color: colors.text.primary }]}>
-                {isEditing ? 'Edit Exercise' : 'New Exercise Entry'}
+                {isEditing ? 'Edit Exercise' : 'Add Exercise'}
               </Text>
 
               {/* Exercise Name */}
@@ -251,88 +273,60 @@ export default function ManualWorkoutLogScreen() {
                 placeholderTextColor={colors.text.muted}
               />
 
-              {/* Sets/Reps/Weight Table */}
+              {/* Reps/Weight Table - Single Row */}
               <View style={styles.tableContainer}>
                 <Text style={[styles.tableTitle, { color: colors.text.secondary }]}>
-                  Sets & Reps (7-Day Tracker)
+                  Reps & Weight (7-Day Tracker)
                 </Text>
 
                 {/* Table Header */}
                 <View style={styles.tableHeader}>
-                  <View style={styles.setColumn}>
-                    <Text style={[styles.headerCell, { color: colors.text.secondary }]}>Sets</Text>
+                  <View style={styles.labelColumn}>
+                    <Text style={[styles.headerCell, { color: colors.text.secondary }]}></Text>
                   </View>
                   {DAYS.map(day => (
                     <View key={day} style={styles.dayColumn}>
-                      <Text style={[styles.headerCell, { color: colors.text.secondary }]}>{day}</Text>
+                      <Text style={[styles.headerCell, { color: colors.text.secondary }]}>Day {day}</Text>
                     </View>
                   ))}
                 </View>
 
-                {/* Table Rows */}
-                {sets.map((set, setIndex) => (
-                  <View key={setIndex}>
-                    {/* Reps Row */}
-                    <View style={[styles.tableRow, { backgroundColor: setIndex % 2 === 0 ? colors.background.input : 'transparent' }]}>
-                      <View style={styles.setColumn}>
-                        <Text style={[styles.setLabel, { color: colors.text.primary }]}>Reps</Text>
-                      </View>
-                      {DAYS.map(day => (
-                        <View key={day} style={styles.dayColumn}>
-                          <TextInput
-                            style={[styles.cellInput, { color: colors.text.primary, borderColor: colors.border.primary }]}
-                            value={set.days[day]?.reps || ''}
-                            onChangeText={(val) => updateSetData(setIndex, day, 'reps', val)}
-                            keyboardType="number-pad"
-                            placeholder="-"
-                            placeholderTextColor={colors.text.muted}
-                          />
-                        </View>
-                      ))}
-                    </View>
-                    {/* Weight Row */}
-                    <View style={[styles.tableRow, { backgroundColor: setIndex % 2 === 0 ? colors.background.input : 'transparent' }]}>
-                      <View style={styles.setColumn}>
-                        <Text style={[styles.setLabel, { color: colors.text.secondary }]}>Weight</Text>
-                      </View>
-                      {DAYS.map(day => (
-                        <View key={day} style={styles.dayColumn}>
-                          <TextInput
-                            style={[styles.cellInput, { color: colors.text.primary, borderColor: colors.border.primary }]}
-                            value={set.days[day]?.weight || ''}
-                            onChangeText={(val) => updateSetData(setIndex, day, 'weight', val)}
-                            keyboardType="number-pad"
-                            placeholder="-"
-                            placeholderTextColor={colors.text.muted}
-                          />
-                        </View>
-                      ))}
-                    </View>
-                    {/* Set Divider */}
-                    {setIndex < sets.length - 1 && (
-                      <View style={[styles.setDivider, { backgroundColor: colors.border.primary }]} />
-                    )}
+                {/* Reps Row */}
+                <View style={[styles.tableRow, { backgroundColor: colors.background.input }]}>
+                  <View style={styles.labelColumn}>
+                    <Text style={[styles.rowLabel, { color: colors.text.primary }]}>Reps</Text>
                   </View>
-                ))}
+                  {DAYS.map(day => (
+                    <View key={day} style={styles.dayColumn}>
+                      <TextInput
+                        style={[styles.cellInput, { color: colors.text.primary, borderColor: colors.border.primary }]}
+                        value={reps[day] || ''}
+                        onChangeText={(val) => setReps({ ...reps, [day]: val })}
+                        keyboardType="number-pad"
+                        placeholder="-"
+                        placeholderTextColor={colors.text.muted}
+                      />
+                    </View>
+                  ))}
+                </View>
 
-                {/* Add/Remove Set Buttons */}
-                <View style={styles.setButtons}>
-                  <TouchableOpacity
-                    style={[styles.setButton, { borderColor: accent.primary }]}
-                    onPress={addSet}
-                  >
-                    <Ionicons name="add" size={18} color={accent.primary} />
-                    <Text style={[styles.setButtonText, { color: accent.primary }]}>Add Set</Text>
-                  </TouchableOpacity>
-                  {sets.length > 1 && (
-                    <TouchableOpacity
-                      style={[styles.setButton, { borderColor: '#EF4444' }]}
-                      onPress={removeSet}
-                    >
-                      <Ionicons name="remove" size={18} color="#EF4444" />
-                      <Text style={[styles.setButtonText, { color: '#EF4444' }]}>Remove Set</Text>
-                    </TouchableOpacity>
-                  )}
+                {/* Weight Row */}
+                <View style={[styles.tableRow, { backgroundColor: 'transparent' }]}>
+                  <View style={styles.labelColumn}>
+                    <Text style={[styles.rowLabel, { color: colors.text.primary }]}>Weight</Text>
+                  </View>
+                  {DAYS.map(day => (
+                    <View key={day} style={styles.dayColumn}>
+                      <TextInput
+                        style={[styles.cellInput, { color: colors.text.primary, borderColor: colors.border.primary }]}
+                        value={weight[day] || ''}
+                        onChangeText={(val) => setWeight({ ...weight, [day]: val })}
+                        keyboardType="number-pad"
+                        placeholder="-"
+                        placeholderTextColor={colors.text.muted}
+                      />
+                    </View>
+                  ))}
                 </View>
               </View>
 
@@ -352,60 +346,89 @@ export default function ManualWorkoutLogScreen() {
                 style={[styles.saveButton, { backgroundColor: accent.primary }]}
                 onPress={saveEntry}
               >
-                <Ionicons name={isEditing ? 'checkmark' : 'save'} size={20} color="#fff" />
-                <Text style={styles.saveButtonText}>{isEditing ? 'Update Entry' : 'Save Entry'}</Text>
+                <Ionicons name={isEditing ? 'checkmark' : 'add-circle'} size={20} color="#fff" />
+                <Text style={styles.saveButtonText}>{isEditing ? 'Update Entry' : 'Add Exercise'}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Saved Entries */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-                Saved Workout Entries
-              </Text>
-              <Text style={[styles.sectionHint, { color: colors.text.muted }]}>
-                ← Swipe left to delete
-              </Text>
+              <View style={styles.sectionHeader}>
+                <View>
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                    Today's Workout ({entries.length})
+                  </Text>
+                  <Text style={[styles.sectionHint, { color: colors.text.muted }]}>
+                    ← Swipe left to delete • Tap to edit
+                  </Text>
+                </View>
+              </View>
 
               {entries.length === 0 ? (
                 <View style={[styles.emptyState, { backgroundColor: colors.background.card }]}>
                   <Ionicons name="clipboard-outline" size={48} color={colors.text.muted} />
-                  <Text style={[styles.emptyText, { color: colors.text.primary }]}>No entries yet</Text>
+                  <Text style={[styles.emptyText, { color: colors.text.primary }]}>No exercises yet</Text>
                   <Text style={[styles.emptySubtext, { color: colors.text.secondary }]}>
-                    Add your first workout entry above
+                    Add your first exercise above
                   </Text>
                 </View>
               ) : (
-                entries.map((entry) => (
-                  <SwipeableRow
-                    key={entry.entry_id}
-                    onDelete={() => deleteEntry(entry.entry_id)}
-                  >
-                    <TouchableOpacity
-                      style={[styles.entryCard, { backgroundColor: colors.background.card }]}
-                      onPress={() => editEntry(entry)}
-                    >
-                      <View style={styles.entryHeader}>
-                        <Text style={[styles.entryName, { color: colors.text.primary }]}>
-                          {entry.exercise_name}
-                        </Text>
-                        <TouchableOpacity onPress={() => editEntry(entry)}>
-                          <Ionicons name="pencil" size={18} color={accent.primary} />
+                <>
+                  {entries.map((entry) => {
+                    const summary = getEntrySummary(entry);
+                    return (
+                      <SwipeableRow
+                        key={entry.entry_id}
+                        onDelete={() => deleteEntry(entry.entry_id)}
+                      >
+                        <TouchableOpacity
+                          style={[styles.entryCard, { backgroundColor: colors.background.card }]}
+                          onPress={() => editEntry(entry)}
+                        >
+                          <View style={styles.entryHeader}>
+                            <View style={styles.entryTitleRow}>
+                              <Text style={[styles.entryName, { color: colors.text.primary }]}>
+                                {entry.exercise_name}
+                              </Text>
+                              {entry.synced_to_calendar && (
+                                <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
+                              )}
+                            </View>
+                            <TouchableOpacity onPress={() => editEntry(entry)}>
+                              <Ionicons name="pencil" size={18} color={accent.primary} />
+                            </TouchableOpacity>
+                          </View>
+                          <View style={styles.entryStats}>
+                            {summary.days > 0 && (
+                              <Text style={[styles.entryStat, { color: colors.text.secondary }]}>
+                                {summary.days} day{summary.days > 1 ? 's' : ''} logged
+                              </Text>
+                            )}
+                            {summary.maxWeight && (
+                              <Text style={[styles.entryStat, { color: accent.primary }]}>
+                                Max: {summary.maxWeight} lbs
+                              </Text>
+                            )}
+                          </View>
+                          {entry.notes && (
+                            <Text style={[styles.entryNotes, { color: colors.text.muted }]} numberOfLines={1}>
+                              {entry.notes}
+                            </Text>
+                          )}
                         </TouchableOpacity>
-                      </View>
-                      <Text style={[styles.entrySets, { color: colors.text.secondary }]}>
-                        {entry.sets?.length || 0} sets recorded
-                      </Text>
-                      {entry.notes && (
-                        <Text style={[styles.entryNotes, { color: colors.text.muted }]} numberOfLines={1}>
-                          {entry.notes}
-                        </Text>
-                      )}
-                      <Text style={[styles.entryDate, { color: colors.text.muted }]}>
-                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
-                      </Text>
-                    </TouchableOpacity>
-                  </SwipeableRow>
-                ))
+                      </SwipeableRow>
+                    );
+                  })}
+
+                  {/* Complete Workout Button */}
+                  <TouchableOpacity
+                    style={[styles.completeButton, { backgroundColor: '#22C55E' }]}
+                    onPress={completeWorkout}
+                  >
+                    <Ionicons name="checkmark-done" size={24} color="#fff" />
+                    <Text style={styles.completeButtonText}>Workout Complete</Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
 
@@ -489,8 +512,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  setColumn: {
-    width: 60,
+  labelColumn: {
+    width: 55,
     justifyContent: 'center',
   },
   dayColumn: {
@@ -498,48 +521,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerCell: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 6,
+    paddingVertical: 10,
     alignItems: 'center',
+    borderRadius: 8,
+    marginVertical: 2,
   },
-  setLabel: {
-    fontSize: 12,
-    fontWeight: '500',
+  rowLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   cellInput: {
-    width: 32,
-    height: 28,
+    width: 36,
+    height: 32,
     borderWidth: 1,
-    borderRadius: 6,
-    textAlign: 'center',
-    fontSize: 12,
-  },
-  setDivider: {
-    height: 1,
-    marginVertical: 8,
-  },
-  setButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginTop: 16,
-  },
-  setButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
     borderRadius: 8,
-    borderWidth: 1,
-    gap: 6,
-  },
-  setButtonText: {
+    textAlign: 'center',
     fontSize: 14,
-    fontWeight: '600',
   },
   saveButton: {
     flexDirection: 'row',
@@ -558,15 +560,20 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 8,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 4,
   },
   sectionHint: {
     fontSize: 12,
     fontStyle: 'italic',
-    marginBottom: 12,
+    marginTop: 2,
   },
   emptyState: {
     alignItems: 'center',
@@ -592,21 +599,40 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  entryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   entryName: {
     fontSize: 16,
     fontWeight: '700',
   },
-  entrySets: {
-    fontSize: 14,
-    marginTop: 4,
+  entryStats: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 6,
+  },
+  entryStat: {
+    fontSize: 13,
   },
   entryNotes: {
     fontSize: 13,
-    marginTop: 4,
+    marginTop: 6,
     fontStyle: 'italic',
   },
-  entryDate: {
-    fontSize: 12,
+  completeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
     marginTop: 8,
+    gap: 10,
+  },
+  completeButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
   },
 });
