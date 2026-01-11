@@ -900,4 +900,60 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  quantityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 12,
+  },
+  quantityButtonText: {
+    flex: 1,
+  },
+  quantityButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  quantityButtonHint: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  quantityForm: {
+    padding: 20,
+  },
+  quantityDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  quantityInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 16,
+  },
+  quantityAdjustButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityInput: {
+    width: 100,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  quantityHint: {
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
 });
