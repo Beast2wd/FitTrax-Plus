@@ -6586,7 +6586,8 @@ async def delete_body_scan(scan_id: str):
 class ManualWorkoutLogEntry(BaseModel):
     user_id: str
     exercise_name: str
-    sets: list = []
+    reps: dict = {}
+    weight: dict = {}
     notes: str = ""
 
 @api_router.post("/manual-workout-log")
@@ -6598,19 +6599,21 @@ async def create_manual_workout_entry(entry: ManualWorkoutLogEntry):
             "entry_id": entry_id,
             "user_id": entry.user_id,
             "exercise_name": entry.exercise_name,
-            "sets": entry.sets,
+            "reps": entry.reps,
+            "weight": entry.weight,
             "notes": entry.notes,
+            "synced_to_calendar": False,
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
         }
         await db.manual_workout_logs.insert_one(entry_data)
-        # Return a clean response without MongoDB _id
         return {
             "message": "Workout entry created", 
             "entry": {
                 "entry_id": entry_id,
                 "exercise_name": entry.exercise_name,
-                "sets": entry.sets,
+                "reps": entry.reps,
+                "weight": entry.weight,
                 "notes": entry.notes
             }
         }
