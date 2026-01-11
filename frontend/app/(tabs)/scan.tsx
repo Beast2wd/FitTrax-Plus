@@ -234,6 +234,30 @@ export default function ScanScreen() {
     setImageBase64(null);
     setResult(null);
     setSavedMealId(null);
+    setServingQuantity('1');
+  };
+
+  // Apply quantity multiplier to nutrition values
+  const applyQuantity = () => {
+    const qty = parseFloat(servingQuantity) || 1;
+    if (qty <= 0) {
+      Alert.alert('Invalid Quantity', 'Please enter a number greater than 0');
+      return;
+    }
+
+    setResult((prev: any) => ({
+      ...prev,
+      analysis: {
+        ...prev.analysis,
+        calories: Math.round((prev.analysis.calories || 0) * qty),
+        protein: Math.round(((prev.analysis.protein || 0) * qty) * 10) / 10,
+        carbs: Math.round(((prev.analysis.carbs || 0) * qty) * 10) / 10,
+        fat: Math.round(((prev.analysis.fat || 0) * qty) * 10) / 10,
+        portion_size: `${qty} × ${prev.analysis.portion_size || '1 serving'}`,
+      },
+    }));
+    setQuantityModalVisible(false);
+    setServingQuantity('1');
   };
 
   const selectedCategory = MEAL_CATEGORIES.find(c => c.value === mealCategory);
