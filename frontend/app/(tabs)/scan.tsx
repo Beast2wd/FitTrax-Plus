@@ -399,6 +399,23 @@ export default function ScanScreen() {
               </Text>
             </View>
 
+            {/* Quantity Adjustment Button */}
+            <TouchableOpacity 
+              style={[styles.quantityButton, { backgroundColor: colors.background.card, borderColor: accent.primary }]}
+              onPress={() => setQuantityModalVisible(true)}
+            >
+              <Ionicons name="calculator" size={20} color={accent.primary} />
+              <View style={styles.quantityButtonText}>
+                <Text style={[styles.quantityButtonTitle, { color: colors.text.primary }]}>
+                  Adjust Quantity
+                </Text>
+                <Text style={[styles.quantityButtonHint, { color: colors.text.secondary }]}>
+                  For bulk items: cookies, donuts, etc.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+            </TouchableOpacity>
+
             <TouchableOpacity 
               style={[styles.scanAgainButton, { backgroundColor: accent.primary }]} 
               onPress={reset}
