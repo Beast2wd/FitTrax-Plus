@@ -39,6 +39,8 @@ export default function ScanScreen() {
   const [mealCategory, setMealCategory] = useState('breakfast');
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [quantityModalVisible, setQuantityModalVisible] = useState(false);
+  const [servingQuantity, setServingQuantity] = useState('1');
   const [editedNutrition, setEditedNutrition] = useState({
     calories: '',
     protein: '',
