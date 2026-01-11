@@ -1257,6 +1257,106 @@ export default function ScheduleScreen() {
             </SafeAreaView>
           </KeyboardAvoidingView>
         </Modal>
+
+        {/* Completed Workout Details Modal */}
+        <Modal
+          visible={completedWorkoutModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setCompletedWorkoutModalVisible(false)}
+        >
+          <SafeAreaView style={[localStyles.modalContainer, { backgroundColor: colors.background.primary }]}>
+            <View style={localStyles.modalHeader}>
+              <TouchableOpacity onPress={() => setCompletedWorkoutModalVisible(false)}>
+                <Ionicons name="close" size={28} color={colors.text.primary} />
+              </TouchableOpacity>
+              <Text style={[localStyles.modalTitle, { color: colors.text.primary }]}>Workout Details</Text>
+              <TouchableOpacity onPress={() => {
+                if (selectedCompletedWorkout?.workout_id) {
+                  setCompletedWorkoutModalVisible(false);
+                  handleDeleteCompletedWorkout(selectedCompletedWorkout.workout_id);
+                }
+              }}>
+                <Ionicons name="trash-outline" size={24} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={localStyles.modalScroll} showsVerticalScrollIndicator={false}>
+              {selectedCompletedWorkout && (
+                <>
+                  {/* Completed Badge */}
+                  <View style={[localStyles.completedDetailBadge, { backgroundColor: `${colors.status.success}20` }]}>
+                    <Ionicons name="checkmark-circle" size={32} color={colors.status.success} />
+                    <View style={localStyles.completedDetailText}>
+                      <Text style={[localStyles.completedDetailTitle, { color: colors.status.success }]}>
+                        Workout Completed
+                      </Text>
+                      <Text style={[localStyles.completedDetailDate, { color: colors.text.secondary }]}>
+                        {selectedCompletedWorkout.completed_at 
+                          ? format(new Date(selectedCompletedWorkout.completed_at), 'MMMM d, yyyy • h:mm a')
+                          : selectedCompletedWorkout.scheduled_date
+                        }
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Exercises List */}
+                  <Text style={[localStyles.exercisesSectionTitle, { color: colors.text.primary }]}>
+                    Exercises ({selectedCompletedWorkout.exercises?.length || 0})
+                  </Text>
+                  
+                  {selectedCompletedWorkout.exercises?.map((exercise: any, index: number) => (
+                    <View key={index} style={[localStyles.exerciseDetailCard, { backgroundColor: colors.background.card }]}>
+                      <Text style={[localStyles.exerciseDetailName, { color: colors.text.primary }]}>
+                        {exercise.name}
+                      </Text>
+                      
+                      {/* Show reps/weight data if available */}
+                      {exercise.reps && Object.keys(exercise.reps).length > 0 && (
+                        <View style={localStyles.exerciseStats}>
+                          <View style={localStyles.exerciseStatRow}>
+                            <Text style={[localStyles.exerciseStatLabel, { color: colors.text.secondary }]}>Days logged:</Text>
+                            <Text style={[localStyles.exerciseStatValue, { color: accent.primary }]}>
+                              {Object.keys(exercise.reps).filter(k => exercise.reps[k]).length}
+                            </Text>
+                          </View>
+                          {exercise.weight && (
+                            <View style={localStyles.exerciseStatRow}>
+                              <Text style={[localStyles.exerciseStatLabel, { color: colors.text.secondary }]}>Max weight:</Text>
+                              <Text style={[localStyles.exerciseStatValue, { color: accent.primary }]}>
+                                {Math.max(...Object.values(exercise.weight).map((w: any) => parseFloat(w) || 0))} lbs
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                      
+                      {exercise.notes && (
+                        <Text style={[localStyles.exerciseDetailNotes, { color: colors.text.muted }]}>
+                          {exercise.notes}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+
+                  {/* Delete Button */}
+                  <TouchableOpacity 
+                    style={localStyles.deleteWorkoutButton}
+                    onPress={() => {
+                      if (selectedCompletedWorkout?.workout_id) {
+                        setCompletedWorkoutModalVisible(false);
+                        handleDeleteCompletedWorkout(selectedCompletedWorkout.workout_id);
+                      }
+                    }}
+                  >
+                    <Ionicons name="trash" size={20} color="#fff" />
+                    <Text style={localStyles.deleteWorkoutButtonText}>Delete Workout</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
