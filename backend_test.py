@@ -14,7 +14,7 @@ from datetime import datetime
 import base64
 
 # Backend URL from environment
-BACKEND_URL = "https://exercise-companion-11.preview.emergentagent.com/api"
+BACKEND_URL = "https://health-hub-136.preview.emergentagent.com/api"
 
 def test_health_check():
     """Test if backend is running"""
