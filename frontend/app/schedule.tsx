@@ -1951,4 +1951,74 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  // Completed Workout Detail Modal Styles
+  completedDetailBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 12,
+  },
+  completedDetailText: {
+    flex: 1,
+  },
+  completedDetailTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  completedDetailDate: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  exercisesSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  exerciseDetailCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  exerciseDetailName: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  exerciseStats: {
+    marginTop: 10,
+  },
+  exerciseStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  exerciseStatLabel: {
+    fontSize: 14,
+  },
+  exerciseStatValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  exerciseDetailNotes: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
+  deleteWorkoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 20,
+    marginBottom: 40,
+    gap: 8,
+  },
+  deleteWorkoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });
