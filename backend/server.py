@@ -528,10 +528,12 @@ async def health_check():
 # ============================================================================
 
 @api_router.post("/auth/register", response_model=Token)
-@limiter.limit(RATE_LIMITS["auth"])
 async def register(request: Request, user_data: UserRegister):
     """Register a new user"""
     try:
+        # Rate limit check
+        check_rate_limit(request, "auth")
+        
         # Check if email already exists
         existing_user = await db.auth_users.find_one({"email": user_data.email})
         if existing_user:
