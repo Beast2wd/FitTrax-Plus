@@ -34,23 +34,8 @@ db_name = os.getenv('DB_NAME', 'fitness_tracker_db')
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
-# Initialize rate limiter with custom key function
-def get_real_client_ip(request: Request) -> str:
-    """Get real client IP considering proxies"""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip
-    return request.client.host if request.client else "127.0.0.1"
-
-limiter = Limiter(key_func=get_real_client_ip)
-
 # Create the main app without a prefix
 app = FastAPI(title="FitTrax API", version="1.0")
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
