@@ -297,6 +297,18 @@ backend:
         agent: "testing"
         comment: "Body scan progress endpoint tested successfully - verified that each progress entry now includes scan_id field for deletion functionality. Endpoint returns proper structure with scan_id, date, measurements, weight, and body_fat data."
 
+  - task: "Step Tracker endpoints (POST/GET /api/steps)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "STEP TRACKER TESTING COMPLETED: Tested all 7 step tracking endpoints. Results: 8/8 tests passed (100% success rate). ✅ POST /api/steps saves steps with automatic calorie/distance calculation (5000 steps = 200 cal, 2.5 miles), ✅ GET /api/steps/{user_id}/today returns today's step data correctly, ✅ GET /api/steps/{user_id}/history provides comprehensive history with summary stats, ✅ GET /api/steps/{user_id}/weekly aggregates data by week properly, ✅ GET /api/steps/{user_id}/monthly aggregates data by month correctly, ✅ POST /api/steps/settings saves user preferences (daily goal, tracking enabled, auto sync), ✅ GET /api/steps/settings/{user_id} retrieves settings with proper defaults. All step tracking functionality is production-ready with proper data validation and automatic calculations."
+
 frontend:
   - task: "Tab Navigation Setup"
     implemented: true
