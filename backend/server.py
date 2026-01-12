@@ -767,7 +767,7 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
         # Create meal record
         meal = Meal(
             meal_id=f"meal_{int(datetime.now().timestamp() * 1000)}",
-            user_id=request.user_id,
+            user_id=validated_user_id,
             food_name=analysis.food_name,
             calories=analysis.calories,
             protein=analysis.protein,
