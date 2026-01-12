@@ -1282,7 +1282,7 @@ def generate_nutrition_insights(averages: dict, goals: dict, daily_data: dict) -
     
     # Protein insights
     if averages["protein"] < goals["protein_grams"] * 0.8:
-        insights.append(f"Your protein intake is lower than recommended. Try adding more lean meats, eggs, or legumes.")
+        insights.append("Your protein intake is lower than recommended. Try adding more lean meats, eggs, or legumes.")
     elif averages["protein"] >= goals["protein_grams"]:
         insights.append("Excellent protein intake! This supports muscle maintenance and recovery.")
     
@@ -2923,7 +2923,7 @@ Return ONLY valid JSON in this exact format:
             response_text = response_text.strip()
             
             workout_data = json.loads(response_text)
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             logger.error(f"Failed to parse AI response: {response}")
             raise HTTPException(status_code=500, detail="Failed to generate workout plan")
         
@@ -3237,8 +3237,8 @@ def get_exercise_prompts(exercise_name: str, equipment_str: str, muscles_str: st
     # Default prompts for exercises not specifically defined
     return {
         "start": f"starting position, ready to begin the movement, proper grip and stance with {equipment_str}",
-        "mid": f"range position, halfway through the movement, muscles engaged, controlled form",
-        "end": f"SAME AS START - returning to starting position after completing the rep",
+        "mid": "range position, halfway through the movement, muscles engaged, controlled form",
+        "end": "SAME AS START - returning to starting position after completing the rep",
         "use_start_for_end": True
     }
 

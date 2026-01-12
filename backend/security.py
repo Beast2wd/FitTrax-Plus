@@ -102,7 +102,7 @@ def check_rate_limit(request: Request, limit_type: str = "default") -> None:
         remaining = rate_limiter.get_remaining(key, max_requests, window_seconds)
         raise HTTPException(
             status_code=429,
-            detail=f"Rate limit exceeded. Try again later.",
+            detail="Rate limit exceeded. Try again later.",
             headers={
                 "X-RateLimit-Limit": str(max_requests),
                 "X-RateLimit-Remaining": str(remaining),
