@@ -199,7 +199,7 @@ def test_input_validation():
         print(f"\nTesting: {test_case['name']}")
         
         try:
-            response = requests.post(f"{BASE_URL}/analyze-food", json=payload, timeout=30)
+            response = requests.post(f"{BASE_URL}/analyze-food", json=test_case["payload"], timeout=30)
             
             if response.status_code in test_case["expected_status"]:
                 if test_case["name"] == "Invalid meal_category" and response.status_code == 200:
