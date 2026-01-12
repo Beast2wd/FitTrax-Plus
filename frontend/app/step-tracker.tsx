@@ -22,7 +22,16 @@ import { useThemeStore } from '../stores/themeStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
 import { stepsAPI } from '../services/api';
-import { Pedometer } from 'expo-sensors';
+
+// Conditionally import Pedometer only on native platforms
+let Pedometer: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    Pedometer = require('expo-sensors').Pedometer;
+  } catch (e) {
+    console.log('Pedometer not available');
+  }
+}
 
 const { width } = Dimensions.get('window');
 
