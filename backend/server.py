@@ -14,11 +14,6 @@ import re
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
 
-# Rate limiting
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-
 # Security imports
 from security import (
     UserRegister, UserLogin, Token, PasswordChange,
