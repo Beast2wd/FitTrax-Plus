@@ -966,7 +966,13 @@ async def set_nutrition_goals(user_id: str, goals: NutritionGoalsUpdate):
 async def search_foods(q: str, user_id: Optional[str] = None):
     """Search food database and user's custom foods"""
     results = []
-    query_lower = q.lower()
+    
+    # Sanitize search query to prevent regex injection
+    safe_query = sanitize_search_query(q, max_length=100)
+    if not safe_query:
+        return {"foods": []}
+    
+    query_lower = safe_query.lower()
     
     # Search built-in food database
     for food in FOOD_DATABASE:
@@ -975,11 +981,12 @@ async def search_foods(q: str, user_id: Optional[str] = None):
     
     # Search user's custom foods if user_id provided
     if user_id:
+        validated_user_id = validate_user_id(user_id)
         custom_foods_cursor = db.custom_foods.find({
-            "user_id": user_id,
+            "user_id": validated_user_id,
             "$or": [
-                {"name": {"$regex": q, "$options": "i"}},
-                {"brand": {"$regex": q, "$options": "i"}}
+                {"name": {"$regex": safe_query, "$options": "i"}},
+                {"brand": {"$regex": safe_query, "$options": "i"}}
             ]
         })
         custom_foods = await custom_foods_cursor.to_list(length=50)
