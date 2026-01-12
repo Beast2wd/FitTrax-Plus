@@ -749,11 +749,29 @@ async def get_profile(user_id: str):
 # ============================================================================
 
 @api_router.post("/analyze-food")
-async def analyze_food(request: FoodAnalysisRequest):
+@limiter.limit(RATE_LIMITS["ai"])
+async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
     """Analyze food image with AI and save meal"""
     try:
+        # Validate user_id
+        validated_user_id = validate_user_id(food_request.user_id)
+        
+        # Validate and sanitize image
+        validated_image = validate_base64_image(food_request.image_base64, max_size_mb=10)
+        
+        # Sanitize meal category
+        meal_category = sanitize_string(food_request.meal_category, 50)
+        if meal_category not in ["breakfast", "lunch", "dinner", "snack"]:
+            meal_category = "snack"
+        
+        # Audit log
+        AuditLog.log_data_access(
+            validated_user_id, "food_analysis", "create", 
+            ip_address=get_client_ip(request)
+        )
+        
         # Analyze food with AI
-        analysis = await analyze_food_with_ai(request.image_base64)
+        analysis = await analyze_food_with_ai(validated_image)
         
         # Create meal record
         meal = Meal(
