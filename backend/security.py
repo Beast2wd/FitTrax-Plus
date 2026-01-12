@@ -9,12 +9,15 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, validator, Field
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import Optional, List, Dict
 import os
 import re
 import secrets
 import logging
+import time
 from functools import wraps
+from collections import defaultdict
+import threading
 
 # ============================================================================
 # CONFIGURATION
@@ -35,6 +38,77 @@ security = HTTPBearer(auto_error=False)
 # Audit logger
 audit_logger = logging.getLogger("audit")
 audit_logger.setLevel(logging.INFO)
+
+# ============================================================================
+# CUSTOM IN-MEMORY RATE LIMITER
+# ============================================================================
+
+class InMemoryRateLimiter:
+    """Simple in-memory rate limiter with sliding window"""
+    
+    def __init__(self):
+        self.requests: Dict[str, List[float]] = defaultdict(list)
+        self.lock = threading.Lock()
+    
+    def _clean_old_requests(self, key: str, window_seconds: int):
+        """Remove requests outside the time window"""
+        cutoff = time.time() - window_seconds
+        self.requests[key] = [t for t in self.requests[key] if t > cutoff]
+    
+    def is_rate_limited(self, key: str, max_requests: int, window_seconds: int) -> bool:
+        """Check if request should be rate limited"""
+        with self.lock:
+            self._clean_old_requests(key, window_seconds)
+            
+            if len(self.requests[key]) >= max_requests:
+                return True
+            
+            self.requests[key].append(time.time())
+            return False
+    
+    def get_remaining(self, key: str, max_requests: int, window_seconds: int) -> int:
+        """Get remaining requests in window"""
+        with self.lock:
+            self._clean_old_requests(key, window_seconds)
+            return max(0, max_requests - len(self.requests[key]))
+
+# Global rate limiter instance
+rate_limiter = InMemoryRateLimiter()
+
+# Rate limit configurations
+RATE_LIMITS = {
+    "auth": (10, 60),        # 10 requests per minute
+    "ai": (20, 60),          # 20 requests per minute
+    "sensitive": (30, 60),   # 30 requests per minute
+    "default": (100, 60),    # 100 requests per minute
+}
+
+def check_rate_limit(request: Request, limit_type: str = "default") -> None:
+    """Check rate limit and raise exception if exceeded"""
+    # Get client identifier
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+    
+    # Get limit config
+    max_requests, window_seconds = RATE_LIMITS.get(limit_type, RATE_LIMITS["default"])
+    
+    # Create unique key for this endpoint + IP
+    key = f"{limit_type}:{client_ip}"
+    
+    if rate_limiter.is_rate_limited(key, max_requests, window_seconds):
+        remaining = rate_limiter.get_remaining(key, max_requests, window_seconds)
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Try again later.",
+            headers={
+                "X-RateLimit-Limit": str(max_requests),
+                "X-RateLimit-Remaining": str(remaining),
+                "X-RateLimit-Reset": str(window_seconds)
+            }
+        )
 
 # ============================================================================
 # MODELS
