@@ -437,16 +437,3 @@ def get_client_ip(request: Request) -> str:
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
-
-# ============================================================================
-# RATE LIMITING CONFIGURATION
-# ============================================================================
-
-# Rate limit strings for different endpoint types
-RATE_LIMITS = {
-    "default": "100/minute",
-    "auth": "10/minute",
-    "ai": "20/minute",
-    "sensitive": "30/minute",
-    "upload": "10/minute"
-}
