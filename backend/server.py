@@ -514,6 +514,176 @@ async def health_check():
     return {"status": "healthy"}
 
 # ============================================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================================
+
+@api_router.post("/auth/register", response_model=Token)
+@limiter.limit(RATE_LIMITS["auth"])
+async def register(request: Request, user_data: UserRegister):
+    """Register a new user"""
+    try:
+        # Check if email already exists
+        existing_user = await db.auth_users.find_one({"email": user_data.email})
+        if existing_user:
+            AuditLog.log_auth("register", user_data.email, get_client_ip(request), False, "Email already exists")
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Create user
+        import uuid
+        user_id = f"user_{uuid.uuid4().hex[:16]}"
+        hashed_password = get_password_hash(user_data.password)
+        
+        user_doc = {
+            "user_id": user_id,
+            "email": user_data.email,
+            "name": sanitize_string(user_data.name, 100),
+            "password_hash": hashed_password,
+            "created_at": datetime.utcnow().isoformat(),
+            "is_active": True
+        }
+        
+        await db.auth_users.insert_one(user_doc)
+        
+        # Create tokens
+        token_data = {"user_id": user_id, "email": user_data.email}
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data)
+        
+        AuditLog.log_auth("register", user_data.email, get_client_ip(request), True)
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=60 * 24 * 60  # 24 hours in seconds
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Registration failed")
+
+@api_router.post("/auth/login", response_model=Token)
+@limiter.limit(RATE_LIMITS["auth"])
+async def login(request: Request, credentials: UserLogin):
+    """Login and get access token"""
+    try:
+        user = await db.auth_users.find_one({"email": credentials.email})
+        
+        if not user or not verify_password(credentials.password, user["password_hash"]):
+            AuditLog.log_auth("login", credentials.email, get_client_ip(request), False, "Invalid credentials")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+        
+        if not user.get("is_active", True):
+            AuditLog.log_auth("login", credentials.email, get_client_ip(request), False, "Account disabled")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account is disabled"
+            )
+        
+        # Create tokens
+        token_data = {"user_id": user["user_id"], "email": user["email"]}
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data)
+        
+        # Update last login
+        await db.auth_users.update_one(
+            {"user_id": user["user_id"]},
+            {"$set": {"last_login": datetime.utcnow().isoformat()}}
+        )
+        
+        AuditLog.log_auth("login", credentials.email, get_client_ip(request), True)
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=60 * 24 * 60
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Login failed")
+
+@api_router.post("/auth/refresh", response_model=Token)
+@limiter.limit(RATE_LIMITS["auth"])
+async def refresh_token_endpoint(request: Request, refresh_token: str = Body(..., embed=True)):
+    """Refresh access token"""
+    try:
+        payload = decode_token(refresh_token)
+        if not payload or payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+        # Verify user still exists and is active
+        user = await db.auth_users.find_one({"user_id": payload["user_id"]})
+        if not user or not user.get("is_active", True):
+            raise HTTPException(status_code=401, detail="User not found or disabled")
+        
+        # Create new tokens
+        token_data = {"user_id": user["user_id"], "email": user["email"]}
+        new_access_token = create_access_token(token_data)
+        new_refresh_token = create_refresh_token(token_data)
+        
+        return Token(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            expires_in=60 * 24 * 60
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Token refresh failed")
+
+@api_router.post("/auth/change-password")
+@limiter.limit(RATE_LIMITS["auth"])
+async def change_password(
+    request: Request,
+    password_data: PasswordChange,
+    current_user: dict = Depends(get_current_user)
+):
+    """Change user password"""
+    try:
+        user = await db.auth_users.find_one({"user_id": current_user["user_id"]})
+        
+        if not verify_password(password_data.current_password, user["password_hash"]):
+            AuditLog.log_auth("password_change", current_user["email"], get_client_ip(request), False, "Invalid current password")
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Update password
+        new_hash = get_password_hash(password_data.new_password)
+        await db.auth_users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": {"password_hash": new_hash, "password_changed_at": datetime.utcnow().isoformat()}}
+        )
+        
+        AuditLog.log_auth("password_change", current_user["email"], get_client_ip(request), True)
+        
+        return {"message": "Password changed successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Password change error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Password change failed")
+
+@api_router.get("/auth/me")
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    """Get current user information"""
+    user = await db.auth_users.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "name": user.get("name"),
+        "created_at": user.get("created_at"),
+        "last_login": user.get("last_login")
+    }
+
+# ============================================================================
 # USER PROFILE ENDPOINTS
 # ============================================================================
 
