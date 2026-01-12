@@ -320,7 +320,7 @@ export default function StepTrackerScreen() {
   };
 
   const startTracking = async () => {
-    if (isTracking || !isPedometerAvailable) return;
+    if (isTracking || !isPedometerAvailable || !Pedometer) return;
 
     try {
       setIsTracking(true);
@@ -334,8 +334,8 @@ export default function StepTrackerScreen() {
       setPedometerSteps(pastSteps.steps);
 
       // Subscribe to step updates
-      pedometerSubscription.current = Pedometer.watchStepCount(result => {
-        setPedometerSteps(prev => prev + result.steps);
+      pedometerSubscription.current = Pedometer.watchStepCount((result: any) => {
+        setPedometerSteps((prev: number) => prev + result.steps);
       });
     } catch (error) {
       console.error('Error starting pedometer:', error);
