@@ -575,10 +575,12 @@ async def register(request: Request, user_data: UserRegister):
         raise HTTPException(status_code=500, detail="Registration failed")
 
 @api_router.post("/auth/login", response_model=Token)
-@limiter.limit(RATE_LIMITS["auth"])
 async def login(request: Request, credentials: UserLogin):
     """Login and get access token"""
     try:
+        # Rate limit check
+        check_rate_limit(request, "auth")
+        
         user = await db.auth_users.find_one({"email": credentials.email})
         
         if not user or not verify_password(credentials.password, user["password_hash"]):
