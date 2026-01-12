@@ -6733,6 +6733,249 @@ async def complete_workout(data: WorkoutCompleteData):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# STEP TRACKER ENDPOINTS
+# ============================================================================
+
+class StepEntry(BaseModel):
+    user_id: str
+    steps: int
+    date: str  # YYYY-MM-DD format
+    source: str = "manual"  # manual, pedometer, healthkit, health_connect
+    calories_burned: Optional[float] = None
+    distance_miles: Optional[float] = None
+
+class StepGoalSettings(BaseModel):
+    user_id: str
+    daily_goal: int = 10000
+    tracking_enabled: bool = True
+    auto_sync_health: bool = True
+
+@api_router.post("/steps")
+async def save_steps(entry: StepEntry):
+    """Save or update step entry for a specific date"""
+    try:
+        # Calculate calories if not provided (approx 0.04 cal per step)
+        if entry.calories_burned is None:
+            entry.calories_burned = round(entry.steps * 0.04, 1)
+        
+        # Calculate distance if not provided (approx 2000 steps per mile)
+        if entry.distance_miles is None:
+            entry.distance_miles = round(entry.steps / 2000, 2)
+        
+        # Upsert - update if exists for that date, otherwise insert
+        result = await db.step_entries.update_one(
+            {"user_id": entry.user_id, "date": entry.date},
+            {"$set": {
+                "steps": entry.steps,
+                "source": entry.source,
+                "calories_burned": entry.calories_burned,
+                "distance_miles": entry.distance_miles,
+                "updated_at": datetime.utcnow().isoformat()
+            }},
+            upsert=True
+        )
+        
+        return {
+            "message": "Steps saved successfully",
+            "date": entry.date,
+            "steps": entry.steps,
+            "calories_burned": entry.calories_burned,
+            "distance_miles": entry.distance_miles
+        }
+    except Exception as e:
+        logger.error(f"Error saving steps: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/steps/{user_id}/today")
+async def get_today_steps(user_id: str):
+    """Get today's step count"""
+    try:
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        entry = await db.step_entries.find_one({"user_id": user_id, "date": today})
+        
+        if entry:
+            return {
+                "date": today,
+                "steps": entry.get("steps", 0),
+                "calories_burned": entry.get("calories_burned", 0),
+                "distance_miles": entry.get("distance_miles", 0),
+                "source": entry.get("source", "manual")
+            }
+        return {
+            "date": today,
+            "steps": 0,
+            "calories_burned": 0,
+            "distance_miles": 0,
+            "source": None
+        }
+    except Exception as e:
+        logger.error(f"Error getting today's steps: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/steps/{user_id}/history")
+async def get_step_history(user_id: str, days: int = 30):
+    """Get step history for the past N days"""
+    try:
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=days)
+        
+        entries = await db.step_entries.find({
+            "user_id": user_id,
+            "date": {
+                "$gte": start_date.strftime("%Y-%m-%d"),
+                "$lte": end_date.strftime("%Y-%m-%d")
+            }
+        }).sort("date", -1).to_list(length=days)
+        
+        # Calculate totals
+        total_steps = sum(e.get("steps", 0) for e in entries)
+        total_calories = sum(e.get("calories_burned", 0) for e in entries)
+        total_distance = sum(e.get("distance_miles", 0) for e in entries)
+        avg_steps = total_steps // len(entries) if entries else 0
+        
+        return {
+            "entries": [{
+                "date": e.get("date"),
+                "steps": e.get("steps", 0),
+                "calories_burned": e.get("calories_burned", 0),
+                "distance_miles": e.get("distance_miles", 0),
+                "source": e.get("source", "manual")
+            } for e in entries],
+            "summary": {
+                "total_steps": total_steps,
+                "total_calories": round(total_calories, 1),
+                "total_distance": round(total_distance, 2),
+                "average_steps": avg_steps,
+                "days_tracked": len(entries)
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting step history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/steps/{user_id}/weekly")
+async def get_weekly_steps(user_id: str):
+    """Get step data aggregated by week for the past 12 weeks"""
+    try:
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(weeks=12)
+        
+        entries = await db.step_entries.find({
+            "user_id": user_id,
+            "date": {
+                "$gte": start_date.strftime("%Y-%m-%d"),
+                "$lte": end_date.strftime("%Y-%m-%d")
+            }
+        }).to_list(length=100)
+        
+        # Group by week
+        weeks = {}
+        for entry in entries:
+            date = datetime.strptime(entry["date"], "%Y-%m-%d")
+            week_start = date - timedelta(days=date.weekday())
+            week_key = week_start.strftime("%Y-%m-%d")
+            
+            if week_key not in weeks:
+                weeks[week_key] = {"steps": 0, "days": 0}
+            weeks[week_key]["steps"] += entry.get("steps", 0)
+            weeks[week_key]["days"] += 1
+        
+        weekly_data = [
+            {
+                "week_start": k,
+                "total_steps": v["steps"],
+                "average_daily": v["steps"] // v["days"] if v["days"] > 0 else 0,
+                "days_tracked": v["days"]
+            }
+            for k, v in sorted(weeks.items())
+        ]
+        
+        return {"weekly_data": weekly_data}
+    except Exception as e:
+        logger.error(f"Error getting weekly steps: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/steps/{user_id}/monthly")
+async def get_monthly_steps(user_id: str):
+    """Get step data aggregated by month for the past 12 months"""
+    try:
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=365)
+        
+        entries = await db.step_entries.find({
+            "user_id": user_id,
+            "date": {
+                "$gte": start_date.strftime("%Y-%m-%d"),
+                "$lte": end_date.strftime("%Y-%m-%d")
+            }
+        }).to_list(length=400)
+        
+        # Group by month
+        months = {}
+        for entry in entries:
+            date = datetime.strptime(entry["date"], "%Y-%m-%d")
+            month_key = date.strftime("%Y-%m")
+            
+            if month_key not in months:
+                months[month_key] = {"steps": 0, "days": 0}
+            months[month_key]["steps"] += entry.get("steps", 0)
+            months[month_key]["days"] += 1
+        
+        monthly_data = [
+            {
+                "month": k,
+                "total_steps": v["steps"],
+                "average_daily": v["steps"] // v["days"] if v["days"] > 0 else 0,
+                "days_tracked": v["days"]
+            }
+            for k, v in sorted(months.items())
+        ]
+        
+        return {"monthly_data": monthly_data}
+    except Exception as e:
+        logger.error(f"Error getting monthly steps: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/steps/settings")
+async def save_step_settings(settings: StepGoalSettings):
+    """Save user's step tracking settings"""
+    try:
+        await db.step_settings.update_one(
+            {"user_id": settings.user_id},
+            {"$set": {
+                "daily_goal": settings.daily_goal,
+                "tracking_enabled": settings.tracking_enabled,
+                "auto_sync_health": settings.auto_sync_health,
+                "updated_at": datetime.utcnow().isoformat()
+            }},
+            upsert=True
+        )
+        return {"message": "Settings saved", "settings": settings.dict()}
+    except Exception as e:
+        logger.error(f"Error saving step settings: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/steps/settings/{user_id}")
+async def get_step_settings(user_id: str):
+    """Get user's step tracking settings"""
+    try:
+        settings = await db.step_settings.find_one({"user_id": user_id})
+        if settings:
+            return {
+                "daily_goal": settings.get("daily_goal", 10000),
+                "tracking_enabled": settings.get("tracking_enabled", True),
+                "auto_sync_health": settings.get("auto_sync_health", True)
+            }
+        return {
+            "daily_goal": 10000,
+            "tracking_enabled": True,
+            "auto_sync_health": True
+        }
+    except Exception as e:
+        logger.error(f"Error getting step settings: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
