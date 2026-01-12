@@ -43,6 +43,7 @@ export default function RootLayout() {
 
     const inTosScreen = segments[0] === 'terms-of-service';
     const inOnboardingScreen = segments[0] === 'onboarding';
+    const inTabsScreen = segments[0] === '(tabs)';
     
     // Check if TOS has been accepted
     const hasTosAccepted = tosAccepted?.accepted === true;
@@ -56,7 +57,8 @@ export default function RootLayout() {
     }
     
     // User has accepted TOS but hasn't set up profile yet
-    if (hasTosAccepted && !hasProfile && !inOnboardingScreen && !inTosScreen) {
+    // Only redirect to onboarding if not already in tabs (allow profile setup in profile tab)
+    if (hasTosAccepted && !hasProfile && !inOnboardingScreen && !inTosScreen && !inTabsScreen) {
       router.replace('/onboarding');
       return;
     }
