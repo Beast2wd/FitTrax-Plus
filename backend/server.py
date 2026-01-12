@@ -7004,13 +7004,21 @@ async def get_step_settings(user_id: str):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Add CORS middleware
+# Allowed origins for CORS - restrict in production
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8081",
+    "https://health-hub-136.preview.emergentagent.com",
+    # Add your production domain here
+]
+
+# Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
 )
 
 @app.on_event("shutdown")
