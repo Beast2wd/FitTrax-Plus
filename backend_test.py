@@ -1,199 +1,433 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for AI Food Scanner
-Testing the /api/analyze-food endpoint as requested
+FitTrax Security Testing Suite
+Tests authentication, rate limiting, input validation, and CORS
 """
 
 import requests
 import json
+import time
+import base64
 from datetime import datetime
+from typing import Dict, Any, Optional
 
-# Backend URL from frontend .env
-BACKEND_URL = "https://health-hub-136.preview.emergentagent.com"
+# Configuration
+BASE_URL = "https://health-hub-136.preview.emergentagent.com/api"
+TIMEOUT = 30
 
-def test_health_endpoint():
-    """Test 1: Health endpoint should return {"status":"healthy"}"""
-    print("🔍 Testing health endpoint...")
-    
-    try:
-        response = requests.get(f"{BACKEND_URL}/api/health", timeout=10)
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {response.json()}")
+class SecurityTester:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.timeout = TIMEOUT
+        self.test_results = []
+        self.access_token = None
         
-        if response.status_code == 200 and response.json().get("status") == "healthy":
-            print("✅ Health endpoint working correctly")
-            return True
-        else:
-            print("❌ Health endpoint failed")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Health endpoint error: {str(e)}")
-        return False
+    def log_test(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
+        """Log test result"""
+        result = {
+            "test": test_name,
+            "success": success,
+            "details": details,
+            "timestamp": datetime.now().isoformat(),
+            "response_data": response_data
+        }
+        self.test_results.append(result)
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status}: {test_name}")
+        if details:
+            print(f"   Details: {details}")
+        if not success and response_data:
+            print(f"   Response: {response_data}")
+        print()
 
-def test_analyze_food_minimal_payload():
-    """Test 2: Test with minimal valid payload (dummy base64)"""
-    print("\n🔍 Testing analyze-food endpoint with minimal payload...")
-    
-    # Create a very small dummy base64 string (1x1 pixel image)
-    dummy_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-    
-    payload = {
-        "user_id": "test_user_123",
-        "image_base64": dummy_base64,
-        "meal_category": "lunch"
-    }
-    
-    try:
-        response = requests.post(
-            f"{BACKEND_URL}/api/analyze-food",
-            json=payload,
-            timeout=30
-        )
-        
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {response.text[:500]}...")  # First 500 chars
-        
-        if response.status_code in [200, 400, 500]:
-            print("✅ Endpoint is reachable and responding")
+    def test_health_endpoint(self):
+        """Test basic health endpoint"""
+        try:
+            response = self.session.get(f"{BASE_URL}/health")
             
             if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == "healthy":
+                    self.log_test("Health Check", True, "Backend is healthy")
+                    return True
+                else:
+                    self.log_test("Health Check", False, f"Unexpected response: {data}")
+                    return False
+            else:
+                self.log_test("Health Check", False, f"Status code: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Health Check", False, f"Exception: {str(e)}")
+            return False
+
+    def test_user_registration(self):
+        """Test user registration with valid data"""
+        try:
+            # Generate unique email for testing
+            timestamp = int(time.time())
+            test_data = {
+                "email": f"security_test_{timestamp}@example.com",
+                "password": "SecurePass123",
+                "name": "Security Tester"
+            }
+            
+            response = self.session.post(f"{BASE_URL}/auth/register", json=test_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "access_token" in data and "refresh_token" in data:
+                    self.access_token = data["access_token"]
+                    self.log_test("User Registration", True, 
+                                f"Successfully registered user: {test_data['email']}")
+                    return True
+                else:
+                    self.log_test("User Registration", False, 
+                                "Missing tokens in response", data)
+                    return False
+            else:
+                self.log_test("User Registration", False, 
+                            f"Status code: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("User Registration", False, f"Exception: {str(e)}")
+            return False
+
+    def test_user_login(self):
+        """Test user login with valid credentials"""
+        try:
+            # Use the same credentials from registration
+            timestamp = int(time.time())
+            login_data = {
+                "email": f"security_test_{timestamp}@example.com",
+                "password": "SecurePass123"
+            }
+            
+            # First register the user
+            self.session.post(f"{BASE_URL}/auth/register", json={
+                "email": login_data["email"],
+                "password": login_data["password"],
+                "name": "Security Tester"
+            })
+            
+            # Now test login
+            response = self.session.post(f"{BASE_URL}/auth/login", json=login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "access_token" in data and "refresh_token" in data:
+                    self.access_token = data["access_token"]
+                    self.log_test("User Login", True, 
+                                f"Successfully logged in user: {login_data['email']}")
+                    return True
+                else:
+                    self.log_test("User Login", False, 
+                                "Missing tokens in response", data)
+                    return False
+            else:
+                self.log_test("User Login", False, 
+                            f"Status code: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("User Login", False, f"Exception: {str(e)}")
+            return False
+
+    def test_protected_endpoint(self):
+        """Test /auth/me endpoint with authentication"""
+        try:
+            if not self.access_token:
+                # Try to get a token first
+                if not self.test_user_registration():
+                    self.log_test("Protected Endpoint (/auth/me)", False, 
+                                "No access token available")
+                    return False
+            
+            headers = {"Authorization": f"Bearer {self.access_token}"}
+            response = self.session.get(f"{BASE_URL}/auth/me", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "user_id" in data and "email" in data:
+                    self.log_test("Protected Endpoint (/auth/me)", True, 
+                                f"Successfully accessed protected endpoint")
+                    return True
+                else:
+                    self.log_test("Protected Endpoint (/auth/me)", False, 
+                                "Missing user data in response", data)
+                    return False
+            else:
+                self.log_test("Protected Endpoint (/auth/me)", False, 
+                            f"Status code: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Protected Endpoint (/auth/me)", False, f"Exception: {str(e)}")
+            return False
+
+    def test_rate_limiting(self):
+        """Test rate limiting on login endpoint"""
+        try:
+            login_data = {
+                "email": "rate_limit_test@example.com",
+                "password": "WrongPassword123"
+            }
+            
+            # Make rapid requests to trigger rate limiting
+            rate_limited = False
+            for i in range(15):  # Try 15 requests
+                response = self.session.post(f"{BASE_URL}/auth/login", json=login_data)
+                
+                if response.status_code == 429:  # Too Many Requests
+                    rate_limited = True
+                    self.log_test("Rate Limiting", True, 
+                                f"Rate limiting triggered after {i+1} requests")
+                    return True
+                
+                # Small delay between requests
+                time.sleep(0.1)
+            
+            if not rate_limited:
+                self.log_test("Rate Limiting", False, 
+                            "Rate limiting not triggered after 15 requests")
+                return False
+                
+        except Exception as e:
+            self.log_test("Rate Limiting", False, f"Exception: {str(e)}")
+            return False
+
+    def test_weak_password_validation(self):
+        """Test password validation with weak password"""
+        try:
+            test_data = {
+                "email": "weak_password_test@example.com",
+                "password": "123",  # Weak password
+                "name": "Test User"
+            }
+            
+            response = self.session.post(f"{BASE_URL}/auth/register", json=test_data)
+            
+            if response.status_code == 422:  # Validation Error
+                self.log_test("Weak Password Validation", True, 
+                            "Weak password correctly rejected")
+                return True
+            elif response.status_code == 400:
+                # Check if it's a validation error
                 try:
                     data = response.json()
-                    if "meal" in data or "analysis" in data:
-                        print("✅ Endpoint returned expected structure")
+                    if "password" in str(data).lower():
+                        self.log_test("Weak Password Validation", True, 
+                                    "Weak password correctly rejected")
                         return True
                 except:
                     pass
-            
-            # Expected behavior: might fail with dummy image, but endpoint should respond
-            print("✅ Endpoint responds appropriately (error expected for dummy image)")
-            return True
-        else:
-            print("❌ Unexpected status code")
+                
+            self.log_test("Weak Password Validation", False, 
+                        f"Weak password not rejected. Status: {response.status_code}", 
+                        response.text)
             return False
-            
-    except Exception as e:
-        print(f"❌ Analyze food endpoint error: {str(e)}")
-        return False
+                
+        except Exception as e:
+            self.log_test("Weak Password Validation", False, f"Exception: {str(e)}")
+            return False
 
-def test_missing_user_id():
-    """Test 3: Verify error handling when user_id is missing"""
-    print("\n🔍 Testing analyze-food endpoint with missing user_id...")
-    
-    dummy_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-    
-    payload = {
-        # "user_id": "test_user_123",  # Missing user_id
-        "image_base64": dummy_base64,
-        "meal_category": "lunch"
-    }
-    
-    try:
-        response = requests.post(
-            f"{BACKEND_URL}/api/analyze-food",
-            json=payload,
-            timeout=10
-        )
-        
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {response.text[:300]}...")
-        
-        if response.status_code == 422:  # FastAPI validation error
-            print("✅ Correctly returns validation error for missing user_id")
-            return True
-        elif response.status_code == 400:
-            print("✅ Correctly returns bad request for missing user_id")
-            return True
-        else:
-            print("⚠️ Unexpected response, but endpoint is functional")
-            return True
+    def test_invalid_email_validation(self):
+        """Test email validation with invalid email"""
+        try:
+            test_data = {
+                "email": "not-an-email",  # Invalid email
+                "password": "SecurePass123",
+                "name": "Test User"
+            }
             
-    except Exception as e:
-        print(f"❌ Error testing missing user_id: {str(e)}")
-        return False
+            response = self.session.post(f"{BASE_URL}/auth/register", json=test_data)
+            
+            if response.status_code == 422:  # Validation Error
+                self.log_test("Invalid Email Validation", True, 
+                            "Invalid email correctly rejected")
+                return True
+            elif response.status_code == 400:
+                # Check if it's a validation error
+                try:
+                    data = response.json()
+                    if "email" in str(data).lower():
+                        self.log_test("Invalid Email Validation", True, 
+                                    "Invalid email correctly rejected")
+                        return True
+                except:
+                    pass
+                
+            self.log_test("Invalid Email Validation", False, 
+                        f"Invalid email not rejected. Status: {response.status_code}", 
+                        response.text)
+            return False
+                
+        except Exception as e:
+            self.log_test("Invalid Email Validation", False, f"Exception: {str(e)}")
+            return False
 
-def test_missing_image_base64():
-    """Test 4: Verify error handling when image_base64 is missing"""
-    print("\n🔍 Testing analyze-food endpoint with missing image_base64...")
-    
-    payload = {
-        "user_id": "test_user_123",
-        # "image_base64": dummy_base64,  # Missing image_base64
-        "meal_category": "lunch"
-    }
-    
-    try:
-        response = requests.post(
-            f"{BACKEND_URL}/api/analyze-food",
-            json=payload,
-            timeout=10
-        )
-        
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {response.text[:300]}...")
-        
-        if response.status_code == 422:  # FastAPI validation error
-            print("✅ Correctly returns validation error for missing image_base64")
-            return True
-        elif response.status_code == 400:
-            print("✅ Correctly returns bad request for missing image_base64")
-            return True
-        else:
-            print("⚠️ Unexpected response, but endpoint is functional")
-            return True
+    def test_cors_headers(self):
+        """Test CORS headers in response"""
+        try:
+            response = self.session.get(f"{BASE_URL}/health")
             
-    except Exception as e:
-        print(f"❌ Error testing missing image_base64: {str(e)}")
-        return False
+            cors_headers = [
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Methods", 
+                "Access-Control-Allow-Headers"
+            ]
+            
+            found_cors = False
+            cors_details = []
+            
+            for header in cors_headers:
+                if header in response.headers:
+                    found_cors = True
+                    cors_details.append(f"{header}: {response.headers[header]}")
+            
+            if found_cors:
+                self.log_test("CORS Headers", True, 
+                            f"CORS headers found: {', '.join(cors_details)}")
+                return True
+            else:
+                self.log_test("CORS Headers", False, 
+                            "No CORS headers found in response")
+                return False
+                
+        except Exception as e:
+            self.log_test("CORS Headers", False, f"Exception: {str(e)}")
+            return False
+
+    def test_unauthorized_access(self):
+        """Test accessing protected endpoint without token"""
+        try:
+            response = self.session.get(f"{BASE_URL}/auth/me")
+            
+            if response.status_code == 401:  # Unauthorized
+                self.log_test("Unauthorized Access Protection", True, 
+                            "Protected endpoint correctly requires authentication")
+                return True
+            else:
+                self.log_test("Unauthorized Access Protection", False, 
+                            f"Protected endpoint accessible without auth. Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Unauthorized Access Protection", False, f"Exception: {str(e)}")
+            return False
+
+    def test_invalid_token_access(self):
+        """Test accessing protected endpoint with invalid token"""
+        try:
+            headers = {"Authorization": "Bearer invalid_token_12345"}
+            response = self.session.get(f"{BASE_URL}/auth/me", headers=headers)
+            
+            if response.status_code == 401:  # Unauthorized
+                self.log_test("Invalid Token Protection", True, 
+                            "Invalid token correctly rejected")
+                return True
+            else:
+                self.log_test("Invalid Token Protection", False, 
+                            f"Invalid token not rejected. Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Invalid Token Protection", False, f"Exception: {str(e)}")
+            return False
+
+    def run_all_tests(self):
+        """Run all security tests"""
+        print("🔒 FitTrax Security Testing Suite")
+        print("=" * 50)
+        print()
+        
+        # Test basic connectivity
+        if not self.test_health_endpoint():
+            print("❌ Backend not accessible. Stopping tests.")
+            return False
+        
+        # Authentication Tests
+        print("🔐 Authentication Tests")
+        print("-" * 30)
+        self.test_user_registration()
+        self.test_user_login()
+        self.test_protected_endpoint()
+        self.test_unauthorized_access()
+        self.test_invalid_token_access()
+        print()
+        
+        # Rate Limiting Tests
+        print("⏱️  Rate Limiting Tests")
+        print("-" * 30)
+        self.test_rate_limiting()
+        print()
+        
+        # Input Validation Tests
+        print("🛡️  Input Validation Tests")
+        print("-" * 30)
+        self.test_weak_password_validation()
+        self.test_invalid_email_validation()
+        print()
+        
+        # CORS Tests
+        print("🌐 CORS Tests")
+        print("-" * 30)
+        self.test_cors_headers()
+        print()
+        
+        # Summary
+        self.print_summary()
+        
+        return True
+
+    def print_summary(self):
+        """Print test summary"""
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result["success"])
+        failed_tests = total_tests - passed_tests
+        
+        print("📊 Test Summary")
+        print("=" * 50)
+        print(f"Total Tests: {total_tests}")
+        print(f"✅ Passed: {passed_tests}")
+        print(f"❌ Failed: {failed_tests}")
+        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+        print()
+        
+        if failed_tests > 0:
+            print("❌ Failed Tests:")
+            for result in self.test_results:
+                if not result["success"]:
+                    print(f"   - {result['test']}: {result['details']}")
+            print()
+        
+        # Security Assessment
+        critical_tests = [
+            "User Registration",
+            "User Login", 
+            "Protected Endpoint (/auth/me)",
+            "Unauthorized Access Protection",
+            "Invalid Token Protection",
+            "Weak Password Validation",
+            "Invalid Email Validation"
+        ]
+        
+        critical_passed = sum(1 for result in self.test_results 
+                            if result["test"] in critical_tests and result["success"])
+        
+        print("🔒 Security Assessment:")
+        if critical_passed == len(critical_tests):
+            print("   ✅ All critical security features working correctly")
+        else:
+            print(f"   ⚠️  {len(critical_tests) - critical_passed} critical security issues found")
+        
+        print()
 
 def main():
-    """Run all AI Food Scanner backend tests"""
-    print("=" * 60)
-    print("🧪 AI FOOD SCANNER BACKEND ENDPOINT TESTING")
-    print("=" * 60)
-    print(f"Backend URL: {BACKEND_URL}")
-    print(f"Test Time: {datetime.now().isoformat()}")
-    print("=" * 60)
-    
-    results = []
-    
-    # Test 1: Health endpoint
-    results.append(("Health Endpoint", test_health_endpoint()))
-    
-    # Test 2: Minimal valid payload
-    results.append(("Analyze Food - Minimal Payload", test_analyze_food_minimal_payload()))
-    
-    # Test 3: Missing user_id
-    results.append(("Missing user_id Error Handling", test_missing_user_id()))
-    
-    # Test 4: Missing image_base64
-    results.append(("Missing image_base64 Error Handling", test_missing_image_base64()))
-    
-    # Summary
-    print("\n" + "=" * 60)
-    print("📊 TEST RESULTS SUMMARY")
-    print("=" * 60)
-    
-    passed = 0
-    total = len(results)
-    
-    for test_name, result in results:
-        status = "✅ PASS" if result else "❌ FAIL"
-        print(f"{test_name}: {status}")
-        if result:
-            passed += 1
-    
-    print(f"\nOverall: {passed}/{total} tests passed ({(passed/total)*100:.1f}%)")
-    
-    if passed == total:
-        print("🎉 All tests passed! AI Food Scanner backend is functional.")
-    elif passed >= total * 0.75:
-        print("⚠️ Most tests passed. Minor issues detected.")
-    else:
-        print("❌ Multiple test failures. Backend needs attention.")
-    
-    return passed == total
+    """Main test runner"""
+    tester = SecurityTester()
+    tester.run_all_tests()
 
 if __name__ == "__main__":
     main()
