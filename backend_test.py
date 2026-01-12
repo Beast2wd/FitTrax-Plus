@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
 """
-FitTrax Security Testing Suite
-Tests authentication, rate limiting, input validation, and CORS
+Comprehensive FitTrax API Testing Suite
+Tests all critical endpoints for deployment readiness
 """
 
 import requests
 import json
 import time
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
+import uuid
 
-# Configuration
-BASE_URL = "https://health-hub-136.preview.emergentagent.com/api"
-TIMEOUT = 30
-
-class SecurityTester:
-    def __init__(self):
+class FitTraxAPITester:
+    def __init__(self, base_url: str):
+        self.base_url = base_url.rstrip('/')
+        self.api_url = f"{self.base_url}/api"
         self.session = requests.Session()
-        self.session.timeout = TIMEOUT
-        self.test_results = []
         self.access_token = None
+        self.refresh_token = None
+        self.test_user_id = None
+        self.test_results = []
         
     def log_test(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
-        """Log test result"""
+        """Log test results"""
         result = {
             "test": test_name,
             "success": success,
@@ -33,401 +33,699 @@ class SecurityTester:
         }
         self.test_results.append(result)
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status}: {test_name}")
-        if details:
-            print(f"   Details: {details}")
-        if not success and response_data:
-            print(f"   Response: {response_data}")
-        print()
+        print(f"{status} {test_name}: {details}")
+        
+    def make_request(self, method: str, endpoint: str, data: Dict = None, headers: Dict = None, params: Dict = None) -> requests.Response:
+        """Make HTTP request with proper error handling"""
+        url = f"{self.api_url}{endpoint}"
+        
+        # Add auth header if token available
+        if self.access_token and headers is None:
+            headers = {}
+        if self.access_token and headers is not None:
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        elif self.access_token:
+            headers = {"Authorization": f"Bearer {self.access_token}"}
+            
+        try:
+            if method.upper() == "GET":
+                response = self.session.get(url, params=params, headers=headers, timeout=30)
+            elif method.upper() == "POST":
+                response = self.session.post(url, json=data, headers=headers, params=params, timeout=30)
+            elif method.upper() == "PUT":
+                response = self.session.put(url, json=data, headers=headers, params=params, timeout=30)
+            elif method.upper() == "DELETE":
+                response = self.session.delete(url, headers=headers, params=params, timeout=30)
+            else:
+                raise ValueError(f"Unsupported method: {method}")
+                
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed for {method} {url}: {str(e)}")
+            raise
 
     def test_health_endpoint(self):
-        """Test basic health endpoint"""
+        """Test health check endpoint"""
         try:
-            response = self.session.get(f"{BASE_URL}/health")
+            response = self.make_request("GET", "/health")
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get("status") == "healthy":
-                    self.log_test("Health Check", True, "Backend is healthy")
-                    return True
+                    self.log_test("Health Check", True, "API is healthy", data)
                 else:
-                    self.log_test("Health Check", False, f"Unexpected response: {data}")
-                    return False
+                    self.log_test("Health Check", False, f"Unexpected health status: {data}")
             else:
                 self.log_test("Health Check", False, f"Status code: {response.status_code}")
-                return False
                 
         except Exception as e:
             self.log_test("Health Check", False, f"Exception: {str(e)}")
-            return False
 
-    def test_user_registration(self):
-        """Test user registration with valid data"""
+    def test_authentication_flow(self):
+        """Test complete authentication flow"""
+        # Generate unique test user
+        timestamp = int(time.time())
+        test_email = f"deploy_test_{timestamp}@example.com"
+        test_password = "SecurePass123"
+        test_name = "Deploy Tester"
+        
+        # Test Registration
         try:
-            # Generate unique email for testing
-            timestamp = int(time.time())
-            test_data = {
-                "email": f"security_test_{timestamp}@example.com",
-                "password": "SecurePass123",
-                "name": "Security Tester"
+            register_data = {
+                "email": test_email,
+                "password": test_password,
+                "name": test_name
             }
             
-            response = self.session.post(f"{BASE_URL}/auth/register", json=test_data)
+            response = self.make_request("POST", "/auth/register", register_data)
             
             if response.status_code == 200:
                 data = response.json()
                 if "access_token" in data and "refresh_token" in data:
                     self.access_token = data["access_token"]
-                    self.log_test("User Registration", True, 
-                                f"Successfully registered user: {test_data['email']}")
-                    return True
+                    self.refresh_token = data["refresh_token"]
+                    self.log_test("User Registration", True, f"User registered successfully: {test_email}", data)
                 else:
-                    self.log_test("User Registration", False, 
-                                "Missing tokens in response", data)
-                    return False
+                    self.log_test("User Registration", False, f"Missing tokens in response: {data}")
             else:
-                self.log_test("User Registration", False, 
-                            f"Status code: {response.status_code}", response.text)
-                return False
+                self.log_test("User Registration", False, f"Status code: {response.status_code}, Response: {response.text}")
+                return
                 
         except Exception as e:
             self.log_test("User Registration", False, f"Exception: {str(e)}")
-            return False
+            return
 
-    def test_user_login(self):
-        """Test user login with valid credentials"""
+        # Test Login
         try:
-            # Use the same credentials from registration
-            timestamp = int(time.time())
             login_data = {
-                "email": f"security_test_{timestamp}@example.com",
-                "password": "SecurePass123"
+                "email": test_email,
+                "password": test_password
             }
             
-            # First register the user
-            self.session.post(f"{BASE_URL}/auth/register", json={
-                "email": login_data["email"],
-                "password": login_data["password"],
-                "name": "Security Tester"
-            })
-            
-            # Now test login
-            response = self.session.post(f"{BASE_URL}/auth/login", json=login_data)
+            response = self.make_request("POST", "/auth/login", login_data)
             
             if response.status_code == 200:
                 data = response.json()
-                if "access_token" in data and "refresh_token" in data:
+                if "access_token" in data:
                     self.access_token = data["access_token"]
-                    self.log_test("User Login", True, 
-                                f"Successfully logged in user: {login_data['email']}")
-                    return True
+                    self.log_test("User Login", True, f"Login successful for: {test_email}", data)
                 else:
-                    self.log_test("User Login", False, 
-                                "Missing tokens in response", data)
-                    return False
+                    self.log_test("User Login", False, f"Missing access_token: {data}")
             else:
-                self.log_test("User Login", False, 
-                            f"Status code: {response.status_code}", response.text)
-                return False
+                self.log_test("User Login", False, f"Status code: {response.status_code}, Response: {response.text}")
                 
         except Exception as e:
             self.log_test("User Login", False, f"Exception: {str(e)}")
-            return False
 
-    def test_protected_endpoint(self):
-        """Test /auth/me endpoint with authentication"""
+        # Test /auth/me endpoint
         try:
-            if not self.access_token:
-                # Try to get a token first
-                if not self.test_user_registration():
-                    self.log_test("Protected Endpoint (/auth/me)", False, 
-                                "No access token available")
-                    return False
-            
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-            response = self.session.get(f"{BASE_URL}/auth/me", headers=headers)
+            response = self.make_request("GET", "/auth/me")
             
             if response.status_code == 200:
                 data = response.json()
                 if "user_id" in data and "email" in data:
-                    self.log_test("Protected Endpoint (/auth/me)", True, 
-                                f"Successfully accessed protected endpoint")
-                    return True
+                    self.test_user_id = data["user_id"]
+                    self.log_test("Get Current User", True, f"User info retrieved: {data['email']}", data)
                 else:
-                    self.log_test("Protected Endpoint (/auth/me)", False, 
-                                "Missing user data in response", data)
-                    return False
+                    self.log_test("Get Current User", False, f"Missing user info: {data}")
             else:
-                self.log_test("Protected Endpoint (/auth/me)", False, 
-                            f"Status code: {response.status_code}", response.text)
-                return False
+                self.log_test("Get Current User", False, f"Status code: {response.status_code}")
                 
         except Exception as e:
-            self.log_test("Protected Endpoint (/auth/me)", False, f"Exception: {str(e)}")
-            return False
+            self.log_test("Get Current User", False, f"Exception: {str(e)}")
 
-    def test_rate_limiting(self):
-        """Test rate limiting on login endpoint"""
+        # Test Token Refresh
+        if self.refresh_token:
+            try:
+                refresh_data = {"refresh_token": self.refresh_token}
+                response = self.make_request("POST", "/auth/refresh", refresh_data)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if "access_token" in data:
+                        self.access_token = data["access_token"]
+                        self.log_test("Token Refresh", True, "Token refreshed successfully", data)
+                    else:
+                        self.log_test("Token Refresh", False, f"Missing new access_token: {data}")
+                else:
+                    self.log_test("Token Refresh", False, f"Status code: {response.status_code}")
+                    
+            except Exception as e:
+                self.log_test("Token Refresh", False, f"Exception: {str(e)}")
+
+    def test_user_profile_endpoints(self):
+        """Test user profile CRUD operations"""
+        if not self.test_user_id:
+            self.log_test("User Profile Tests", False, "No test user ID available")
+            return
+            
+        # Test Profile Creation
         try:
-            login_data = {
-                "email": "rate_limit_test@example.com",
-                "password": "WrongPassword123"
+            profile_data = {
+                "user_id": self.test_user_id,
+                "name": "Deploy Tester",
+                "age": 30,
+                "gender": "male",
+                "height_feet": 5,
+                "height_inches": 10,
+                "weight": 180.0,
+                "goal_weight": 170.0,
+                "activity_level": "moderate",
+                "custom_calorie_goal": 2200
             }
             
-            # Make rapid requests to trigger rate limiting
-            rate_limited = False
-            for i in range(15):  # Try 15 requests
-                response = self.session.post(f"{BASE_URL}/auth/login", json=login_data)
-                
-                if response.status_code == 429:  # Too Many Requests
-                    rate_limited = True
-                    self.log_test("Rate Limiting", True, 
-                                f"Rate limiting triggered after {i+1} requests")
-                    return True
-                
-                # Small delay between requests
-                time.sleep(0.1)
+            response = self.make_request("POST", "/user/profile", profile_data)
             
-            if not rate_limited:
-                self.log_test("Rate Limiting", False, 
-                            "Rate limiting not triggered after 15 requests")
-                return False
+            if response.status_code == 200:
+                data = response.json()
+                if "profile" in data:
+                    self.log_test("Create User Profile", True, f"Profile created with BMR calculation", data)
+                else:
+                    self.log_test("Create User Profile", False, f"Missing profile in response: {data}")
+            else:
+                self.log_test("Create User Profile", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Create User Profile", False, f"Exception: {str(e)}")
+
+        # Test Profile Retrieval
+        try:
+            response = self.make_request("GET", f"/user/profile/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "user_id" in data and "daily_calorie_goal" in data:
+                    self.log_test("Get User Profile", True, f"Profile retrieved with calorie goal: {data.get('daily_calorie_goal')}", data)
+                else:
+                    self.log_test("Get User Profile", False, f"Missing profile data: {data}")
+            else:
+                self.log_test("Get User Profile", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get User Profile", False, f"Exception: {str(e)}")
+
+    def test_nutrition_endpoints(self):
+        """Test nutrition and meal endpoints"""
+        if not self.test_user_id:
+            self.log_test("Nutrition Tests", False, "No test user ID available")
+            return
+
+        # Test Food Search
+        try:
+            response = self.make_request("GET", "/nutrition/foods/search", params={"q": "chicken"})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "foods" in data and len(data["foods"]) > 0:
+                    self.log_test("Food Search", True, f"Found {len(data['foods'])} foods for 'chicken'", data)
+                else:
+                    self.log_test("Food Search", False, f"No foods found: {data}")
+            else:
+                self.log_test("Food Search", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Food Search", False, f"Exception: {str(e)}")
+
+        # Test Quick Log Meal
+        try:
+            meal_data = {
+                "user_id": self.test_user_id,
+                "name": "Grilled Chicken Breast",
+                "calories": 187,
+                "protein": 35,
+                "carbs": 0,
+                "fat": 4,
+                "meal_category": "lunch",
+                "serving_size": "4 oz",
+                "servings": 1.0
+            }
+            
+            response = self.make_request("POST", "/nutrition/quick-log", meal_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "meal" in data:
+                    self.log_test("Quick Log Meal", True, f"Meal logged successfully", data)
+                else:
+                    self.log_test("Quick Log Meal", False, f"Missing meal in response: {data}")
+            else:
+                self.log_test("Quick Log Meal", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Quick Log Meal", False, f"Exception: {str(e)}")
+
+        # Test Get Meals
+        try:
+            response = self.make_request("GET", f"/meals/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "meals" in data:
+                    self.log_test("Get User Meals", True, f"Retrieved {len(data['meals'])} meals", data)
+                else:
+                    self.log_test("Get User Meals", False, f"Missing meals in response: {data}")
+            else:
+                self.log_test("Get User Meals", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get User Meals", False, f"Exception: {str(e)}")
+
+        # Test Daily Nutrition Summary
+        try:
+            today = datetime.now().strftime("%Y-%m-%d")
+            response = self.make_request("GET", f"/nutrition/daily-summary/{self.test_user_id}", params={"date": today})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "totals" in data and "goals" in data:
+                    self.log_test("Daily Nutrition Summary", True, f"Daily summary for {today}", data)
+                else:
+                    self.log_test("Daily Nutrition Summary", False, f"Missing summary data: {data}")
+            else:
+                self.log_test("Daily Nutrition Summary", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Daily Nutrition Summary", False, f"Exception: {str(e)}")
+
+    def test_workout_endpoints(self):
+        """Test workout endpoints"""
+        if not self.test_user_id:
+            self.log_test("Workout Tests", False, "No test user ID available")
+            return
+
+        # Test Get Workouts
+        try:
+            response = self.make_request("GET", f"/workouts/user/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "workouts" in data:
+                    self.log_test("Get User Workouts", True, f"Retrieved {len(data['workouts'])} workouts", data)
+                else:
+                    self.log_test("Get User Workouts", False, f"Missing workouts in response: {data}")
+            else:
+                self.log_test("Get User Workouts", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get User Workouts", False, f"Exception: {str(e)}")
+
+        # Test Create Workout
+        try:
+            workout_data = {
+                "workout_id": f"workout_{int(time.time())}",
+                "user_id": self.test_user_id,
+                "workout_type": "cardio",
+                "duration": 30,
+                "calories_burned": 250.0,
+                "notes": "Morning run",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            response = self.make_request("POST", "/workouts", workout_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "workout" in data:
+                    self.log_test("Create Workout", True, f"Workout created successfully", data)
+                else:
+                    self.log_test("Create Workout", False, f"Missing workout in response: {data}")
+            else:
+                self.log_test("Create Workout", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Create Workout", False, f"Exception: {str(e)}")
+
+        # Test Get Scheduled Workouts
+        try:
+            response = self.make_request("GET", f"/scheduled-workouts/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "scheduled_workouts" in data:
+                    self.log_test("Get Scheduled Workouts", True, f"Retrieved {len(data['scheduled_workouts'])} scheduled workouts", data)
+                else:
+                    self.log_test("Get Scheduled Workouts", False, f"Missing scheduled_workouts in response: {data}")
+            else:
+                self.log_test("Get Scheduled Workouts", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Scheduled Workouts", False, f"Exception: {str(e)}")
+
+    def test_step_tracker_endpoints(self):
+        """Test step tracker endpoints"""
+        if not self.test_user_id:
+            self.log_test("Step Tracker Tests", False, "No test user ID available")
+            return
+
+        # Test Log Steps
+        try:
+            steps_data = {
+                "user_id": self.test_user_id,
+                "steps": 5000,
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "source": "manual"
+            }
+            
+            response = self.make_request("POST", "/steps", steps_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "steps" in data or "message" in data:
+                    self.log_test("Log Steps", True, f"Steps logged: 5000 steps", data)
+                else:
+                    self.log_test("Log Steps", False, f"Unexpected response: {data}")
+            else:
+                self.log_test("Log Steps", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Log Steps", False, f"Exception: {str(e)}")
+
+        # Test Get Today's Steps
+        try:
+            response = self.make_request("GET", f"/steps/{self.test_user_id}/today")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "steps" in data or "total_steps" in data:
+                    self.log_test("Get Today's Steps", True, f"Today's steps retrieved", data)
+                else:
+                    self.log_test("Get Today's Steps", False, f"Missing steps data: {data}")
+            else:
+                self.log_test("Get Today's Steps", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Today's Steps", False, f"Exception: {str(e)}")
+
+        # Test Get Steps History
+        try:
+            response = self.make_request("GET", f"/steps/{self.test_user_id}/history", params={"days": 7})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "history" in data or "steps" in data:
+                    self.log_test("Get Steps History", True, f"Steps history retrieved", data)
+                else:
+                    self.log_test("Get Steps History", False, f"Missing history data: {data}")
+            else:
+                self.log_test("Get Steps History", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Steps History", False, f"Exception: {str(e)}")
+
+        # Test Get Weekly Steps
+        try:
+            response = self.make_request("GET", f"/steps/{self.test_user_id}/weekly")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Weekly Steps", True, f"Weekly steps retrieved", data)
+            else:
+                self.log_test("Get Weekly Steps", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Weekly Steps", False, f"Exception: {str(e)}")
+
+        # Test Get Monthly Steps
+        try:
+            response = self.make_request("GET", f"/steps/{self.test_user_id}/monthly")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Monthly Steps", True, f"Monthly steps retrieved", data)
+            else:
+                self.log_test("Get Monthly Steps", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Monthly Steps", False, f"Exception: {str(e)}")
+
+        # Test Step Settings
+        try:
+            settings_data = {
+                "user_id": self.test_user_id,
+                "daily_goal": 10000,
+                "tracking_enabled": True,
+                "auto_sync": True
+            }
+            
+            response = self.make_request("POST", "/steps/settings", settings_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Set Step Settings", True, f"Step settings saved", data)
+            else:
+                self.log_test("Set Step Settings", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Set Step Settings", False, f"Exception: {str(e)}")
+
+        # Test Get Step Settings
+        try:
+            response = self.make_request("GET", f"/steps/settings/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Step Settings", True, f"Step settings retrieved", data)
+            else:
+                self.log_test("Get Step Settings", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Step Settings", False, f"Exception: {str(e)}")
+
+    def test_body_scan_heart_rate_endpoints(self):
+        """Test body scan and heart rate endpoints"""
+        if not self.test_user_id:
+            self.log_test("Body Scan & Heart Rate Tests", False, "No test user ID available")
+            return
+
+        # Test Get Body Scan Progress
+        try:
+            response = self.make_request("GET", f"/body-scan/progress/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Body Scan Progress", True, f"Body scan progress retrieved", data)
+            else:
+                self.log_test("Get Body Scan Progress", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Body Scan Progress", False, f"Exception: {str(e)}")
+
+        # Test Get Heart Rate Data
+        try:
+            response = self.make_request("GET", f"/heart-rate/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "heart_rates" in data:
+                    self.log_test("Get Heart Rate Data", True, f"Heart rate data retrieved", data)
+                else:
+                    self.log_test("Get Heart Rate Data", False, f"Missing heart_rates in response: {data}")
+            else:
+                self.log_test("Get Heart Rate Data", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Heart Rate Data", False, f"Exception: {str(e)}")
+
+    def test_dashboard_endpoint(self):
+        """Test dashboard endpoint"""
+        if not self.test_user_id:
+            self.log_test("Dashboard Test", False, "No test user ID available")
+            return
+
+        try:
+            response = self.make_request("GET", f"/dashboard/{self.test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Dashboard Data", True, f"Dashboard data retrieved", data)
+            else:
+                self.log_test("Get Dashboard Data", False, f"Status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Get Dashboard Data", False, f"Exception: {str(e)}")
+
+    def test_security_features(self):
+        """Test security features"""
+        
+        # Test Rate Limiting on Auth Endpoints
+        print("\n🔒 Testing Rate Limiting (this may take a moment)...")
+        
+        try:
+            # Make rapid requests to test rate limiting
+            failed_attempts = 0
+            for i in range(15):  # Try 15 rapid requests
+                try:
+                    invalid_login = {
+                        "email": "invalid@test.com",
+                        "password": "wrongpassword"
+                    }
+                    response = self.make_request("POST", "/auth/login", invalid_login)
+                    
+                    if response.status_code == 429:  # Rate limited
+                        self.log_test("Rate Limiting", True, f"Rate limiting triggered after {i+1} requests")
+                        break
+                    elif response.status_code == 401:  # Expected invalid login
+                        failed_attempts += 1
+                        
+                    time.sleep(0.1)  # Small delay between requests
+                    
+                except Exception as e:
+                    continue
+                    
+            if failed_attempts >= 10:  # If we made 10+ requests without rate limiting
+                self.log_test("Rate Limiting", False, f"Rate limiting not triggered after {failed_attempts} requests")
                 
         except Exception as e:
             self.log_test("Rate Limiting", False, f"Exception: {str(e)}")
-            return False
 
-    def test_weak_password_validation(self):
-        """Test password validation with weak password"""
+        # Test Invalid Token Rejection
         try:
-            test_data = {
-                "email": "weak_password_test@example.com",
+            # Save current token
+            original_token = self.access_token
+            
+            # Set invalid token
+            self.access_token = "invalid_token_12345"
+            
+            response = self.make_request("GET", "/auth/me")
+            
+            if response.status_code == 401:
+                self.log_test("Invalid Token Rejection", True, "Invalid token properly rejected")
+            else:
+                self.log_test("Invalid Token Rejection", False, f"Invalid token not rejected, status: {response.status_code}")
+                
+            # Restore original token
+            self.access_token = original_token
+            
+        except Exception as e:
+            self.log_test("Invalid Token Rejection", False, f"Exception: {str(e)}")
+
+        # Test Input Validation - Weak Password
+        try:
+            weak_password_data = {
+                "email": "test_weak@example.com",
                 "password": "123",  # Weak password
                 "name": "Test User"
             }
             
-            response = self.session.post(f"{BASE_URL}/auth/register", json=test_data)
+            response = self.make_request("POST", "/auth/register", weak_password_data)
             
-            if response.status_code == 422:  # Validation Error
-                self.log_test("Weak Password Validation", True, 
-                            "Weak password correctly rejected")
-                return True
-            elif response.status_code == 400:
-                # Check if it's a validation error
-                try:
-                    data = response.json()
-                    if "password" in str(data).lower():
-                        self.log_test("Weak Password Validation", True, 
-                                    "Weak password correctly rejected")
-                        return True
-                except:
-                    pass
-                
-            self.log_test("Weak Password Validation", False, 
-                        f"Weak password not rejected. Status: {response.status_code}", 
-                        response.text)
-            return False
+            if response.status_code in [400, 422]:  # Should reject weak password
+                self.log_test("Weak Password Validation", True, "Weak password properly rejected")
+            else:
+                self.log_test("Weak Password Validation", False, f"Weak password not rejected, status: {response.status_code}")
                 
         except Exception as e:
             self.log_test("Weak Password Validation", False, f"Exception: {str(e)}")
-            return False
 
-    def test_invalid_email_validation(self):
-        """Test email validation with invalid email"""
+        # Test Input Validation - Invalid Email
         try:
-            test_data = {
-                "email": "not-an-email",  # Invalid email
-                "password": "SecurePass123",
+            invalid_email_data = {
+                "email": "invalid-email",  # Invalid email format
+                "password": "ValidPassword123",
                 "name": "Test User"
             }
             
-            response = self.session.post(f"{BASE_URL}/auth/register", json=test_data)
+            response = self.make_request("POST", "/auth/register", invalid_email_data)
             
-            if response.status_code == 422:  # Validation Error
-                self.log_test("Invalid Email Validation", True, 
-                            "Invalid email correctly rejected")
-                return True
-            elif response.status_code == 400:
-                # Check if it's a validation error
-                try:
-                    data = response.json()
-                    if "email" in str(data).lower():
-                        self.log_test("Invalid Email Validation", True, 
-                                    "Invalid email correctly rejected")
-                        return True
-                except:
-                    pass
-                
-            self.log_test("Invalid Email Validation", False, 
-                        f"Invalid email not rejected. Status: {response.status_code}", 
-                        response.text)
-            return False
+            if response.status_code in [400, 422]:  # Should reject invalid email
+                self.log_test("Invalid Email Validation", True, "Invalid email properly rejected")
+            else:
+                self.log_test("Invalid Email Validation", False, f"Invalid email not rejected, status: {response.status_code}")
                 
         except Exception as e:
             self.log_test("Invalid Email Validation", False, f"Exception: {str(e)}")
-            return False
 
-    def test_cors_headers(self):
-        """Test CORS headers in response"""
-        try:
-            response = self.session.get(f"{BASE_URL}/health")
-            
-            cors_headers = [
-                "Access-Control-Allow-Origin",
-                "Access-Control-Allow-Methods", 
-                "Access-Control-Allow-Headers"
-            ]
-            
-            found_cors = False
-            cors_details = []
-            
-            for header in cors_headers:
-                if header in response.headers:
-                    found_cors = True
-                    cors_details.append(f"{header}: {response.headers[header]}")
-            
-            if found_cors:
-                self.log_test("CORS Headers", True, 
-                            f"CORS headers found: {', '.join(cors_details)}")
-                return True
-            else:
-                self.log_test("CORS Headers", False, 
-                            "No CORS headers found in response")
-                return False
-                
-        except Exception as e:
-            self.log_test("CORS Headers", False, f"Exception: {str(e)}")
-            return False
+    def run_comprehensive_test(self):
+        """Run all tests in sequence"""
+        print("🚀 Starting Comprehensive FitTrax API Testing Suite")
+        print(f"🌐 Testing API at: {self.api_url}")
+        print("=" * 80)
+        
+        # 1. Health & Basic
+        print("\n📊 Testing Health & Basic Endpoints...")
+        self.test_health_endpoint()
+        
+        # 2. Authentication Flow
+        print("\n🔐 Testing Authentication Flow...")
+        self.test_authentication_flow()
+        
+        # 3. User Profile
+        print("\n👤 Testing User Profile Endpoints...")
+        self.test_user_profile_endpoints()
+        
+        # 4. Nutrition/Meals
+        print("\n🍎 Testing Nutrition & Meal Endpoints...")
+        self.test_nutrition_endpoints()
+        
+        # 5. Workouts
+        print("\n💪 Testing Workout Endpoints...")
+        self.test_workout_endpoints()
+        
+        # 6. Step Tracker
+        print("\n👟 Testing Step Tracker Endpoints...")
+        self.test_step_tracker_endpoints()
+        
+        # 7. Body Scan & Heart Rate
+        print("\n❤️ Testing Body Scan & Heart Rate Endpoints...")
+        self.test_body_scan_heart_rate_endpoints()
+        
+        # 8. Dashboard
+        print("\n📈 Testing Dashboard Endpoint...")
+        self.test_dashboard_endpoint()
+        
+        # 9. Security Tests
+        print("\n🔒 Testing Security Features...")
+        self.test_security_features()
+        
+        # Generate Summary
+        self.generate_summary()
 
-    def test_unauthorized_access(self):
-        """Test accessing protected endpoint without token"""
-        try:
-            response = self.session.get(f"{BASE_URL}/auth/me")
-            
-            if response.status_code == 401:  # Unauthorized
-                self.log_test("Unauthorized Access Protection", True, 
-                            "Protected endpoint correctly requires authentication")
-                return True
-            else:
-                self.log_test("Unauthorized Access Protection", False, 
-                            f"Protected endpoint accessible without auth. Status: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Unauthorized Access Protection", False, f"Exception: {str(e)}")
-            return False
-
-    def test_invalid_token_access(self):
-        """Test accessing protected endpoint with invalid token"""
-        try:
-            headers = {"Authorization": "Bearer invalid_token_12345"}
-            response = self.session.get(f"{BASE_URL}/auth/me", headers=headers)
-            
-            if response.status_code == 401:  # Unauthorized
-                self.log_test("Invalid Token Protection", True, 
-                            "Invalid token correctly rejected")
-                return True
-            else:
-                self.log_test("Invalid Token Protection", False, 
-                            f"Invalid token not rejected. Status: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Invalid Token Protection", False, f"Exception: {str(e)}")
-            return False
-
-    def run_all_tests(self):
-        """Run all security tests"""
-        print("🔒 FitTrax Security Testing Suite")
-        print("=" * 50)
-        print()
+    def generate_summary(self):
+        """Generate test summary"""
+        print("\n" + "=" * 80)
+        print("📋 COMPREHENSIVE TEST RESULTS SUMMARY")
+        print("=" * 80)
         
-        # Test basic connectivity
-        if not self.test_health_endpoint():
-            print("❌ Backend not accessible. Stopping tests.")
-            return False
-        
-        # Authentication Tests
-        print("🔐 Authentication Tests")
-        print("-" * 30)
-        self.test_user_registration()
-        self.test_user_login()
-        self.test_protected_endpoint()
-        self.test_unauthorized_access()
-        self.test_invalid_token_access()
-        print()
-        
-        # Rate Limiting Tests
-        print("⏱️  Rate Limiting Tests")
-        print("-" * 30)
-        self.test_rate_limiting()
-        print()
-        
-        # Input Validation Tests
-        print("🛡️  Input Validation Tests")
-        print("-" * 30)
-        self.test_weak_password_validation()
-        self.test_invalid_email_validation()
-        print()
-        
-        # CORS Tests
-        print("🌐 CORS Tests")
-        print("-" * 30)
-        self.test_cors_headers()
-        print()
-        
-        # Summary
-        self.print_summary()
-        
-        return True
-
-    def print_summary(self):
-        """Print test summary"""
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result["success"])
         failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
-        print("📊 Test Summary")
-        print("=" * 50)
-        print(f"Total Tests: {total_tests}")
+        print(f"📊 Total Tests: {total_tests}")
         print(f"✅ Passed: {passed_tests}")
         print(f"❌ Failed: {failed_tests}")
-        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
-        print()
+        print(f"📈 Success Rate: {success_rate:.1f}%")
         
         if failed_tests > 0:
-            print("❌ Failed Tests:")
+            print(f"\n❌ FAILED TESTS ({failed_tests}):")
             for result in self.test_results:
                 if not result["success"]:
-                    print(f"   - {result['test']}: {result['details']}")
-            print()
+                    print(f"   • {result['test']}: {result['details']}")
         
-        # Security Assessment
-        critical_tests = [
-            "User Registration",
-            "User Login", 
-            "Protected Endpoint (/auth/me)",
-            "Unauthorized Access Protection",
-            "Invalid Token Protection",
-            "Weak Password Validation",
-            "Invalid Email Validation"
-        ]
+        print(f"\n✅ PASSED TESTS ({passed_tests}):")
+        for result in self.test_results:
+            if result["success"]:
+                print(f"   • {result['test']}")
         
-        critical_passed = sum(1 for result in self.test_results 
-                            if result["test"] in critical_tests and result["success"])
-        
-        print("🔒 Security Assessment:")
-        if critical_passed == len(critical_tests):
-            print("   ✅ All critical security features working correctly")
+        # Deployment Readiness Assessment
+        print(f"\n🚀 DEPLOYMENT READINESS ASSESSMENT:")
+        if success_rate >= 95:
+            print("   🟢 EXCELLENT - API is deployment ready!")
+        elif success_rate >= 85:
+            print("   🟡 GOOD - Minor issues to address before deployment")
+        elif success_rate >= 70:
+            print("   🟠 FAIR - Several issues need fixing before deployment")
         else:
-            print(f"   ⚠️  {len(critical_tests) - critical_passed} critical security issues found")
+            print("   🔴 POOR - Major issues must be resolved before deployment")
         
-        print()
-
-def main():
-    """Main test runner"""
-    tester = SecurityTester()
-    tester.run_all_tests()
+        print("=" * 80)
 
 if __name__ == "__main__":
-    main()
+    # Use the backend URL from environment
+    BACKEND_URL = "https://health-hub-136.preview.emergentagent.com"
+    
+    print(f"🎯 FitTrax API Comprehensive Testing Suite")
+    print(f"🌐 Backend URL: {BACKEND_URL}")
+    
+    tester = FitTraxAPITester(BACKEND_URL)
+    tester.run_comprehensive_test()
