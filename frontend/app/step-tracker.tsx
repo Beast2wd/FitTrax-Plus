@@ -221,8 +221,16 @@ export default function StepTrackerScreen() {
   // Check pedometer availability
   useEffect(() => {
     const checkPedometer = async () => {
-      const available = await Pedometer.isAvailableAsync();
-      setIsPedometerAvailable(available);
+      if (Platform.OS === 'web' || !Pedometer) {
+        setIsPedometerAvailable(false);
+        return;
+      }
+      try {
+        const available = await Pedometer.isAvailableAsync();
+        setIsPedometerAvailable(available);
+      } catch (e) {
+        setIsPedometerAvailable(false);
+      }
     };
     checkPedometer();
   }, []);
