@@ -138,4 +138,48 @@ export const dashboardAPI = {
   },
 };
 
+// Step Tracker API
+export const stepsAPI = {
+  saveSteps: async (data: { 
+    user_id: string; 
+    steps: number; 
+    date: string; 
+    source?: string;
+    calories_burned?: number;
+    distance_miles?: number;
+  }) => {
+    const response = await api.post('/steps', data);
+    return response.data;
+  },
+  getTodaySteps: async (userId: string) => {
+    const response = await api.get(`/steps/${userId}/today`);
+    return response.data;
+  },
+  getHistory: async (userId: string, days: number = 30) => {
+    const response = await api.get(`/steps/${userId}/history?days=${days}`);
+    return response.data;
+  },
+  getWeekly: async (userId: string) => {
+    const response = await api.get(`/steps/${userId}/weekly`);
+    return response.data;
+  },
+  getMonthly: async (userId: string) => {
+    const response = await api.get(`/steps/${userId}/monthly`);
+    return response.data;
+  },
+  saveSettings: async (data: {
+    user_id: string;
+    daily_goal: number;
+    tracking_enabled: boolean;
+    auto_sync_health: boolean;
+  }) => {
+    const response = await api.post('/steps/settings', data);
+    return response.data;
+  },
+  getSettings: async (userId: string) => {
+    const response = await api.get(`/steps/settings/${userId}`);
+    return response.data;
+  },
+};
+
 export default api;
