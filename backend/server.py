@@ -622,7 +622,6 @@ async def login(request: Request, credentials: UserLogin):
         raise HTTPException(status_code=500, detail="Login failed")
 
 @api_router.post("/auth/refresh", response_model=Token)
-@limiter.limit(RATE_LIMITS["auth"])
 async def refresh_token_endpoint(request: Request, refresh_token: str = Body(..., embed=True)):
     """Refresh access token"""
     try:
@@ -652,7 +651,6 @@ async def refresh_token_endpoint(request: Request, refresh_token: str = Body(...
         raise HTTPException(status_code=500, detail="Token refresh failed")
 
 @api_router.post("/auth/change-password")
-@limiter.limit(RATE_LIMITS["auth"])
 async def change_password(
     request: Request,
     password_data: PasswordChange,
@@ -763,7 +761,6 @@ async def get_profile(user_id: str):
 # ============================================================================
 
 @api_router.post("/analyze-food")
-@limiter.limit(RATE_LIMITS["ai"])
 async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
     """Analyze food image with AI and save meal"""
     try:
