@@ -422,8 +422,8 @@ class FitTraxAPITester:
             
             if response.status_code == 200:
                 data = response.json()
-                if "history" in data or "steps" in data:
-                    self.log_test("Get Steps History", True, f"Steps history retrieved", data)
+                if "entries" in data or "history" in data or "steps" in data:
+                    self.log_test("Get Steps History", True, f"Steps history retrieved with {len(data.get('entries', []))} entries", data)
                 else:
                     self.log_test("Get Steps History", False, f"Missing history data: {data}")
             else:
