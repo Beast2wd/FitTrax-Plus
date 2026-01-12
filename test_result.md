@@ -324,9 +324,9 @@ backend:
 frontend:
   - task: "Tab Navigation Setup"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/app/_layout.tsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -339,6 +339,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "FIXED: Navigation error resolved by fixing function hoisting issue in Dashboard component. App now loads successfully without red error screen. All 4 tabs (Dashboard, Plans, Scan, Profile) are visible and functional. Onboarding message displays correctly."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL REGRESSION: Comprehensive mobile testing (390x844) reveals navigation is broken again. After accepting Terms of Service, app remains stuck on TOS screen. No bottom tabs (Dashboard, Plans, Scan, Profile) are accessible. Navigation logic in _layout.tsx lines 41-69 is not working properly after TOS acceptance. App is completely unusable - users cannot access any functionality after TOS."
 
   - task: "User Profile Screen"
     implemented: true
@@ -360,9 +363,9 @@ frontend:
 
   - task: "Dashboard Screen"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/app/index.tsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -375,6 +378,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "FIXED: Resolved 'Cannot access loadDashboard before initialization' error by moving function definition before useEffect. Dashboard now shows proper onboarding message for new users: 'Welcome to FitTraxx!' with instruction to go to Profile tab. No more red error screen."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL: Dashboard is inaccessible due to navigation failure after TOS acceptance. Users cannot reach dashboard screen at all. Navigation routing in _layout.tsx is not properly transitioning from TOS to main app interface. Dashboard functionality cannot be tested until navigation is fixed."
 
   - task: "Workout Plans Browser"
     implemented: true
@@ -465,12 +471,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User Profile Screen"
-    - "Workout Plans Browser"
-    - "Food Scanning Screen"
-  stuck_tasks: []
+    - "Tab Navigation Setup"
+    - "Dashboard Screen"
+  stuck_tasks:
+    - "Tab Navigation Setup"
+    - "Dashboard Screen"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
   - agent: "main"
