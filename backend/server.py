@@ -26,7 +26,7 @@ from security import (
     create_access_token, create_refresh_token, decode_token,
     get_current_user, get_current_user_optional,
     sanitize_string, sanitize_search_query, validate_user_id, validate_base64_image,
-    AuditLog, get_client_ip, RATE_LIMITS
+    AuditLog, get_client_ip, check_rate_limit
 )
 
 # Load environment variables
