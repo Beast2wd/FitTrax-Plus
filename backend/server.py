@@ -782,8 +782,8 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
             protein=analysis.protein,
             carbs=analysis.carbs,
             fat=analysis.fat,
-            meal_category=request.meal_category,
-            image_base64=request.image_base64,
+            meal_category=meal_category,
+            image_base64=validated_image,
             timestamp=datetime.utcnow().isoformat()
         )
         
@@ -795,9 +795,11 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
             "analysis": analysis.dict()
         }
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in analyze_food: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to analyze food")
 
 # ============================================================================
 # MEALS ENDPOINTS
