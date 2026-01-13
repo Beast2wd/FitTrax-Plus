@@ -24,18 +24,37 @@ from security import (
     AuditLog, get_client_ip, check_rate_limit
 )
 
+# Production configuration imports
+from config import (
+    DatabaseConfig, SecurityConfig, CORSConfig, APIConfig,
+    log_startup_checks, AuditLogStorage,
+    HTTPSRedirectMiddleware, RequestSizeLimitMiddleware,
+    is_production
+)
+
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
-db_name = os.getenv('DB_NAME', 'fitness_tracker_db')
-client = AsyncIOMotorClient(mongo_url)
-db = client[db_name]
+# MongoDB connection with production settings
+client = AsyncIOMotorClient(
+    DatabaseConfig.MONGO_URL,
+    maxPoolSize=DatabaseConfig.MAX_POOL_SIZE,
+    minPoolSize=DatabaseConfig.MIN_POOL_SIZE
+)
+db = client[DatabaseConfig.DB_NAME]
 
-# Create the main app without a prefix
-app = FastAPI(title="FitTrax API", version="1.0")
+# Initialize audit log storage
+audit_storage = AuditLogStorage(db)
+
+# Create the main app
+app = FastAPI(
+    title="FitTrax API", 
+    version="2.0",
+    description="Fitness tracking API with AI-powered features",
+    docs_url="/api/docs" if not is_production() else None,  # Disable docs in production
+    redoc_url="/api/redoc" if not is_production() else None
+)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
