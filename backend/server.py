@@ -7211,26 +7211,77 @@ async def get_step_settings(user_id: str):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Allowed origins for CORS - restrict in production
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:8081",
-    "https://health-hub-136.preview.emergentagent.com",
-    # Add your production domain here
-]
-
-# Add CORS middleware with restricted origins
+# Add CORS middleware with configuration-based origins
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=CORSConfig.ALLOWED_ORIGINS + [
+        "https://health-hub-136.preview.emergentagent.com",  # Preview URL
+    ],
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
 )
 
+# Add request size limit middleware (10MB max)
+app.add_middleware(RequestSizeLimitMiddleware, max_size=10 * 1024 * 1024)
+
+# Add HTTPS redirect middleware (only enforces if ENFORCE_HTTPS=true)
+app.add_middleware(HTTPSRedirectMiddleware)
+
+@app.on_event("startup")
+async def startup_event():
+    """Run startup checks and initialize components"""
+    # Log configuration checks
+    log_startup_checks()
+    
+    # Setup audit log indexes
+    await audit_storage.setup_indexes()
+    
+    logger.info("FitTrax API started successfully")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    """Gracefully shutdown database connections"""
+    logger.info("Shutting down FitTrax API...")
     client.close()
+    logger.info("Database connection closed")
+
+# Production check endpoint (admin only)
+@api_router.get("/admin/health-check")
+async def admin_health_check():
+    """Detailed health check for production monitoring"""
+    from config import run_production_checks
+    
+    checks = run_production_checks()
+    
+    # Test database connection
+    try:
+        await db.command("ping")
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return {
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "timestamp": datetime.utcnow().isoformat(),
+        "database": db_status,
+        "environment": checks["environment"],
+        "config_issues": len(checks["issues"]),
+        "critical_issues": len(checks["critical"]),
+        "warnings": len(checks["warnings"])
+    }
+
+# Audit logs endpoint (admin only)
+@api_router.get("/admin/audit-logs")
+async def get_audit_logs(
+    user_id: Optional[str] = None,
+    action: Optional[str] = None,
+    limit: int = 100,
+    skip: int = 0
+):
+    """Retrieve audit logs"""
+    logs = await audit_storage.get_logs(user_id, action, limit, skip)
+    return {"logs": logs, "count": len(logs)}
 
 if __name__ == "__main__":
     import uvicorn
