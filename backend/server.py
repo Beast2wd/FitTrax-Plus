@@ -7205,6 +7205,45 @@ async def get_step_settings(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# ADMIN ENDPOINTS (Production Monitoring)
+# ============================================================================
+
+@api_router.get("/admin/health-check")
+async def admin_health_check():
+    """Detailed health check for production monitoring"""
+    from config import run_production_checks
+    
+    checks = run_production_checks()
+    
+    # Test database connection
+    try:
+        await db.command("ping")
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return {
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "timestamp": datetime.utcnow().isoformat(),
+        "database": db_status,
+        "environment": checks["environment"],
+        "config_issues": len(checks["issues"]),
+        "critical_issues": len(checks["critical"]),
+        "warnings": len(checks["warnings"])
+    }
+
+@api_router.get("/admin/audit-logs")
+async def get_audit_logs(
+    user_id: Optional[str] = None,
+    action: Optional[str] = None,
+    limit: int = 100,
+    skip: int = 0
+):
+    """Retrieve audit logs"""
+    logs = await audit_storage.get_logs(user_id, action, limit, skip)
+    return {"logs": logs, "count": len(logs)}
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
