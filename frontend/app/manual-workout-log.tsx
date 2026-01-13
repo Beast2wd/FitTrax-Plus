@@ -159,25 +159,37 @@ export default function ManualWorkoutLogScreen() {
     );
   };
 
+  // Get local date in YYYY-MM-DD format
+  const getLocalDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const completeWorkout = async () => {
     if (entries.length === 0) {
       Alert.alert('No Entries', 'Add some exercises before completing your workout.');
       return;
     }
 
+    const todayLocal = getLocalDate();
+    const todayDisplay = format(new Date(), 'MMMM d, yyyy');
+
     Alert.alert(
       'Complete Workout',
-      'This will sync all today\'s workout entries to your schedule calendar. Continue?',
+      `This will sync all workout entries to your calendar for ${todayDisplay}. Continue?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Complete',
           onPress: async () => {
             try {
-              // Sync workout to calendar
+              // Sync workout to calendar using LOCAL date
               const workoutSummary = {
                 user_id: userId,
-                workout_date: new Date().toISOString().split('T')[0],
+                workout_date: todayLocal,
                 exercises: entries.map(e => ({
                   name: e.exercise_name,
                   reps: e.reps,
@@ -191,7 +203,7 @@ export default function ManualWorkoutLogScreen() {
               
               Alert.alert(
                 'Workout Complete! 💪',
-                `Great job! ${entries.length} exercises have been synced to your schedule calendar.`,
+                `Great job! ${entries.length} exercises have been synced to your calendar for ${todayDisplay}.`,
                 [{ text: 'OK' }]
               );
               
