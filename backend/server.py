@@ -2269,8 +2269,8 @@ async def start_free_trial(request: SubscriptionCreate):
         
         trial_end = datetime.utcnow() + timedelta(days=3)
         
-        # Mock mode handling
-        if customer.get("mock_mode", False) or stripe.api_key == 'sk_test_placeholder':
+        # Use mock mode if Stripe is not configured
+        if customer.get("mock_mode", False) or not is_stripe_configured():
             subscription_id = f"sub_mock_{request.user_id}_{int(time.time())}"
             
             await db.subscriptions.insert_one({
@@ -2289,7 +2289,7 @@ async def start_free_trial(request: SubscriptionCreate):
                 "status": "trialing",
                 "trial_ends_at": trial_end.isoformat(),
                 "mock_mode": True,
-                "message": "3-day free trial started! Stripe integration pending."
+                "message": "3-day free trial started! Configure Stripe keys for real payments."
             }
         
         # Real Stripe subscription with trial
@@ -2323,6 +2323,8 @@ async def start_free_trial(request: SubscriptionCreate):
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error starting trial: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error starting trial: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
