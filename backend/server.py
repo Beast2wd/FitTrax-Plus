@@ -2541,7 +2541,60 @@ class CheckoutSessionRequest(BaseModel):
 async def create_checkout_session(request: CheckoutSessionRequest):
     """Create a Stripe Checkout Session for subscription"""
     try:
-        # Get or create price for $25/year subscription
+        # Check if Stripe is properly configured
+        if not is_stripe_configured():
+            # Mock mode - start trial directly without Stripe
+            logger.info("Stripe not configured - using mock mode for trial")
+            
+            trial_end = datetime.utcnow() + timedelta(days=3)
+            subscription_id = f"sub_mock_{request.user_id}_{int(time.time())}"
+            
+            # Create mock customer if needed
+            existing_customer = await db.membership_customers.find_one({"user_id": request.user_id})
+            if not existing_customer:
+                await db.membership_customers.insert_one({
+                    "user_id": request.user_id,
+                    "email": request.email,
+                    "stripe_customer_id": f"cus_mock_{request.user_id}",
+                    "mock_mode": True,
+                    "created_at": datetime.utcnow().isoformat()
+                })
+            
+            # Check existing subscription
+            existing_sub = await db.subscriptions.find_one({
+                "user_id": request.user_id,
+                "status": {"$in": ["trialing", "active"]}
+            })
+            
+            if existing_sub:
+                return {
+                    "mock_mode": True,
+                    "message": "You already have an active subscription or trial!",
+                    "subscription_id": existing_sub.get("subscription_id"),
+                    "status": existing_sub.get("status")
+                }
+            
+            # Create mock subscription
+            await db.subscriptions.insert_one({
+                "subscription_id": subscription_id,
+                "user_id": request.user_id,
+                "stripe_customer_id": f"cus_mock_{request.user_id}",
+                "status": "trialing",
+                "trial_start": datetime.utcnow().isoformat(),
+                "trial_end": trial_end.isoformat(),
+                "mock_mode": True,
+                "created_at": datetime.utcnow().isoformat()
+            })
+            
+            return {
+                "mock_mode": True,
+                "subscription_id": subscription_id,
+                "status": "trialing",
+                "trial_ends_at": trial_end.isoformat(),
+                "message": "🎉 3-day free trial started! Configure Stripe keys for real payments."
+            }
+        
+        # Real Stripe checkout session
         price_id = os.getenv('STRIPE_PRICE_ID')
         
         # If no price ID configured, create one dynamically
