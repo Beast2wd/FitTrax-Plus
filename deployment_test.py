@@ -250,7 +250,7 @@ class FitTraxDeploymentTester:
         self.generate_summary()
 
 if __name__ == "__main__":
-    BACKEND_URL = "https://health-hub-136.preview.emergentagent.com"
+    BACKEND_URL = "https://health-hub-prod.preview.emergentagent.com"
     
     tester = FitTraxDeploymentTester(BACKEND_URL)
     tester.run_deployment_test()

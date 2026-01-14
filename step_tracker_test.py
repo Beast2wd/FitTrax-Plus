@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import sys
 
 # Backend URL from environment
-BACKEND_URL = "https://health-hub-136.preview.emergentagent.com/api"
+BACKEND_URL = "https://health-hub-prod.preview.emergentagent.com/api"
 
 def test_health_endpoint():
     """Test health check endpoint"""

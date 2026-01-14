@@ -10,7 +10,7 @@ import base64
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://health-hub-136.preview.emergentagent.com/api"
+BASE_URL = "https://health-hub-prod.preview.emergentagent.com/api"
 TEST_USER_ID = "food_scanner_real_test"
 
 # Create a simple food-like image (red square that might be interpreted as food)
