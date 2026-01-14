@@ -2129,8 +2129,22 @@ import stripe
 import time
 
 # Initialize Stripe with test key
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY', 'sk_test_placeholder')
-STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', 'price_placeholder')
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', '')
+
+# Helper function to check if Stripe is properly configured
+def is_stripe_configured() -> bool:
+    """Check if Stripe API key is valid and configured"""
+    key = stripe.api_key
+    if not key:
+        return False
+    if 'REPLACE' in key or 'placeholder' in key.lower():
+        return False
+    if not (key.startswith('sk_test_') or key.startswith('sk_live_')):
+        return False
+    if len(key) < 30:  # Valid Stripe keys are much longer
+        return False
+    return True
 
 # Membership Models
 class MembershipCustomerCreate(BaseModel):
