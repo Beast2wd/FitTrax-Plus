@@ -184,6 +184,22 @@ export const stepsAPI = {
     const response = await api.get(`/steps/settings/${userId}`);
     return response.data;
   },
+  deleteDaily: async (userId: string) => {
+    const response = await api.delete(`/steps/${userId}/history/daily`);
+    return response.data;
+  },
+  deleteWeekly: async (userId: string) => {
+    const response = await api.delete(`/steps/${userId}/history/weekly`);
+    return response.data;
+  },
+  deleteMonthly: async (userId: string) => {
+    const response = await api.delete(`/steps/${userId}/history/monthly`);
+    return response.data;
+  },
+  deleteAll: async (userId: string) => {
+    const response = await api.delete(`/steps/${userId}/history/all`);
+    return response.data;
+  },
 };
 
 export default api;
