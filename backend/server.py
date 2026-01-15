@@ -7356,6 +7356,84 @@ async def get_step_settings(user_id: str):
         logger.error(f"Error getting step settings: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.delete("/steps/{user_id}/history/daily")
+async def delete_daily_step_history(user_id: str):
+    """Delete today's step data for a user"""
+    try:
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        result = await db.step_data.delete_many({
+            "user_id": user_id,
+            "date": today
+        })
+        logger.info(f"Deleted {result.deleted_count} daily step records for user {user_id}")
+        return {
+            "message": "Daily step history deleted",
+            "deleted_count": result.deleted_count
+        }
+    except Exception as e:
+        logger.error(f"Error deleting daily step history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/steps/{user_id}/history/weekly")
+async def delete_weekly_step_history(user_id: str):
+    """Delete this week's step data for a user"""
+    try:
+        today = datetime.utcnow()
+        # Get start of week (Monday)
+        start_of_week = today - timedelta(days=today.weekday())
+        start_date = start_of_week.strftime("%Y-%m-%d")
+        end_date = today.strftime("%Y-%m-%d")
+        
+        result = await db.step_data.delete_many({
+            "user_id": user_id,
+            "date": {"$gte": start_date, "$lte": end_date}
+        })
+        logger.info(f"Deleted {result.deleted_count} weekly step records for user {user_id}")
+        return {
+            "message": "Weekly step history deleted",
+            "deleted_count": result.deleted_count,
+            "period": f"{start_date} to {end_date}"
+        }
+    except Exception as e:
+        logger.error(f"Error deleting weekly step history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/steps/{user_id}/history/monthly")
+async def delete_monthly_step_history(user_id: str):
+    """Delete this month's step data for a user"""
+    try:
+        today = datetime.utcnow()
+        start_of_month = today.replace(day=1).strftime("%Y-%m-%d")
+        end_date = today.strftime("%Y-%m-%d")
+        
+        result = await db.step_data.delete_many({
+            "user_id": user_id,
+            "date": {"$gte": start_of_month, "$lte": end_date}
+        })
+        logger.info(f"Deleted {result.deleted_count} monthly step records for user {user_id}")
+        return {
+            "message": "Monthly step history deleted",
+            "deleted_count": result.deleted_count,
+            "period": f"{start_of_month} to {end_date}"
+        }
+    except Exception as e:
+        logger.error(f"Error deleting monthly step history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/steps/{user_id}/history/all")
+async def delete_all_step_history(user_id: str):
+    """Delete all step data for a user"""
+    try:
+        result = await db.step_data.delete_many({"user_id": user_id})
+        logger.info(f"Deleted {result.deleted_count} total step records for user {user_id}")
+        return {
+            "message": "All step history deleted",
+            "deleted_count": result.deleted_count
+        }
+    except Exception as e:
+        logger.error(f"Error deleting all step history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # ADMIN ENDPOINTS (Production Monitoring)
 # ============================================================================
