@@ -132,6 +132,35 @@ export default function BadgesScreen() {
     );
   };
 
+  const handleResetChallenges = () => {
+    Alert.alert(
+      'Reset All Challenges',
+      'Are you sure you want to reset all challenge progress? This will clear your daily and weekly challenge progress but keep your badges. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset Challenges',
+          style: 'destructive',
+          onPress: async () => {
+            if (!userId) return;
+            
+            setResettingChallenges(true);
+            try {
+              await axios.delete(`${API_URL}/api/challenges/reset/${userId}`);
+              Alert.alert('Success', 'All challenges have been reset. Complete them again to earn rewards!');
+              loadData();
+            } catch (error) {
+              console.error('Error resetting challenges:', error);
+              Alert.alert('Error', 'Failed to reset challenges. Please try again.');
+            } finally {
+              setResettingChallenges(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getCategoryColor = (category: string) => {
     const colors: any = {
       starter: '#10B981',
