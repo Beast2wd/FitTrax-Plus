@@ -236,7 +236,7 @@ export default function DashboardScreen() {
             return updated;
           });
 
-          setLastPosition(prev => {
+          setLastPosition((prev: { latitude: number; longitude: number } | null) => {
             if (prev) {
               const dist = calculateDistance(prev.latitude, prev.longitude, latitude, longitude);
               if (dist < 0.5) { // Filter out GPS jumps > 0.5 miles
