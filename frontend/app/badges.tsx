@@ -1120,4 +1120,32 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#6B7280',
   },
+  resetSection: {
+    marginTop: 32,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
+    alignItems: 'center',
+  },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+  },
+  resetButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#EF4444',
+  },
+  resetHint: {
+    fontSize: 12,
+    color: Colors.text.muted,
+    marginTop: 8,
+  },
 });
