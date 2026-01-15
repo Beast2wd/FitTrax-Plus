@@ -458,7 +458,7 @@ export default function StepTrackerScreen() {
               Alert.alert('Success', `${result.deleted_count} step record(s) deleted`);
               
               // Refresh data
-              loadHistoryData();
+              loadHistory();
               if (period === 'daily' || period === 'all') {
                 setTodaysSteps(0);
                 setPedometerSteps(0);
