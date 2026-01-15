@@ -418,6 +418,63 @@ export default function StepTrackerScreen() {
     }
   };
 
+  const handleDeleteHistory = (period: 'daily' | 'weekly' | 'monthly' | 'all') => {
+    const periodLabels = {
+      daily: "today's",
+      weekly: "this week's",
+      monthly: "this month's",
+      all: "all"
+    };
+    
+    Alert.alert(
+      'Delete Step History',
+      `Are you sure you want to delete ${periodLabels[period]} step data? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!userId) return;
+            
+            setDeletingHistory(true);
+            try {
+              let result;
+              switch (period) {
+                case 'daily':
+                  result = await stepsAPI.deleteDaily(userId);
+                  break;
+                case 'weekly':
+                  result = await stepsAPI.deleteWeekly(userId);
+                  break;
+                case 'monthly':
+                  result = await stepsAPI.deleteMonthly(userId);
+                  break;
+                case 'all':
+                  result = await stepsAPI.deleteAll(userId);
+                  break;
+              }
+              
+              Alert.alert('Success', `${result.deleted_count} step record(s) deleted`);
+              
+              // Refresh data
+              loadHistoryData();
+              if (period === 'daily' || period === 'all') {
+                setTodaysSteps(0);
+                setPedometerSteps(0);
+              }
+            } catch (error) {
+              console.error('Error deleting history:', error);
+              Alert.alert('Error', 'Failed to delete step history');
+            } finally {
+              setDeletingHistory(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // Calculate metrics
   const currentSteps = Math.max(todaysSteps, pedometerSteps);
   const ringProgress = settings.daily_goal > 0 ? currentSteps / settings.daily_goal : 0;
