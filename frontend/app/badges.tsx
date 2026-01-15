@@ -102,6 +102,35 @@ export default function BadgesScreen() {
     }
   };
 
+  const handleResetRewards = () => {
+    Alert.alert(
+      'Reset All Rewards',
+      'Are you sure you want to reset all your rewards? This will delete all badges, challenge completions, and points. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset Everything',
+          style: 'destructive',
+          onPress: async () => {
+            if (!userId) return;
+            
+            setResettingRewards(true);
+            try {
+              await axios.delete(`${API_URL}/api/gamification/reset/${userId}`);
+              Alert.alert('Success', 'All rewards have been reset. Start fresh and earn them again!');
+              loadData();
+            } catch (error) {
+              console.error('Error resetting rewards:', error);
+              Alert.alert('Error', 'Failed to reset rewards. Please try again.');
+            } finally {
+              setResettingRewards(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getCategoryColor = (category: string) => {
     const colors: any = {
       starter: '#10B981',
