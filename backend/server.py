@@ -11,6 +11,7 @@ import os
 import logging
 import base64
 import re
+import certifi
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
 
