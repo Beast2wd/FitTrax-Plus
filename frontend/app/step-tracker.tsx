@@ -426,9 +426,13 @@ export default function StepTrackerScreen() {
       all: "all"
     };
     
+    const additionalNote = period === 'daily' || period === 'all' 
+      ? "\n\nThis will also reset your current step counter display."
+      : "";
+    
     Alert.alert(
       'Delete Step History',
-      `Are you sure you want to delete ${periodLabels[period]} step data? This action cannot be undone.`,
+      `Are you sure you want to delete ${periodLabels[period]} step data?${additionalNote}\n\nThis action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -443,29 +447,41 @@ export default function StepTrackerScreen() {
               switch (period) {
                 case 'daily':
                   result = await stepsAPI.deleteDaily(userId);
+                  // Reset today's counter
+                  setTodaysSteps(0);
+                  setPedometerSteps(0);
                   break;
                 case 'weekly':
                   result = await stepsAPI.deleteWeekly(userId);
+                  // Also reset today if deleting weekly
+                  setTodaysSteps(0);
+                  setPedometerSteps(0);
                   break;
                 case 'monthly':
                   result = await stepsAPI.deleteMonthly(userId);
+                  // Also reset today if deleting monthly
+                  setTodaysSteps(0);
+                  setPedometerSteps(0);
                   break;
                 case 'all':
                   result = await stepsAPI.deleteAll(userId);
+                  setTodaysSteps(0);
+                  setPedometerSteps(0);
                   break;
               }
               
-              Alert.alert('Success', `${result.deleted_count} step record(s) deleted`);
-              
-              // Refresh data
+              // Refresh history data
               loadHistory();
-              if (period === 'daily' || period === 'all') {
-                setTodaysSteps(0);
-                setPedometerSteps(0);
-              }
+              
+              const deletedMsg = result.deleted_count > 0 
+                ? `${result.deleted_count} step record(s) deleted from database.`
+                : "No saved records found in database.";
+              
+              Alert.alert('Success', `${deletedMsg}\n\nStep counter has been reset.`);
+              
             } catch (error) {
               console.error('Error deleting history:', error);
-              Alert.alert('Error', 'Failed to delete step history');
+              Alert.alert('Error', 'Failed to delete step history. Please try again.');
             } finally {
               setDeletingHistory(false);
             }
