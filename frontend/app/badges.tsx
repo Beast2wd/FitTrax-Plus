@@ -356,6 +356,25 @@ export default function BadgesScreen() {
                 </View>
               ))}
             </View>
+
+            {/* Reset Rewards Button */}
+            <View style={styles.resetSection}>
+              <TouchableOpacity 
+                style={styles.resetButton}
+                onPress={handleResetRewards}
+                disabled={resettingRewards}
+              >
+                {resettingRewards ? (
+                  <ActivityIndicator size="small" color="#EF4444" />
+                ) : (
+                  <>
+                    <Ionicons name="refresh-circle-outline" size={20} color="#EF4444" />
+                    <Text style={styles.resetButtonText}>Reset All Rewards</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.resetHint}>Start fresh and earn all badges again</Text>
+            </View>
           </>
         )}
 
