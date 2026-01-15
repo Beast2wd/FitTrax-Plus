@@ -89,6 +89,85 @@ export default function HydrationScreen() {
     loadWaterData();
   };
 
+  const deleteWaterEntry = async (waterId: string, amount: number) => {
+    Alert.alert(
+      'Delete Entry',
+      `Delete this ${amount}oz water entry?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await waterAPI.deleteWater(waterId);
+              loadWaterData();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete water entry');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Swipeable Entry Component
+  const SwipeableEntry = ({ entry, index }: { entry: WaterEntry; index: number }) => {
+    const translateX = useRef(new Animated.Value(0)).current;
+    const deleteThreshold = -80;
+
+    const panResponder = useRef(
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+        },
+        onPanResponderMove: (_, gestureState) => {
+          if (gestureState.dx < 0) {
+            translateX.setValue(Math.max(gestureState.dx, -100));
+          }
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dx < deleteThreshold) {
+            // Show delete confirmation
+            deleteWaterEntry(entry.water_id, entry.amount);
+            Animated.spring(translateX, {
+              toValue: 0,
+              useNativeDriver: true,
+            }).start();
+          } else {
+            Animated.spring(translateX, {
+              toValue: 0,
+              useNativeDriver: true,
+            }).start();
+          }
+        },
+      })
+    ).current;
+
+    return (
+      <View style={styles.swipeableContainer}>
+        {/* Delete background */}
+        <View style={styles.deleteBackground}>
+          <Ionicons name="trash-outline" size={20} color="#fff" />
+          <Text style={styles.deleteText}>Delete</Text>
+        </View>
+        
+        {/* Swipeable entry */}
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.entryChip,
+            { transform: [{ translateX }] },
+          ]}
+        >
+          <Text style={styles.entryChipText}>
+            {format(new Date(entry.timestamp), 'h:mm a')} • {entry.amount}oz
+          </Text>
+        </Animated.View>
+      </View>
+    );
+  };
+
   // Group water entries by day
   const dailyLogs = useMemo((): DailyWater[] => {
     const grouped: { [key: string]: WaterEntry[] } = {};
