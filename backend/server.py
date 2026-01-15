@@ -5461,6 +5461,41 @@ async def get_recent_achievements(user_id: str, limit: int = 10):
         logger.error(f"Error getting achievements: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.delete("/gamification/reset/{user_id}")
+async def reset_user_rewards(user_id: str):
+    """Reset all rewards and gamification data for a user"""
+    try:
+        # Delete user badges
+        badges_result = await db.user_badges.delete_many({"user_id": user_id})
+        
+        # Delete challenge completions
+        challenges_result = await db.challenge_completions.delete_many({"user_id": user_id})
+        
+        # Delete daily challenge progress
+        daily_result = await db.daily_challenge_progress.delete_many({"user_id": user_id})
+        
+        # Delete weekly challenge progress
+        weekly_result = await db.weekly_challenge_progress.delete_many({"user_id": user_id})
+        
+        # Delete gamification/points data if exists
+        points_result = await db.gamification.delete_many({"user_id": user_id})
+        
+        logger.info(f"Reset rewards for user {user_id}: {badges_result.deleted_count} badges, {challenges_result.deleted_count} challenge completions deleted")
+        
+        return {
+            "message": "All rewards reset successfully",
+            "deleted": {
+                "badges": badges_result.deleted_count,
+                "challenge_completions": challenges_result.deleted_count,
+                "daily_progress": daily_result.deleted_count,
+                "weekly_progress": weekly_result.deleted_count,
+                "points_data": points_result.deleted_count
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error resetting rewards: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # HEALTH SYNC ENDPOINTS (Apple Health / Google Health Connect)
 # ============================================================================
