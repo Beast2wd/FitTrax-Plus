@@ -36,6 +36,7 @@ export default function BadgesScreen() {
   const [weeklyChallenges, setWeeklyChallenges] = useState<any>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [checkingBadges, setCheckingBadges] = useState(false);
+  const [resettingRewards, setResettingRewards] = useState(false);
   
   // Modal
   const [selectedBadge, setSelectedBadge] = useState<any>(null);
