@@ -41,7 +41,8 @@ load_dotenv(ROOT_DIR / '.env')
 client = AsyncIOMotorClient(
     DatabaseConfig.MONGO_URL,
     maxPoolSize=DatabaseConfig.MAX_POOL_SIZE,
-    minPoolSize=DatabaseConfig.MIN_POOL_SIZE
+    minPoolSize=DatabaseConfig.MIN_POOL_SIZE,
+    tlsCAFile=certifi.where()
 )
 db = client[DatabaseConfig.DB_NAME]
 
