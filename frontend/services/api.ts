@@ -81,6 +81,10 @@ export const waterAPI = {
     const response = await api.get(`/water/${userId}?days=${days}`);
     return response.data;
   },
+  deleteWater: async (waterId: string) => {
+    const response = await api.delete(`/water/${waterId}`);
+    return response.data;
+  },
 };
 
 // Heart Rate APIs
