@@ -208,6 +208,7 @@ export default function StepTrackerScreen() {
   const [weeklyHistory, setWeeklyHistory] = useState<any[]>([]);
   const [monthlyHistory, setMonthlyHistory] = useState<any[]>([]);
   const [historySummary, setHistorySummary] = useState<any>(null);
+  const [deletingHistory, setDeletingHistory] = useState(false);
 
   // User profile data for calculations
   const weight = profile?.weight || 150;
