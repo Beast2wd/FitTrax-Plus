@@ -1399,6 +1399,14 @@ async def add_water(water: WaterIntakeCreate):
     await db.water_intake.insert_one(water.dict())
     return {"message": "Water intake added successfully", "water": water.dict()}
 
+@api_router.delete("/water/{water_id}")
+async def delete_water(water_id: str):
+    """Delete a water intake entry"""
+    result = await db.water_intake.delete_one({"water_id": water_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Water entry not found")
+    return {"message": "Water entry deleted successfully", "water_id": water_id}
+
 @api_router.get("/water/{user_id}")
 async def get_water_intake(user_id: str, days: int = 7):
     """Get user's water intake"""
