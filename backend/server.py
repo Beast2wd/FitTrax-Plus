@@ -5471,6 +5471,9 @@ async def reset_user_rewards(user_id: str):
         # Delete challenge completions
         challenges_result = await db.challenge_completions.delete_many({"user_id": user_id})
         
+        # Delete user challenges progress
+        user_challenges_result = await db.user_challenges.delete_many({"user_id": user_id})
+        
         # Delete daily challenge progress
         daily_result = await db.daily_challenge_progress.delete_many({"user_id": user_id})
         
@@ -5480,13 +5483,14 @@ async def reset_user_rewards(user_id: str):
         # Delete gamification/points data if exists
         points_result = await db.gamification.delete_many({"user_id": user_id})
         
-        logger.info(f"Reset rewards for user {user_id}: {badges_result.deleted_count} badges, {challenges_result.deleted_count} challenge completions deleted")
+        logger.info(f"Reset rewards for user {user_id}: {badges_result.deleted_count} badges, {challenges_result.deleted_count} challenge completions, {user_challenges_result.deleted_count} user challenges deleted")
         
         return {
-            "message": "All rewards reset successfully",
+            "message": "All rewards and challenges reset successfully",
             "deleted": {
                 "badges": badges_result.deleted_count,
                 "challenge_completions": challenges_result.deleted_count,
+                "user_challenges": user_challenges_result.deleted_count,
                 "daily_progress": daily_result.deleted_count,
                 "weekly_progress": weekly_result.deleted_count,
                 "points_data": points_result.deleted_count
@@ -5494,6 +5498,37 @@ async def reset_user_rewards(user_id: str):
         }
     except Exception as e:
         logger.error(f"Error resetting rewards: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/challenges/reset/{user_id}")
+async def reset_user_challenges(user_id: str):
+    """Reset only challenge progress for a user (keeps badges)"""
+    try:
+        # Delete user challenges progress
+        user_challenges_result = await db.user_challenges.delete_many({"user_id": user_id})
+        
+        # Delete challenge completions
+        challenges_result = await db.challenge_completions.delete_many({"user_id": user_id})
+        
+        # Delete daily challenge progress
+        daily_result = await db.daily_challenge_progress.delete_many({"user_id": user_id})
+        
+        # Delete weekly challenge progress
+        weekly_result = await db.weekly_challenge_progress.delete_many({"user_id": user_id})
+        
+        logger.info(f"Reset challenges for user {user_id}: {user_challenges_result.deleted_count} user challenges, {challenges_result.deleted_count} completions deleted")
+        
+        return {
+            "message": "All challenges reset successfully",
+            "deleted": {
+                "user_challenges": user_challenges_result.deleted_count,
+                "challenge_completions": challenges_result.deleted_count,
+                "daily_progress": daily_result.deleted_count,
+                "weekly_progress": weekly_result.deleted_count
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error resetting challenges: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
