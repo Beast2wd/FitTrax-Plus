@@ -576,6 +576,25 @@ export default function BadgesScreen() {
                 </View>
               ))}
             </View>
+
+            {/* Reset Challenges Button */}
+            <View style={styles.resetSection}>
+              <TouchableOpacity 
+                style={styles.resetButton}
+                onPress={handleResetChallenges}
+                disabled={resettingChallenges}
+              >
+                {resettingChallenges ? (
+                  <ActivityIndicator size="small" color="#EF4444" />
+                ) : (
+                  <>
+                    <Ionicons name="refresh-circle-outline" size={20} color="#EF4444" />
+                    <Text style={styles.resetButtonText}>Reset All Challenges</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.resetHint}>Clear progress and complete challenges again (keeps badges)</Text>
+            </View>
           </>
         )}
 
