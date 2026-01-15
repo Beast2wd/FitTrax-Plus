@@ -732,6 +732,53 @@ export default function StepTrackerScreen() {
                 </View>
               </View>
             )}
+
+            {/* Delete History Options */}
+            <View style={styles.deleteHistorySection}>
+              <Text style={[styles.deleteHistoryTitle, { color: colors.text.secondary }]}>
+                Delete Step History
+              </Text>
+              <View style={styles.deleteButtonsRow}>
+                <TouchableOpacity
+                  style={[styles.deleteButton, { borderColor: '#FEE2E2' }]}
+                  onPress={() => handleDeleteHistory('daily')}
+                  disabled={deletingHistory}
+                >
+                  <Ionicons name="today-outline" size={16} color="#EF4444" />
+                  <Text style={styles.deleteButtonText}>Today</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.deleteButton, { borderColor: '#FEE2E2' }]}
+                  onPress={() => handleDeleteHistory('weekly')}
+                  disabled={deletingHistory}
+                >
+                  <Ionicons name="calendar-outline" size={16} color="#EF4444" />
+                  <Text style={styles.deleteButtonText}>Week</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.deleteButton, { borderColor: '#FEE2E2' }]}
+                  onPress={() => handleDeleteHistory('monthly')}
+                  disabled={deletingHistory}
+                >
+                  <Ionicons name="calendar" size={16} color="#EF4444" />
+                  <Text style={styles.deleteButtonText}>Month</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.deleteButton, styles.deleteAllButton]}
+                  onPress={() => handleDeleteHistory('all')}
+                  disabled={deletingHistory}
+                >
+                  {deletingHistory ? (
+                    <ActivityIndicator size="small" color="#EF4444" />
+                  ) : (
+                    <>
+                      <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                      <Text style={styles.deleteButtonText}>All</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           {/* Health Integration Card */}
