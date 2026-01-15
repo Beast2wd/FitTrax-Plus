@@ -1452,10 +1452,13 @@ async def get_heart_rate(user_id: str, days: int = 7):
 async def get_heart_rate_zones(user_id: str):
     """Get heart rate zones for user"""
     profile = await db.users.find_one({"user_id": user_id})
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
     
-    zones = calculate_heart_rate_zones(profile['age'])
+    # Use default age of 30 if profile doesn't exist or age not set
+    age = 30  # Default age
+    if profile and 'age' in profile and profile['age']:
+        age = profile['age']
+    
+    zones = calculate_heart_rate_zones(age)
     return zones
 
 @api_router.delete("/heart-rate/{heart_rate_id}")
