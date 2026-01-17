@@ -7565,6 +7565,39 @@ async def startup_event():
     # Setup audit log indexes
     await audit_storage.setup_indexes()
     
+    # Create database indexes for multi-user performance
+    try:
+        # User-related indexes
+        await db.users.create_index("user_id", unique=True, background=True)
+        await db.users.create_index("email", unique=True, sparse=True, background=True)
+        
+        # Meals - for quick user lookups
+        await db.meals.create_index([("user_id", 1), ("date", -1)], background=True)
+        
+        # Workouts - for user workout history
+        await db.workouts.create_index([("user_id", 1), ("date", -1)], background=True)
+        
+        # Water intake - for daily/weekly tracking
+        await db.water_intake.create_index([("user_id", 1), ("date", -1)], background=True)
+        await db.water_intake.create_index("water_id", background=True)
+        
+        # Heart rate - for health data queries
+        await db.heart_rate.create_index([("user_id", 1), ("timestamp", -1)], background=True)
+        
+        # Step tracking - for daily/weekly/monthly queries
+        await db.step_data.create_index([("user_id", 1), ("date", -1)], background=True)
+        
+        # Gamification - for badges and challenges
+        await db.user_badges.create_index([("user_id", 1), ("badge_id", 1)], background=True)
+        await db.challenge_completions.create_index([("user_id", 1), ("challenge_id", 1)], background=True)
+        
+        # Weight training - for workout history
+        await db.weight_training_sessions.create_index([("user_id", 1), ("date", -1)], background=True)
+        
+        logger.info("Database indexes created/verified successfully")
+    except Exception as e:
+        logger.warning(f"Error creating indexes (may already exist): {str(e)}")
+    
     logger.info("FitTrax API started successfully")
 
 @app.on_event("shutdown")
