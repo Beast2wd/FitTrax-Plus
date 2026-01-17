@@ -37,12 +37,20 @@ from config import (
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection with production settings
+# MongoDB connection with production settings and multi-user support
 client = AsyncIOMotorClient(
     DatabaseConfig.MONGO_URL,
     maxPoolSize=DatabaseConfig.MAX_POOL_SIZE,
     minPoolSize=DatabaseConfig.MIN_POOL_SIZE,
-    tlsCAFile=certifi.where()
+    tlsCAFile=certifi.where(),
+    # Connection settings for stability
+    serverSelectionTimeoutMS=30000,  # 30 seconds to find a server
+    connectTimeoutMS=20000,          # 20 seconds to establish connection
+    socketTimeoutMS=60000,           # 60 seconds for socket operations
+    retryWrites=True,                # Auto-retry write operations
+    retryReads=True,                 # Auto-retry read operations
+    maxIdleTimeMS=45000,             # Close idle connections after 45s
+    waitQueueTimeoutMS=10000,        # Wait up to 10s for connection from pool
 )
 db = client[DatabaseConfig.DB_NAME]
 
