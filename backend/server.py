@@ -77,6 +77,57 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ============================================================================
+# GLOBAL EXCEPTION HANDLERS (Multi-user stability)
+# ============================================================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Handle all unhandled exceptions gracefully"""
+    logger.error(f"Unhandled exception for {request.url.path}: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "An internal error occurred. Please try again.",
+            "error_type": type(exc).__name__
+        }
+    )
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
+
+# Middleware for request tracking and timeout
+from starlette.middleware.base import BaseHTTPMiddleware
+import asyncio
+
+class RequestTimeoutMiddleware(BaseHTTPMiddleware):
+    """Middleware to handle request timeouts and prevent hanging connections"""
+    
+    async def dispatch(self, request: Request, call_next):
+        try:
+            # Set a 60-second timeout for all requests
+            response = await asyncio.wait_for(call_next(request), timeout=60.0)
+            return response
+        except asyncio.TimeoutError:
+            logger.warning(f"Request timeout for {request.url.path}")
+            return JSONResponse(
+                status_code=504,
+                content={"detail": "Request timeout. Please try again."}
+            )
+        except Exception as e:
+            logger.error(f"Request error for {request.url.path}: {str(e)}")
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "An error occurred processing your request."}
+            )
+
+app.add_middleware(RequestTimeoutMiddleware)
+
+# ============================================================================
 # PYDANTIC MODELS
 # ============================================================================
 
