@@ -492,13 +492,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Tab Navigation Setup"
-    - "Dashboard Screen"
-  stuck_tasks:
-    - "Tab Navigation Setup"
-    - "Dashboard Screen"
-  test_all: false
-  test_priority: "stuck_first"
+    - "Hydration Section"
+    - "Step Tracker"
+    - "Food Scanner"
+    - "Workouts"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
