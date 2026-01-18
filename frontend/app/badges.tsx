@@ -401,12 +401,12 @@ export default function BadgesScreen() {
                   <ActivityIndicator size="small" color="#EF4444" />
                 ) : (
                   <>
-                    <Ionicons name="refresh-circle-outline" size={20} color="#EF4444" />
-                    <Text style={styles.resetButtonText}>Reset All Rewards</Text>
+                    <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                    <Text style={styles.resetButtonText}>Reset All Badges & Rewards</Text>
                   </>
                 )}
               </TouchableOpacity>
-              <Text style={styles.resetHint}>Start fresh and earn all badges again</Text>
+              <Text style={styles.resetHint}>⚠️ This will delete ALL badges, points & progress</Text>
             </View>
           </>
         )}
