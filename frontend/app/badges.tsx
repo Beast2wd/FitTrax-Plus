@@ -105,12 +105,12 @@ export default function BadgesScreen() {
 
   const handleResetRewards = () => {
     Alert.alert(
-      'Reset All Rewards',
-      'Are you sure you want to reset all your rewards? This will delete all badges, challenge completions, and points. This action cannot be undone.',
+      '⚠️ Reset All Rewards & Badges',
+      'WARNING: This will permanently delete:\n\n• All earned BADGES\n• All challenge completions\n• All points and progress\n• Your leaderboard position\n\nYou will start completely fresh. This action CANNOT be undone.\n\nAre you sure you want to reset everything?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Reset Everything',
+          text: 'Yes, Reset Everything',
           style: 'destructive',
           onPress: async () => {
             if (!userId) return;
@@ -118,7 +118,10 @@ export default function BadgesScreen() {
             setResettingRewards(true);
             try {
               await axios.delete(`${API_URL}/api/gamification/reset/${userId}`);
-              Alert.alert('Success', 'All rewards have been reset. Start fresh and earn them again!');
+              Alert.alert(
+                '✅ Reset Complete', 
+                'All rewards and badges have been reset.\n\nYour fitness journey starts fresh - go earn those badges again!'
+              );
               loadData();
             } catch (error) {
               console.error('Error resetting rewards:', error);
