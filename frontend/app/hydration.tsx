@@ -109,59 +109,22 @@ export default function HydrationScreen() {
     );
   };
 
-  // Swipeable Entry Component
-  const SwipeableEntry = ({ entry, index }: { entry: WaterEntry; index: number }) => {
-    const translateX = useRef(new Animated.Value(0)).current;
-    const deleteThreshold = -80;
-
-    const panResponder = useRef(
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) => {
-          return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-        },
-        onPanResponderMove: (_, gestureState) => {
-          if (gestureState.dx < 0) {
-            translateX.setValue(Math.max(gestureState.dx, -100));
-          }
-        },
-        onPanResponderRelease: (_, gestureState) => {
-          if (gestureState.dx < deleteThreshold) {
-            // Show delete confirmation
-            deleteWaterEntry(entry.water_id, entry.amount);
-            Animated.spring(translateX, {
-              toValue: 0,
-              useNativeDriver: true,
-            }).start();
-          } else {
-            Animated.spring(translateX, {
-              toValue: 0,
-              useNativeDriver: true,
-            }).start();
-          }
-        },
-      })
-    ).current;
-
+  // Simple Entry Component with delete button
+  const WaterEntryItem = ({ entry }: { entry: WaterEntry }) => {
     return (
-      <View style={styles.swipeableContainer}>
-        {/* Delete background */}
-        <View style={styles.deleteBackground}>
-          <Ionicons name="trash-outline" size={20} color="#fff" />
-          <Text style={styles.deleteText}>Delete</Text>
-        </View>
-        
-        {/* Swipeable entry */}
-        <Animated.View
-          {...panResponder.panHandlers}
-          style={[
-            styles.entryChip,
-            { transform: [{ translateX }] },
-          ]}
-        >
+      <View style={styles.entryRow}>
+        <View style={styles.entryChip}>
           <Text style={styles.entryChipText}>
             {format(new Date(entry.timestamp), 'h:mm a')} • {entry.amount}oz
           </Text>
-        </Animated.View>
+        </View>
+        <TouchableOpacity 
+          style={styles.deleteIconButton}
+          onPress={() => deleteWaterEntry(entry.water_id, entry.amount)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="close-circle" size={22} color="#EF4444" />
+        </TouchableOpacity>
       </View>
     );
   };
