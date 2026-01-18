@@ -433,10 +433,10 @@ export default function HydrationScreen() {
                     />
                   </View>
 
-                  {/* Entry times - swipeable */}
+                  {/* Entry times - with delete buttons */}
                   <View style={styles.entryTimes}>
                     {day.entries.slice(0, 6).map((entry, idx) => (
-                      <SwipeableEntry key={entry.water_id || idx} entry={entry} index={idx} />
+                      <WaterEntryItem key={entry.water_id || idx} entry={entry} />
                     ))}
                     {day.entries.length > 6 && (
                       <View style={styles.entryChipMore}>
@@ -444,7 +444,6 @@ export default function HydrationScreen() {
                       </View>
                     )}
                   </View>
-                  <Text style={styles.swipeHint}>← Swipe left to delete</Text>
                 </View>
               ))
             )}
