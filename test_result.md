@@ -381,8 +381,8 @@ frontend:
 
   - task: "Dashboard Screen"
     implemented: true
-    working: false
-    file: "/app/frontend/app/index.tsx"
+    working: true
+    file: "/app/frontend/app/(tabs)/index.tsx"
     stuck_count: 2
     priority: "high"
     needs_retesting: false
