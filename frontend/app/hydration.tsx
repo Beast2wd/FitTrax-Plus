@@ -796,31 +796,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'column',
     gap: 8,
   },
-  swipeableContainer: {
-    position: 'relative',
-    marginBottom: 4,
-    overflow: 'hidden',
-    borderRadius: 12,
-  },
-  deleteBackground: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 80,
-    backgroundColor: '#EF4444',
+  entryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    borderRadius: 12,
-  },
-  deleteText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    gap: 8,
   },
   entryChip: {
+    flex: 1,
     backgroundColor: theme.colors.background.elevated,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -837,11 +819,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     color: theme.colors.text.secondary,
   },
-  swipeHint: {
-    fontSize: 11,
-    color: theme.colors.text.muted,
-    marginTop: 8,
-    fontStyle: 'italic',
+  deleteIconButton: {
+    padding: 4,
   },
   // Summary Cards
   summaryCard: {
