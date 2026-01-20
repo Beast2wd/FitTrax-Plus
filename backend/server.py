@@ -7608,6 +7608,30 @@ async def shutdown_db_client():
     client.close()
     logger.info("Database connection closed")
 
+# Root endpoint for Kubernetes health probes
+@app.get("/")
+async def root():
+    """Root endpoint for health checks"""
+    return {"status": "healthy", "app": "FitTrax API", "version": "2.0"}
+
+@app.get("/healthz")
+async def healthz():
+    """Kubernetes liveness probe endpoint"""
+    return {"status": "ok"}
+
+@app.get("/readyz")
+async def readyz():
+    """Kubernetes readiness probe endpoint"""
+    try:
+        # Quick database check
+        await db.command("ping")
+        return {"status": "ready", "database": "connected"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not ready", "error": str(e)}
+        )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
