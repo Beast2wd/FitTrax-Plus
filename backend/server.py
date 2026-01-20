@@ -7187,8 +7187,8 @@ class StepEntry(BaseModel):
 class StepGoalSettings(BaseModel):
     user_id: str
     daily_goal: int = 10000
-    tracking_enabled: bool = True
-    auto_sync_health: bool = True
+    tracking_enabled: bool = False  # Start in OFF position by default
+    auto_sync_health: bool = False
 
 @api_router.post("/steps")
 async def save_steps(entry: StepEntry):
