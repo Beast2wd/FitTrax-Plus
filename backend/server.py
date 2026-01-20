@@ -7403,13 +7403,14 @@ async def get_step_settings(user_id: str):
         if settings:
             return {
                 "daily_goal": settings.get("daily_goal", 10000),
-                "tracking_enabled": settings.get("tracking_enabled", True),
-                "auto_sync_health": settings.get("auto_sync_health", True)
+                "tracking_enabled": settings.get("tracking_enabled", False),  # Default OFF
+                "auto_sync_health": settings.get("auto_sync_health", False)
             }
+        # Return defaults with tracking OFF for new users
         return {
             "daily_goal": 10000,
-            "tracking_enabled": True,
-            "auto_sync_health": True
+            "tracking_enabled": False,
+            "auto_sync_health": False
         }
     except Exception as e:
         logger.error(f"Error getting step settings: {str(e)}")
