@@ -188,11 +188,11 @@ export default function StepTrackerScreen() {
   const pedometerSubscription = useRef<any>(null);
   const appState = useRef(AppState.currentState);
 
-  // Settings
+  // Settings - Start with tracking OFF by default
   const [settings, setSettings] = useState({
     daily_goal: 10000,
-    tracking_enabled: true,
-    auto_sync_health: true,
+    tracking_enabled: false,  // Start in OFF position
+    auto_sync_health: false,
   });
   const [settingsLoading, setSettingsLoading] = useState(true);
 
