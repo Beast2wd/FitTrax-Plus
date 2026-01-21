@@ -2632,7 +2632,10 @@ async def get_pricing():
         "currency": "USD",
         "interval": "year",
         "trial_days": 3,
+        "payment_link": STRIPE_PAYMENT_LINK,
         "features": [
+            "AI Food Scanner & Analysis",
+            "AI Body Composition Scan",
             "AI-Personalized Workouts",
             "Custom Meal Planning & Nutrition",
             "Gamification: Badges & Challenges",
@@ -2640,15 +2643,14 @@ async def get_pricing():
             "Wearable Device Integration",
             "Diverse Workout Library (Yoga, HIIT, Dance, Martial Arts)",
             "Peptide Calculator & Tracking",
-            "AI Body Composition Analysis",
             "Multi-Language Support (EN, ES, DE)",
             "Accessibility Features"
         ],
         "free_features": [
-            "Basic Food Tracking",
+            "Basic Activity Tracking",
             "Water Intake Logging",
             "Heart Rate Monitoring",
-            "Running Tracker"
+            "Step Tracking"
         ]
     }
 
