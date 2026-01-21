@@ -2391,6 +2391,29 @@ async def start_free_trial(request: SubscriptionCreate):
         
         # Real Stripe subscription with trial
         price_id = request.price_id or STRIPE_PRICE_ID
+        
+        # Auto-detect price if not set
+        if not price_id:
+            try:
+                # Get active products
+                products = stripe.Product.list(limit=1, active=True)
+                if products.data:
+                    product_id = products.data[0].id
+                    prices = stripe.Price.list(product=product_id, active=True, limit=10)
+                    # Find annual price or use first available
+                    for price in prices.data:
+                        if price.recurring and price.recurring.interval == 'year':
+                            price_id = price.id
+                            break
+                    if not price_id and prices.data:
+                        price_id = prices.data[0].id
+                    logger.info(f"Auto-detected price ID for trial: {price_id}")
+            except Exception as e:
+                logger.error(f"Error auto-detecting price: {e}")
+        
+        if not price_id:
+            raise HTTPException(status_code=400, detail="No price configured. Please set STRIPE_PRICE_ID or create a product in Stripe.")
+        
         subscription = stripe.Subscription.create(
             customer=customer["stripe_customer_id"],
             items=[{"price": price_id}],
