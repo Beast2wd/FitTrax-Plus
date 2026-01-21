@@ -2251,15 +2251,19 @@ PREMIUM_FEATURES = [
     "accessibility_features",
     "multi_language",
     "peptide_calculator",
-    "ai_body_scan"
+    "ai_body_scan",        # Body scan is Premium
+    "food_scanning"        # Food scanning is Premium
 ]
 
 FREE_FEATURES = [
     "basic_tracking",
-    "food_scanning",
     "water_tracking",
-    "heart_rate_logging"
+    "heart_rate_logging",
+    "step_tracking"
 ]
+
+# Stripe Payment Link for checkout
+STRIPE_PAYMENT_LINK = "https://buy.stripe.com/7sY5kD60pcxM65YaqX9Ve00"
 
 @api_router.post("/membership/create-customer")
 async def create_membership_customer(request: MembershipCustomerCreate):
