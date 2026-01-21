@@ -2418,9 +2418,6 @@ async def start_free_trial(request: SubscriptionCreate):
             customer=customer["stripe_customer_id"],
             items=[{"price": price_id}],
             trial_period_days=3,
-            payment_behavior="default_incomplete",
-            payment_settings={"save_default_payment_method": "on_subscription"},
-            expand=["latest_invoice.payment_intent"]
         )
         
         await db.subscriptions.insert_one({
@@ -2438,7 +2435,7 @@ async def start_free_trial(request: SubscriptionCreate):
             "subscription_id": subscription.id,
             "status": subscription.status,
             "trial_ends_at": datetime.fromtimestamp(subscription.trial_end).isoformat() if subscription.trial_end else None,
-            "client_secret": subscription.latest_invoice.payment_intent.client_secret if subscription.latest_invoice and subscription.latest_invoice.payment_intent else None
+            "message": "3-day free trial started successfully!"
         }
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error starting trial: {str(e)}")
