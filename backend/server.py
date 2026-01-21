@@ -2628,7 +2628,7 @@ async def get_pricing():
     return {
         "plan": "annual",
         "name": "FitTrax Premium",
-        "price": 25.00,
+        "price": 75.00,
         "currency": "USD",
         "interval": "year",
         "trial_days": 3,
