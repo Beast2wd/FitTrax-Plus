@@ -2795,6 +2795,7 @@ async def create_checkout_session(request: CheckoutSessionRequest):
         return {
             "checkout_url": checkout_session.url,
             "session_id": checkout_session.id,
+            "payment_link": STRIPE_PAYMENT_LINK,  # Also provide direct payment link
         }
         
     except stripe.error.StripeError as e:
@@ -2803,6 +2804,16 @@ async def create_checkout_session(request: CheckoutSessionRequest):
     except Exception as e:
         logger.error(f"Error creating checkout session: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/membership/payment-link")
+async def get_payment_link():
+    """Get the direct Stripe Payment Link for subscriptions"""
+    return {
+        "payment_link": STRIPE_PAYMENT_LINK,
+        "plan": "FitTrax Premium",
+        "price": "$25/year",
+        "trial_days": 3
+    }
 
 @api_router.get("/membership/checkout-status/{session_id}")
 async def get_checkout_status(session_id: str):
