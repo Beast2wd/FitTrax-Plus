@@ -2326,10 +2326,35 @@ async def create_membership_customer(request: MembershipCustomerCreate):
 async def start_free_trial(request: SubscriptionCreate):
     """Start a 3-day free trial for the user"""
     try:
-        # Get customer
+        # Get or create customer
         customer = await db.membership_customers.find_one({"user_id": request.user_id})
+        
         if not customer:
-            raise HTTPException(status_code=404, detail="Customer not found. Create customer first.")
+            # Auto-create customer for trial
+            logger.info(f"Auto-creating customer for trial: {request.user_id}")
+            
+            if not is_stripe_configured():
+                # Mock mode - create mock customer
+                mock_customer_id = f"cus_mock_{request.user_id}_{int(time.time())}"
+                customer = {
+                    "user_id": request.user_id,
+                    "stripe_customer_id": mock_customer_id,
+                    "mock_mode": True,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                await db.membership_customers.insert_one(customer)
+            else:
+                # Real Stripe - create real customer
+                stripe_customer = stripe.Customer.create(
+                    metadata={"user_id": request.user_id}
+                )
+                customer = {
+                    "user_id": request.user_id,
+                    "stripe_customer_id": stripe_customer.id,
+                    "mock_mode": False,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                await db.membership_customers.insert_one(customer)
         
         # Check if already has subscription
         existing_sub = await db.subscriptions.find_one({
