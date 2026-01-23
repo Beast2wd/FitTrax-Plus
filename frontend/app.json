@@ -23,8 +23,7 @@
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
-        "com.apple.developer.healthkit.access": ["health-records"],
-        "aps-environment": ""
+        "com.apple.developer.healthkit.access": ["health-records"]
       }
     },
     "android": {
