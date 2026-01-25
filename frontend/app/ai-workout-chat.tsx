@@ -53,6 +53,7 @@ export default function AIWorkoutChatScreen() {
   const { theme } = useThemeStore();
   const colors = theme.colors;
   const accent = theme.accentColors;
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
