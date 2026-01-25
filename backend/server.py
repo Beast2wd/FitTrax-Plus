@@ -7596,6 +7596,129 @@ async def get_audit_logs(
     return {"logs": logs, "count": len(logs)}
 
 # ============================================================================
+# AI WORKOUT CHAT ENDPOINT
+# ============================================================================
+
+class AIWorkoutChatRequest(BaseModel):
+    user_id: str
+    session_id: str
+    message: str
+    user_profile: Optional[dict] = None
+    conversation_history: Optional[List[dict]] = []
+
+@api_router.post("/ai-workout-chat")
+async def ai_workout_chat(request: AIWorkoutChatRequest):
+    """AI-powered workout chat - creates personalized workouts through conversation"""
+    try:
+        api_key = os.getenv('EMERGENT_LLM_KEY')
+        if not api_key:
+            raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
+        
+        # Build context from user profile
+        profile_context = ""
+        if request.user_profile:
+            profile_context = f"""
+User Profile:
+- Name: {request.user_profile.get('name', 'User')}
+- Fitness Level: {request.user_profile.get('fitness_level', 'moderate')}
+- Goals: {request.user_profile.get('goals', 'general fitness')}
+"""
+        
+        # Build conversation history for context
+        history_text = ""
+        if request.conversation_history:
+            for msg in request.conversation_history[-6:]:  # Last 6 messages for context
+                role = "User" if msg.get("role") == "user" else "Coach"
+                history_text += f"{role}: {msg.get('content', '')}\n"
+        
+        # System prompt for workout creation
+        system_message = f"""You are an expert fitness coach AI assistant. Your job is to help users create personalized workout plans through friendly conversation.
+
+{profile_context}
+
+GUIDELINES:
+1. Be encouraging, friendly, and motivational
+2. Ask clarifying questions if needed (duration, equipment, fitness level, target muscles)
+3. When you have enough information, create a detailed workout plan
+4. Always explain the benefits of exercises you recommend
+5. Adapt to the user's fitness level
+
+WHEN CREATING A WORKOUT:
+After your conversational response, if you're providing a complete workout, include a JSON block at the END of your response in this exact format:
+
+```workout
+{{
+  "name": "Workout Name",
+  "description": "Brief description",
+  "duration_minutes": 30,
+  "exercises": [
+    {{
+      "name": "Exercise Name",
+      "sets": 3,
+      "reps": "10-12",
+      "duration": null,
+      "rest": "60 seconds",
+      "notes": "Form tips or modifications"
+    }}
+  ]
+}}
+```
+
+Only include the workout JSON when you're presenting a finalized workout plan, not during clarifying questions.
+
+Previous conversation:
+{history_text}
+"""
+        
+        # Create chat instance
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=request.session_id,
+            system_message=system_message
+        ).with_model("openai", "gpt-4o")
+        
+        # Send message
+        user_message = UserMessage(text=request.message)
+        response = await chat.send_message(user_message)
+        
+        # Parse response for workout JSON
+        workout = None
+        message_text = response
+        
+        if "```workout" in response:
+            try:
+                # Extract JSON from workout block
+                parts = response.split("```workout")
+                message_text = parts[0].strip()
+                json_str = parts[1].split("```")[0].strip()
+                workout = json.loads(json_str)
+            except Exception as e:
+                logger.warning(f"Failed to parse workout JSON: {e}")
+        elif "```json" in response:
+            try:
+                # Try parsing as regular JSON block
+                parts = response.split("```json")
+                message_text = parts[0].strip()
+                json_str = parts[1].split("```")[0].strip()
+                data = json.loads(json_str)
+                if "exercises" in data:
+                    workout = data
+            except Exception as e:
+                logger.warning(f"Failed to parse JSON: {e}")
+        
+        return {
+            "message": message_text or response,
+            "workout": workout,
+            "session_id": request.session_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in AI workout chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process message: {str(e)}")
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
