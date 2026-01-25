@@ -664,9 +664,10 @@ export default function DashboardScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
           {[
+            { icon: 'chatbubbles', label: 'AI Workouts', color: '#8B5CF6', route: '/ai-workout-chat' },
             { icon: 'camera', label: t('dashboard.scanFood'), color: accent.primary, route: '/scan' },
             { icon: 'calendar', label: t('dashboard.schedule'), color: '#F59E0B', route: '/schedule' },
-            { icon: 'clipboard', label: 'Workout Log', color: '#8B5CF6', route: '/manual-workout-log' },
+            { icon: 'clipboard', label: 'Workout Log', color: '#7C3AED', route: '/manual-workout-log' },
             { icon: 'footsteps', label: t('dashboard.run'), color: '#EC4899', route: '/running' },
             { icon: 'walk', label: 'Step Tracker', color: '#14B8A6', route: '/step-tracker' },
             { icon: 'body', label: t('dashboard.bodyScan'), color: '#10B981', route: '/body-scan' },
