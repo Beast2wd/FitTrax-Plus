@@ -424,6 +424,9 @@ const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
   },
+  chatContainer: {
+    flex: 1,
+  },
   messagesContainer: {
     flex: 1,
   },
