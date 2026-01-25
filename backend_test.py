@@ -722,7 +722,7 @@ class FitTraxAPITester:
 
 if __name__ == "__main__":
     # Use the backend URL from environment
-    BACKEND_URL = "https://health-hub-prod.preview.emergentagent.com"
+    BACKEND_URL = "https://fit-deploy.preview.emergentagent.com"
     
     print(f"🎯 FitTrax API Comprehensive Testing Suite")
     print(f"🌐 Backend URL: {BACKEND_URL}")
