@@ -429,8 +429,40 @@ export default function ScheduleScreen() {
   const openWorkoutDetail = (workout: any) => {
     setSelectedWorkoutDetail(workout);
     setEditedWorkoutTime(workout.scheduled_time || '08:00');
+    setEditedReminderOption(workout.reminder_option || '30min');
     setEditingWorkout(false);
+    setShowTimePicker(false);
+    setShowReminderPicker(false);
     setWorkoutDetailModalVisible(true);
+  };
+
+  // Schedule notification for workout
+  const scheduleWorkoutNotification = async (workout: any, reminderMinutes: number) => {
+    if (reminderMinutes === 0) return; // No notification
+
+    try {
+      const scheduledDate = new Date(`${workout.scheduled_date}T${workout.scheduled_time || '08:00'}:00`);
+      const notificationTime = new Date(scheduledDate.getTime() - reminderMinutes * 60 * 1000);
+      
+      // Only schedule if notification time is in the future
+      if (notificationTime > new Date()) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `Workout Reminder: ${workout.title || 'Workout'}`,
+            body: `Your workout is scheduled ${reminderMinutes >= 60 
+              ? `in ${Math.floor(reminderMinutes / 60)} hour${Math.floor(reminderMinutes / 60) > 1 ? 's' : ''}` 
+              : `in ${reminderMinutes} minutes`}`,
+            data: { workoutId: workout.workout_id || workout.scheduled_id },
+          },
+          trigger: {
+            type: 'date',
+            date: notificationTime,
+          } as any,
+        });
+      }
+    } catch (error) {
+      console.error('Error scheduling notification:', error);
+    }
   };
 
   // Update scheduled workout
@@ -439,17 +471,31 @@ export default function ScheduleScreen() {
     
     try {
       const workoutId = selectedWorkoutDetail.scheduled_id || selectedWorkoutDetail.workout_id;
+      const reminderOption = REMINDER_OPTIONS.find(r => r.id === editedReminderOption);
+      
       await fetch(`${API_URL}/api/scheduled-workout/${workoutId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           scheduled_time: editedWorkoutTime,
+          reminder_option: editedReminderOption,
+          reminder_minutes: reminderOption?.minutes || 0,
         }),
       });
+      
+      // Schedule the notification
+      if (reminderOption && reminderOption.minutes > 0) {
+        await scheduleWorkoutNotification(
+          { ...selectedWorkoutDetail, scheduled_time: editedWorkoutTime },
+          reminderOption.minutes
+        );
+      }
       
       Alert.alert('Success', 'Workout updated successfully');
       setWorkoutDetailModalVisible(false);
       setEditingWorkout(false);
+      setShowTimePicker(false);
+      setShowReminderPicker(false);
       loadData();
     } catch (error) {
       Alert.alert('Error', 'Failed to update workout');
