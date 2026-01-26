@@ -401,6 +401,37 @@ export default function ScheduleScreen() {
     }
   };
 
+  // Open workout detail modal
+  const openWorkoutDetail = (workout: any) => {
+    setSelectedWorkoutDetail(workout);
+    setEditedWorkoutTime(workout.scheduled_time || '08:00');
+    setEditingWorkout(false);
+    setWorkoutDetailModalVisible(true);
+  };
+
+  // Update scheduled workout
+  const updateScheduledWorkout = async () => {
+    if (!selectedWorkoutDetail) return;
+    
+    try {
+      const workoutId = selectedWorkoutDetail.scheduled_id || selectedWorkoutDetail.workout_id;
+      await fetch(`${API_URL}/api/scheduled-workout/${workoutId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scheduled_time: editedWorkoutTime,
+        }),
+      });
+      
+      Alert.alert('Success', 'Workout updated successfully');
+      setWorkoutDetailModalVisible(false);
+      setEditingWorkout(false);
+      loadData();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update workout');
+    }
+  };
+
   // Delete a completed workout from calendar
   const handleDeleteCompletedWorkout = async (workoutId: string) => {
     Alert.alert(
