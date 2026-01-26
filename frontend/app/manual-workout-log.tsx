@@ -187,7 +187,7 @@ export default function ManualWorkoutLogScreen() {
       
       Alert.alert(
         'Workout Scheduled!',
-        `"${latestTemplate.name}" has been scheduled for ${selectedDays.length} day(s). Check your Calendar to see scheduled workouts.`,
+        `"${templateToSchedule.name}" has been scheduled for ${selectedDays.length} day(s). Check your Calendar to see scheduled workouts.`,
         [
           { text: 'View Calendar', onPress: () => router.push('/schedule') },
           { text: 'OK', style: 'cancel' },
@@ -195,10 +195,17 @@ export default function ManualWorkoutLogScreen() {
       );
       setShowScheduleModal(false);
       setSelectedDays([]);
+      setSelectedTemplateForSchedule(null);
     } catch (error) {
       console.error('Error scheduling workout:', error);
       Alert.alert('Error', 'Failed to schedule workout.');
     }
+  };
+
+  // Open schedule modal for a specific template
+  const openScheduleForTemplate = (template: WorkoutTemplate) => {
+    setSelectedTemplateForSchedule(template);
+    setShowScheduleModal(true);
   };
 
   // Load a template into the workout log
