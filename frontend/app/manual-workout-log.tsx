@@ -50,12 +50,17 @@ export default function ManualWorkoutLogScreen() {
   const [entries, setEntries] = useState<WorkoutEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<WorkoutEntry | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
 
   // Form state - simplified to single reps/weight row across 7 days
   const [exerciseName, setExerciseName] = useState('');
   const [reps, setReps] = useState<{ [key: string]: string }>({});
   const [weight, setWeight] = useState<{ [key: string]: string }>({});
   const [notes, setNotes] = useState('');
+
+  const toggleExpand = (entryId: string) => {
+    setExpandedEntryId(expandedEntryId === entryId ? null : entryId);
+  };
 
   const loadEntries = useCallback(async () => {
     if (!userId) return;
