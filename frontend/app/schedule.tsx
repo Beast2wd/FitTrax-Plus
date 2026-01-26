@@ -473,7 +473,9 @@ export default function ScheduleScreen() {
       const workoutId = selectedWorkoutDetail.scheduled_id || selectedWorkoutDetail.workout_id;
       const reminderOption = REMINDER_OPTIONS.find(r => r.id === editedReminderOption);
       
-      await fetch(`${API_URL}/api/scheduled-workout/${workoutId}`, {
+      console.log('Updating workout:', workoutId, 'with time:', editedWorkoutTime);
+      
+      const response = await fetch(`${API_URL}/api/scheduled-workout/${workoutId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -483,6 +485,15 @@ export default function ScheduleScreen() {
         }),
       });
       
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Update failed:', errorData);
+        throw new Error(errorData.detail || 'Failed to update workout');
+      }
+      
+      const result = await response.json();
+      console.log('Update result:', result);
+      
       // Schedule the notification
       if (reminderOption && reminderOption.minutes > 0) {
         await scheduleWorkoutNotification(
@@ -491,14 +502,15 @@ export default function ScheduleScreen() {
         );
       }
       
-      Alert.alert('Success', 'Workout updated successfully');
+      Alert.alert('Success', 'Workout time and reminder updated!');
       setWorkoutDetailModalVisible(false);
       setEditingWorkout(false);
       setShowTimePicker(false);
       setShowReminderPicker(false);
-      loadData();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update workout');
+      await loadData(); // Reload data to show updated time
+    } catch (error: any) {
+      console.error('Error updating workout:', error);
+      Alert.alert('Error', error.message || 'Failed to update workout');
     }
   };
 
