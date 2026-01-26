@@ -144,12 +144,21 @@ export default function AIWorkoutChatScreen() {
     try {
       // Save each exercise to the manual workout log
       for (const exercise of workout.exercises) {
+        // Parse weight if provided (e.g., "20 lbs", "50kg", "bodyweight")
+        const weightValue = exercise.weight || '';
+        
         const entryData = {
           user_id: userId,
           exercise_name: exercise.name,
           reps: exercise.reps ? { '1': exercise.reps.toString() } : {},
-          weight: {},
-          notes: `${exercise.sets ? `${exercise.sets} sets` : ''} ${exercise.duration ? `• ${exercise.duration}` : ''} ${exercise.rest ? `• Rest: ${exercise.rest}` : ''} ${exercise.notes || ''}`.trim(),
+          weight: weightValue ? { '1': weightValue.toString().replace(/[^\d.]/g, '') || weightValue } : {},
+          notes: [
+            exercise.sets ? `${exercise.sets} sets` : '',
+            exercise.duration ? exercise.duration : '',
+            exercise.rest ? `Rest: ${exercise.rest}` : '',
+            exercise.weight ? `Suggested weight: ${exercise.weight}` : '',
+            exercise.notes || ''
+          ].filter(Boolean).join(' • '),
         };
 
         await axios.post(`${API_URL}/api/manual-workout-log`, entryData);
@@ -157,7 +166,7 @@ export default function AIWorkoutChatScreen() {
 
       Alert.alert(
         'Workout Added! 💪',
-        `"${workout.name}" has been added to your Workout Log. Go to the Workout Log to track your progress and sync to calendar when complete.`,
+        `"${workout.name}" has been added to your Workout Log. Tap any exercise to view/edit reps and weight.`,
         [
           { text: 'View Workout Log', onPress: () => router.push('/manual-workout-log') },
           { text: 'Stay Here', style: 'cancel' },
