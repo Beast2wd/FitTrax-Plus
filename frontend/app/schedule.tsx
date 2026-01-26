@@ -655,7 +655,7 @@ export default function ScheduleScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={localStyles.completeBtn}
-                          onPress={() => handleCompleteWorkout(workout.scheduled_id)}
+                          onPress={() => handleCompleteWorkout(workout.scheduled_id || workout.workout_id)}
                         >
                           <Ionicons name="checkmark" size={20} color="#fff" />
                         </TouchableOpacity>
