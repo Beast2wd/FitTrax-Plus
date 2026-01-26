@@ -2586,4 +2586,51 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  // Picker styles
+  pickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 10,
+  },
+  pickerButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  timePickerList: {
+    maxHeight: 200,
+    marginTop: 8,
+    borderRadius: 10,
+    backgroundColor: theme.colors.background.input,
+  },
+  timePickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
+  },
+  timePickerText: {
+    fontSize: 15,
+  },
+  reminderPickerList: {
+    marginTop: 8,
+    borderRadius: 10,
+    backgroundColor: theme.colors.background.input,
+  },
+  reminderPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
+  },
+  reminderPickerText: {
+    fontSize: 15,
+  },
 });
