@@ -1222,4 +1222,138 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 8,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  templateCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  templateInfo: {
+    flex: 1,
+  },
+  templateName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  templateMeta: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  templateActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  templateActionBtn: {
+    padding: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  modalInput: {
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  modalInfo: {
+    fontSize: 13,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  daysScrollView: {
+    maxHeight: 250,
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  dayOption: {
+    width: '47%',
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  dayOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dayTodayBadge: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  selectedCount: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  noTemplateMessage: {
+    alignItems: 'center',
+    padding: 24,
+  },
+  noTemplateText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
+  },
 });
