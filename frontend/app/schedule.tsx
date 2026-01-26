@@ -1555,16 +1555,99 @@ export default function ScheduleScreen() {
                       <Text style={[localStyles.detailSectionTitle, { color: colors.text.primary }]}>Scheduled Time</Text>
                     </View>
                     {editingWorkout ? (
-                      <TextInput
-                        style={[localStyles.timeInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
-                        value={editedWorkoutTime}
-                        onChangeText={setEditedWorkoutTime}
-                        placeholder="08:00"
-                        placeholderTextColor={colors.text.muted}
-                      />
+                      <>
+                        <TouchableOpacity
+                          style={[localStyles.pickerButton, { backgroundColor: colors.background.input }]}
+                          onPress={() => setShowTimePicker(!showTimePicker)}
+                        >
+                          <Text style={[localStyles.pickerButtonText, { color: colors.text.primary }]}>
+                            {formatTime(editedWorkoutTime)}
+                          </Text>
+                          <Ionicons name={showTimePicker ? "chevron-up" : "chevron-down"} size={20} color={colors.text.muted} />
+                        </TouchableOpacity>
+                        {showTimePicker && (
+                          <ScrollView style={localStyles.timePickerList} nestedScrollEnabled showsVerticalScrollIndicator={true}>
+                            {TIME_OPTIONS.map((timeOption) => (
+                              <TouchableOpacity
+                                key={timeOption}
+                                style={[
+                                  localStyles.timePickerItem,
+                                  editedWorkoutTime === timeOption && { backgroundColor: `${accent.primary}20` }
+                                ]}
+                                onPress={() => {
+                                  setEditedWorkoutTime(timeOption);
+                                  setShowTimePicker(false);
+                                }}
+                              >
+                                <Text style={[
+                                  localStyles.timePickerText,
+                                  { color: editedWorkoutTime === timeOption ? accent.primary : colors.text.primary }
+                                ]}>
+                                  {formatTime(timeOption)}
+                                </Text>
+                                {editedWorkoutTime === timeOption && (
+                                  <Ionicons name="checkmark" size={18} color={accent.primary} />
+                                )}
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </>
                     ) : (
                       <Text style={[localStyles.detailValue, { color: colors.text.secondary }]}>
                         {formatTime(selectedWorkoutDetail.scheduled_time)}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Reminder Section */}
+                  <View style={[localStyles.detailSection, { backgroundColor: colors.background.card }]}>
+                    <View style={localStyles.detailSectionHeader}>
+                      <Ionicons name="notifications-outline" size={20} color="#F59E0B" />
+                      <Text style={[localStyles.detailSectionTitle, { color: colors.text.primary }]}>Reminder Alert</Text>
+                    </View>
+                    {editingWorkout ? (
+                      <>
+                        <TouchableOpacity
+                          style={[localStyles.pickerButton, { backgroundColor: colors.background.input }]}
+                          onPress={() => setShowReminderPicker(!showReminderPicker)}
+                        >
+                          <Text style={[localStyles.pickerButtonText, { color: colors.text.primary }]}>
+                            {REMINDER_OPTIONS.find(r => r.id === editedReminderOption)?.label || 'Select reminder'}
+                          </Text>
+                          <Ionicons name={showReminderPicker ? "chevron-up" : "chevron-down"} size={20} color={colors.text.muted} />
+                        </TouchableOpacity>
+                        {showReminderPicker && (
+                          <View style={localStyles.reminderPickerList}>
+                            {REMINDER_OPTIONS.map((option) => (
+                              <TouchableOpacity
+                                key={option.id}
+                                style={[
+                                  localStyles.reminderPickerItem,
+                                  editedReminderOption === option.id && { backgroundColor: `${accent.primary}20` }
+                                ]}
+                                onPress={() => {
+                                  setEditedReminderOption(option.id);
+                                  setShowReminderPicker(false);
+                                }}
+                              >
+                                <Text style={[
+                                  localStyles.reminderPickerText,
+                                  { color: editedReminderOption === option.id ? accent.primary : colors.text.primary }
+                                ]}>
+                                  {option.label}
+                                </Text>
+                                {editedReminderOption === option.id && (
+                                  <Ionicons name="checkmark" size={18} color={accent.primary} />
+                                )}
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        )}
+                      </>
+                    ) : (
+                      <Text style={[localStyles.detailValue, { color: colors.text.secondary }]}>
+                        {REMINDER_OPTIONS.find(r => r.id === (selectedWorkoutDetail.reminder_option || '30min'))?.label || '30 minutes before'}
                       </Text>
                     )}
                   </View>
