@@ -705,6 +705,71 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontStyle: 'italic',
   },
+  entryActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  editButton: {
+    padding: 4,
+  },
+  expandedSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  expandedLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  expandedGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  dayCell: {
+    width: '13%',
+    minWidth: 42,
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  dayCellHeader: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  dayCellReps: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  dayCellWeight: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  expandedNotes: {
+    marginTop: 16,
+  },
+  expandedNotesText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  expandedEditButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 16,
+    gap: 8,
+  },
+  expandedEditButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
   completeButton: {
     flexDirection: 'row',
     alignItems: 'center',
