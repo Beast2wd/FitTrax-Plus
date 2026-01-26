@@ -393,46 +393,113 @@ export default function ManualWorkoutLogScreen() {
                 <>
                   {entries.map((entry) => {
                     const summary = getEntrySummary(entry);
+                    const isExpanded = expandedEntryId === entry.entry_id;
                     return (
                       <SwipeableRow
                         key={entry.entry_id}
                         onDelete={() => deleteEntry(entry.entry_id)}
                       >
-                        <TouchableOpacity
-                          style={[styles.entryCard, { backgroundColor: colors.background.card }]}
-                          onPress={() => editEntry(entry)}
-                        >
-                          <View style={styles.entryHeader}>
-                            <View style={styles.entryTitleRow}>
-                              <Text style={[styles.entryName, { color: colors.text.primary }]}>
-                                {entry.exercise_name}
-                              </Text>
-                              {entry.synced_to_calendar && (
-                                <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
+                        <View style={[styles.entryCard, { backgroundColor: colors.background.card }]}>
+                          {/* Main Touchable Header */}
+                          <TouchableOpacity
+                            onPress={() => toggleExpand(entry.entry_id)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={styles.entryHeader}>
+                              <View style={styles.entryTitleRow}>
+                                <Text style={[styles.entryName, { color: colors.text.primary }]}>
+                                  {entry.exercise_name}
+                                </Text>
+                                {entry.synced_to_calendar && (
+                                  <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
+                                )}
+                              </View>
+                              <View style={styles.entryActions}>
+                                <TouchableOpacity onPress={() => editEntry(entry)} style={styles.editButton}>
+                                  <Ionicons name="pencil" size={18} color={accent.primary} />
+                                </TouchableOpacity>
+                                <Ionicons 
+                                  name={isExpanded ? "chevron-up" : "chevron-down"} 
+                                  size={20} 
+                                  color={colors.text.muted} 
+                                />
+                              </View>
+                            </View>
+                            <View style={styles.entryStats}>
+                              {summary.days > 0 && (
+                                <Text style={[styles.entryStat, { color: colors.text.secondary }]}>
+                                  {summary.days} day{summary.days > 1 ? 's' : ''} logged
+                                </Text>
+                              )}
+                              {summary.maxWeight && (
+                                <Text style={[styles.entryStat, { color: accent.primary }]}>
+                                  Max: {summary.maxWeight} lbs
+                                </Text>
                               )}
                             </View>
-                            <TouchableOpacity onPress={() => editEntry(entry)}>
-                              <Ionicons name="pencil" size={18} color={accent.primary} />
-                            </TouchableOpacity>
-                          </View>
-                          <View style={styles.entryStats}>
-                            {summary.days > 0 && (
-                              <Text style={[styles.entryStat, { color: colors.text.secondary }]}>
-                                {summary.days} day{summary.days > 1 ? 's' : ''} logged
+                            {entry.notes && !isExpanded && (
+                              <Text style={[styles.entryNotes, { color: colors.text.muted }]} numberOfLines={1}>
+                                {entry.notes}
                               </Text>
                             )}
-                            {summary.maxWeight && (
-                              <Text style={[styles.entryStat, { color: accent.primary }]}>
-                                Max: {summary.maxWeight} lbs
+                          </TouchableOpacity>
+                          
+                          {/* Expanded Details */}
+                          {isExpanded && (
+                            <View style={[styles.expandedSection, { borderTopColor: colors.border.primary }]}>
+                              {/* Reps & Weight Grid */}
+                              <Text style={[styles.expandedLabel, { color: colors.text.secondary }]}>
+                                Reps & Weight by Day
                               </Text>
-                            )}
-                          </View>
-                          {entry.notes && (
-                            <Text style={[styles.entryNotes, { color: colors.text.muted }]} numberOfLines={1}>
-                              {entry.notes}
-                            </Text>
+                              <View style={styles.expandedGrid}>
+                                {DAYS.map(day => {
+                                  const hasData = entry.reps[day] || entry.weight[day];
+                                  return (
+                                    <View 
+                                      key={day} 
+                                      style={[
+                                        styles.dayCell, 
+                                        { 
+                                          backgroundColor: hasData ? `${accent.primary}15` : colors.background.input,
+                                          borderColor: hasData ? accent.primary : colors.border.primary 
+                                        }
+                                      ]}
+                                    >
+                                      <Text style={[styles.dayCellHeader, { color: hasData ? accent.primary : colors.text.muted }]}>
+                                        Day {day}
+                                      </Text>
+                                      <Text style={[styles.dayCellReps, { color: colors.text.primary }]}>
+                                        {entry.reps[day] || '-'} reps
+                                      </Text>
+                                      <Text style={[styles.dayCellWeight, { color: colors.text.secondary }]}>
+                                        {entry.weight[day] ? `${entry.weight[day]} lbs` : '-'}
+                                      </Text>
+                                    </View>
+                                  );
+                                })}
+                              </View>
+                              
+                              {/* Notes */}
+                              {entry.notes && (
+                                <View style={styles.expandedNotes}>
+                                  <Text style={[styles.expandedLabel, { color: colors.text.secondary }]}>Notes</Text>
+                                  <Text style={[styles.expandedNotesText, { color: colors.text.primary }]}>
+                                    {entry.notes}
+                                  </Text>
+                                </View>
+                              )}
+                              
+                              {/* Edit Button */}
+                              <TouchableOpacity
+                                style={[styles.expandedEditButton, { backgroundColor: accent.primary }]}
+                                onPress={() => editEntry(entry)}
+                              >
+                                <Ionicons name="create-outline" size={18} color="#fff" />
+                                <Text style={styles.expandedEditButtonText}>Edit Reps & Weight</Text>
+                              </TouchableOpacity>
+                            </View>
                           )}
-                        </TouchableOpacity>
+                        </View>
                       </SwipeableRow>
                     );
                   })}
