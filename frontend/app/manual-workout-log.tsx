@@ -404,7 +404,7 @@ export default function ManualWorkoutLogScreen() {
             {/* Saved Entries */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <View>
+                <View style={styles.sectionHeaderLeft}>
                   <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                     Today's Workout ({entries.length})
                   </Text>
@@ -412,6 +412,15 @@ export default function ManualWorkoutLogScreen() {
                     Tap to view details • Swipe left to delete
                   </Text>
                 </View>
+                {entries.length > 0 && (
+                  <TouchableOpacity 
+                    style={[styles.deleteAllButton, { borderColor: '#EF4444' }]}
+                    onPress={deleteAllEntries}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                    <Text style={styles.deleteAllText}>Delete All</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {entries.length === 0 ? (
