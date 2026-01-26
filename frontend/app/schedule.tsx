@@ -659,6 +659,7 @@ export default function ScheduleScreen() {
               {upcomingWorkouts.map((workout) => {
                 const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
                 const workoutKey = workout.scheduled_id || workout.workout_id || `upcoming_${Math.random()}`;
+                const workoutColor = workout.color_hex || (workout.completed ? '#22C55E' : '#3B82F6');
                 
                 // Skip manual_log entries in upcoming (they're already completed)
                 if (workout.workout_type === 'manual_log') return null;
@@ -670,7 +671,12 @@ export default function ScheduleScreen() {
                     renderRightActions={() => renderRightActions(workout.scheduled_id || workout.workout_id)}
                     overshootRight={false}
                   >
-                    <View style={localStyles.upcomingCard}>
+                    <TouchableOpacity 
+                      style={[localStyles.upcomingCard, { borderLeftWidth: 4, borderLeftColor: workout.completed ? '#22C55E' : workoutColor }]}
+                      onPress={() => openWorkoutDetail(workout)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[localStyles.workoutColorDot, { backgroundColor: workout.completed ? '#22C55E' : workoutColor }]} />
                       <View style={localStyles.upcomingLeft}>
                         <View style={localStyles.upcomingDate}>
                           <Text style={localStyles.upcomingDateText}>{formatDateLabel(workout.scheduled_date)}</Text>
@@ -678,9 +684,11 @@ export default function ScheduleScreen() {
                         </View>
                         <View style={localStyles.upcomingInfo}>
                           <Text style={localStyles.upcomingPlan}>
-                            {planDetails?.name || 'Workout'}
+                            {workout.title || planDetails?.name || 'Workout'}
                           </Text>
-                          <Text style={localStyles.upcomingDay}>Day {workout.workout_day}</Text>
+                          <Text style={localStyles.upcomingDay}>
+                            {workout.workout_day ? `Day ${workout.workout_day}` : workout.description || `${workout.exercises?.length || 0} exercises`}
+                          </Text>
                         </View>
                       </View>
                       <View style={localStyles.upcomingActions}>
@@ -691,13 +699,13 @@ export default function ScheduleScreen() {
                           <Ionicons name="calendar-outline" size={20} color={accent.primary} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={localStyles.completeBtn}
+                          style={[localStyles.completeBtn, workout.completed && { backgroundColor: '#22C55E' }]}
                           onPress={() => handleCompleteWorkout(workout.scheduled_id || workout.workout_id)}
                         >
                           <Ionicons name="checkmark" size={20} color="#fff" />
                         </TouchableOpacity>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   </Swipeable>
                 );
               })}
