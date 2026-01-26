@@ -529,8 +529,12 @@ export default function ScheduleScreen() {
         marks[date] = { dots: [] };
       }
       const workoutKey = workout.scheduled_id || workout.workout_id || `workout_${Math.random()}`;
+      // Use workout's color, or green if completed, or default to accent.primary
+      const dotColor = workout.completed 
+        ? '#22C55E'  // Green for completed
+        : (workout.color_hex || accent.primary);  // Workout's color or default
       marks[date].dots.push({
-        color: workout.completed ? colors.status.success : accent.primary,
+        color: dotColor,
         key: `scheduled_${workoutKey}`
       });
     });
@@ -541,10 +545,10 @@ export default function ScheduleScreen() {
       if (!marks[date]) {
         marks[date] = { dots: [] };
       }
-      const alreadyMarked = marks[date].dots.some((d: any) => d.color === '#10B981');
+      const alreadyMarked = marks[date].dots.some((d: any) => d.color === '#22C55E');
       if (!alreadyMarked) {
         marks[date].dots.push({
-          color: '#10B981',
+          color: '#22C55E',
           key: `completed_${workout.workout_id || Math.random()}`
         });
       }
