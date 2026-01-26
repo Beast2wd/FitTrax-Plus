@@ -11,6 +11,7 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -20,12 +21,24 @@ import { useUserStore } from '../stores/userStore';
 import { useThemeStore } from '../stores/themeStore';
 import { SwipeableRow } from '../components/SwipeableRow';
 import axios from 'axios';
-import { format } from 'date-fns';
+import { format, addDays, startOfWeek } from 'date-fns';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
 // Days of the week for columns (1-7)
 const DAYS = ['1', '2', '3', '4', '5', '6', '7'];
+
+// Days of week for scheduling
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+interface WorkoutTemplate {
+  template_id: string;
+  name: string;
+  exercises: any[];
+  source: string;
+  created_at: string;
+  times_used: number;
+}
 
 interface WorkoutEntry {
   entry_id: string;
