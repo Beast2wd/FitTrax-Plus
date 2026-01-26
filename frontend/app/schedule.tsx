@@ -756,7 +756,7 @@ export default function ScheduleScreen() {
                     <Swipeable
                       key={workoutKey}
                       ref={(ref) => { swipeableRefs.current[`date_${workoutKey}`] = ref; }}
-                      renderRightActions={() => renderRightActions(workout.scheduled_id)}
+                      renderRightActions={() => renderRightActions(workout.scheduled_id || workout.workout_id)}
                       overshootRight={false}
                     >
                       <View style={[
@@ -774,13 +774,13 @@ export default function ScheduleScreen() {
                           </View>
                         </View>
                         <Text style={localStyles.workoutPlan}>
-                          {planDetails?.name || 'Workout Plan'}
+                          {planDetails?.name || workout.title || 'Workout Plan'}
                         </Text>
-                        <Text style={localStyles.workoutDay}>Day {workout.workout_day}</Text>
+                        <Text style={localStyles.workoutDay}>{workout.workout_day ? `Day ${workout.workout_day}` : workout.description}</Text>
                         {!workout.completed && (
                           <TouchableOpacity
                             style={localStyles.markCompleteBtn}
-                            onPress={() => handleCompleteWorkout(workout.scheduled_id)}
+                            onPress={() => handleCompleteWorkout(workout.scheduled_id || workout.workout_id)}
                           >
                             <Text style={localStyles.markCompleteBtnText}>Mark Complete</Text>
                           </TouchableOpacity>
