@@ -79,6 +79,20 @@ export default function ManualWorkoutLogScreen() {
   const [templateName, setTemplateName] = useState('');
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [scheduleTime, setScheduleTime] = useState('08:00');
+  const [selectedColor, setSelectedColor] = useState('blue');
+  const [selectedTemplateForSchedule, setSelectedTemplateForSchedule] = useState<WorkoutTemplate | null>(null);
+
+  // Available colors for templates
+  const WORKOUT_COLORS = [
+    { id: 'blue', name: 'Blue', hex: '#3B82F6' },
+    { id: 'purple', name: 'Purple', hex: '#8B5CF6' },
+    { id: 'pink', name: 'Pink', hex: '#EC4899' },
+    { id: 'red', name: 'Red', hex: '#EF4444' },
+    { id: 'orange', name: 'Orange', hex: '#F59E0B' },
+    { id: 'green', name: 'Green', hex: '#22C55E' },
+    { id: 'teal', name: 'Teal', hex: '#14B8A6' },
+    { id: 'indigo', name: 'Indigo', hex: '#6366F1' },
+  ];
 
   const toggleExpand = (entryId: string) => {
     setExpandedEntryId(expandedEntryId === entryId ? null : entryId);
