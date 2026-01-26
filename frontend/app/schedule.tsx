@@ -91,6 +91,30 @@ export default function ScheduleScreen() {
   const [selectedWorkoutDetail, setSelectedWorkoutDetail] = useState<any>(null);
   const [editingWorkout, setEditingWorkout] = useState(false);
   const [editedWorkoutTime, setEditedWorkoutTime] = useState('');
+  const [editedReminderOption, setEditedReminderOption] = useState<string>('30min');
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  // Reminder options
+  const REMINDER_OPTIONS = [
+    { id: 'none', label: 'No reminder', minutes: 0 },
+    { id: '5min', label: '5 minutes before', minutes: 5 },
+    { id: '10min', label: '10 minutes before', minutes: 10 },
+    { id: '15min', label: '15 minutes before', minutes: 15 },
+    { id: '30min', label: '30 minutes before', minutes: 30 },
+    { id: '1hour', label: '1 hour before', minutes: 60 },
+    { id: '2hours', label: '2 hours before', minutes: 120 },
+    { id: '1day', label: '1 day before', minutes: 1440 },
+    { id: '2days', label: '2 days before', minutes: 2880 },
+    { id: '1week', label: '1 week before', minutes: 10080 },
+  ];
+  
+  // Time picker options
+  const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hours = Math.floor(i / 4);
+    const minutes = (i % 4) * 15;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  });
   
   // Custom workout state
   const [customWorkoutName, setCustomWorkoutName] = useState('');
