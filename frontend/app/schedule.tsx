@@ -1522,13 +1522,26 @@ export default function ScheduleScreen() {
         >
           <SafeAreaView style={[localStyles.modalContainer, { backgroundColor: colors.background.primary }]}>
             <View style={localStyles.modalHeader}>
-              <TouchableOpacity onPress={() => setWorkoutDetailModalVisible(false)}>
+              <TouchableOpacity onPress={() => {
+                setWorkoutDetailModalVisible(false);
+                setEditingWorkout(false);
+                setShowTimePicker(false);
+                setShowReminderPicker(false);
+              }}>
                 <Ionicons name="close" size={28} color={colors.text.primary} />
               </TouchableOpacity>
               <Text style={[localStyles.modalTitle, { color: colors.text.primary }]}>
                 {editingWorkout ? 'Edit Workout' : 'Workout Details'}
               </Text>
-              <TouchableOpacity onPress={() => setEditingWorkout(!editingWorkout)}>
+              <TouchableOpacity onPress={() => {
+                if (editingWorkout) {
+                  // Save changes when clicking checkmark in edit mode
+                  updateScheduledWorkout();
+                } else {
+                  // Enter edit mode
+                  setEditingWorkout(true);
+                }
+              }}>
                 <Ionicons name={editingWorkout ? "checkmark" : "pencil"} size={24} color={accent.primary} />
               </TouchableOpacity>
             </View>
