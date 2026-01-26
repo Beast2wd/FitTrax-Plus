@@ -376,7 +376,7 @@ export default function ManualWorkoutLogScreen() {
                     Today's Workout ({entries.length})
                   </Text>
                   <Text style={[styles.sectionHint, { color: colors.text.muted }]}>
-                    ← Swipe left to delete • Tap to edit
+                    Tap to view details • Swipe left to delete
                   </Text>
                 </View>
               </View>
