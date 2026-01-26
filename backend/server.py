@@ -7235,6 +7235,184 @@ async def complete_workout(data: WorkoutCompleteData):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# WORKOUT TEMPLATES - Save and Schedule Repeating Workouts
+# ============================================================================
+
+class WorkoutTemplateCreate(BaseModel):
+    user_id: str
+    name: str
+    exercises: list  # List of exercise objects with name, sets, reps, weight, notes
+    source: str = "manual"  # "manual" or "ai_coach"
+
+class ScheduleWorkoutTemplate(BaseModel):
+    user_id: str
+    template_id: str
+    scheduled_days: list  # List of dates in YYYY-MM-DD format
+    time: str = "08:00"  # Time for the workout
+    recurring_days: Optional[list] = None  # Optional: days of week for recurring (0=Mon, 6=Sun)
+
+@api_router.post("/workout-templates")
+async def create_workout_template(template: WorkoutTemplateCreate):
+    """Save current workout as a reusable template"""
+    try:
+        template_id = f"wt_{datetime.utcnow().timestamp()}_{template.user_id[:8]}"
+        
+        template_data = {
+            "template_id": template_id,
+            "user_id": template.user_id,
+            "name": template.name,
+            "exercises": template.exercises,
+            "source": template.source,
+            "created_at": datetime.utcnow().isoformat(),
+            "last_used": None,
+            "times_used": 0,
+        }
+        
+        await db.workout_templates.insert_one(template_data)
+        
+        return {
+            "message": "Workout template saved",
+            "template_id": template_id,
+            "name": template.name
+        }
+    except Exception as e:
+        logger.error(f"Error creating workout template: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/workout-templates/{user_id}")
+async def get_workout_templates(user_id: str):
+    """Get all saved workout templates for a user"""
+    try:
+        templates = await db.workout_templates.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).to_list(50)
+        
+        for template in templates:
+            template.pop('_id', None)
+        
+        return {"templates": templates}
+    except Exception as e:
+        logger.error(f"Error getting workout templates: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/workout-templates/{template_id}")
+async def delete_workout_template(template_id: str):
+    """Delete a workout template"""
+    try:
+        result = await db.workout_templates.delete_one({"template_id": template_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return {"message": "Template deleted", "template_id": template_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting workout template: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/workout-templates/schedule")
+async def schedule_workout_template(schedule: ScheduleWorkoutTemplate):
+    """Schedule a workout template on specific days"""
+    try:
+        # Get the template
+        template = await db.workout_templates.find_one({"template_id": schedule.template_id})
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        scheduled_workouts = []
+        
+        for scheduled_date in schedule.scheduled_days:
+            workout_id = f"scheduled_{datetime.utcnow().timestamp()}_{schedule.user_id[:8]}_{scheduled_date}"
+            
+            workout_entry = {
+                "workout_id": workout_id,
+                "user_id": schedule.user_id,
+                "template_id": schedule.template_id,
+                "workout_type": "scheduled_template",
+                "title": template["name"],
+                "description": f"{len(template['exercises'])} exercises",
+                "exercises": template["exercises"],
+                "scheduled_date": scheduled_date,
+                "scheduled_time": schedule.time,
+                "completed": False,
+                "completed_at": None,
+                "recurring_days": schedule.recurring_days,
+                "created_at": datetime.utcnow().isoformat(),
+            }
+            
+            await db.scheduled_workouts.insert_one(workout_entry)
+            scheduled_workouts.append(workout_id)
+        
+        # Update template usage stats
+        await db.workout_templates.update_one(
+            {"template_id": schedule.template_id},
+            {
+                "$set": {"last_used": datetime.utcnow().isoformat()},
+                "$inc": {"times_used": 1}
+            }
+        )
+        
+        return {
+            "message": f"Workout scheduled for {len(schedule.scheduled_days)} day(s)",
+            "scheduled_workouts": scheduled_workouts
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error scheduling workout template: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/workout-templates/load/{template_id}")
+async def load_template_to_workout_log(template_id: str, user_id: str = Query(...)):
+    """Load a template's exercises into the manual workout log"""
+    try:
+        template = await db.workout_templates.find_one({"template_id": template_id})
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Clear existing entries for this user (optional - could be made a parameter)
+        # await db.manual_workout_logs.delete_many({"user_id": user_id})
+        
+        entries_created = []
+        for exercise in template["exercises"]:
+            entry_id = f"mwl_{datetime.utcnow().timestamp()}_{user_id[:8]}"
+            
+            entry_data = {
+                "entry_id": entry_id,
+                "user_id": user_id,
+                "exercise_name": exercise.get("name", "Unknown"),
+                "reps": exercise.get("reps", {}),
+                "weight": exercise.get("weight", {}),
+                "notes": exercise.get("notes", ""),
+                "synced_to_calendar": False,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+                "from_template": template_id,
+            }
+            
+            await db.manual_workout_logs.insert_one(entry_data)
+            entries_created.append(entry_id)
+        
+        # Update template usage stats
+        await db.workout_templates.update_one(
+            {"template_id": template_id},
+            {
+                "$set": {"last_used": datetime.utcnow().isoformat()},
+                "$inc": {"times_used": 1}
+            }
+        )
+        
+        return {
+            "message": f"Loaded {len(entries_created)} exercises from template",
+            "entries": entries_created,
+            "template_name": template["name"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading template: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # STEP TRACKER ENDPOINTS
 # ============================================================================
 
