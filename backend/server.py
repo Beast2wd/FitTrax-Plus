@@ -7488,6 +7488,10 @@ async def update_scheduled_workout(workout_id: str, update: UpdateScheduledWorko
             color_data = next((c for c in WORKOUT_COLORS if c["id"] == update.color), WORKOUT_COLORS[0])
             update_data["color"] = update.color
             update_data["color_hex"] = color_data["hex"]
+        if update.reminder_option is not None:
+            update_data["reminder_option"] = update.reminder_option
+        if update.reminder_minutes is not None:
+            update_data["reminder_minutes"] = update.reminder_minutes
         
         update_data["updated_at"] = datetime.utcnow().isoformat()
         
