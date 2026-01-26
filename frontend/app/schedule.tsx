@@ -86,6 +86,12 @@ export default function ScheduleScreen() {
   const [workoutToReschedule, setWorkoutToReschedule] = useState<any>(null);
   const [newScheduleDate, setNewScheduleDate] = useState('');
   
+  // Workout detail modal state
+  const [workoutDetailModalVisible, setWorkoutDetailModalVisible] = useState(false);
+  const [selectedWorkoutDetail, setSelectedWorkoutDetail] = useState<any>(null);
+  const [editingWorkout, setEditingWorkout] = useState(false);
+  const [editedWorkoutTime, setEditedWorkoutTime] = useState('');
+  
   // Custom workout state
   const [customWorkoutName, setCustomWorkoutName] = useState('');
   const [customExercises, setCustomExercises] = useState<{name: string, sets: string, reps: string}[]>([
