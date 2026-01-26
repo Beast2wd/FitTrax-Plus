@@ -71,6 +71,15 @@ export default function ManualWorkoutLogScreen() {
   const [weight, setWeight] = useState<{ [key: string]: string }>({});
   const [notes, setNotes] = useState('');
 
+  // Template & Scheduling state
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showLoadTemplateModal, setShowLoadTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [scheduleTime, setScheduleTime] = useState('08:00');
+
   const toggleExpand = (entryId: string) => {
     setExpandedEntryId(expandedEntryId === entryId ? null : entryId);
   };
@@ -78,8 +87,12 @@ export default function ManualWorkoutLogScreen() {
   const loadEntries = useCallback(async () => {
     if (!userId) return;
     try {
-      const response = await axios.get(`${API_URL}/api/manual-workout-log/${userId}`);
-      setEntries(response.data.entries || []);
+      const [entriesRes, templatesRes] = await Promise.all([
+        axios.get(`${API_URL}/api/manual-workout-log/${userId}`),
+        axios.get(`${API_URL}/api/workout-templates/${userId}`),
+      ]);
+      setEntries(entriesRes.data.entries || []);
+      setTemplates(templatesRes.data.templates || []);
     } catch (error) {
       console.error('Error loading workout log entries:', error);
     } finally {
@@ -95,6 +108,144 @@ export default function ManualWorkoutLogScreen() {
     setRefreshing(true);
     await loadEntries();
     setRefreshing(false);
+  };
+
+  // Save current workout as template
+  const saveAsTemplate = async () => {
+    if (entries.length === 0) {
+      Alert.alert('No Exercises', 'Add some exercises before saving as a template.');
+      return;
+    }
+    if (!templateName.trim()) {
+      Alert.alert('Name Required', 'Please enter a name for your workout template.');
+      return;
+    }
+
+    try {
+      const templateData = {
+        user_id: userId,
+        name: templateName.trim(),
+        exercises: entries.map(e => ({
+          name: e.exercise_name,
+          reps: e.reps,
+          weight: e.weight,
+          notes: e.notes,
+        })),
+        source: 'manual',
+      };
+
+      await axios.post(`${API_URL}/api/workout-templates`, templateData);
+      
+      Alert.alert('Template Saved!', `"${templateName}" has been saved. You can now schedule it on any day.`);
+      setShowTemplateModal(false);
+      setTemplateName('');
+      loadEntries();
+    } catch (error) {
+      console.error('Error saving template:', error);
+      Alert.alert('Error', 'Failed to save workout template.');
+    }
+  };
+
+  // Schedule the current workout on selected days
+  const scheduleWorkout = async () => {
+    if (templates.length === 0) {
+      Alert.alert('No Templates', 'Save your workout as a template first, then schedule it.');
+      return;
+    }
+    if (selectedDays.length === 0) {
+      Alert.alert('Select Days', 'Please select at least one day to schedule.');
+      return;
+    }
+
+    // Use the most recent template
+    const latestTemplate = templates[0];
+    
+    try {
+      const scheduleData = {
+        user_id: userId,
+        template_id: latestTemplate.template_id,
+        scheduled_days: selectedDays,
+        time: scheduleTime,
+      };
+
+      await axios.post(`${API_URL}/api/workout-templates/schedule`, scheduleData);
+      
+      Alert.alert(
+        'Workout Scheduled!',
+        `"${latestTemplate.name}" has been scheduled for ${selectedDays.length} day(s). Check your Calendar to see scheduled workouts.`,
+        [
+          { text: 'View Calendar', onPress: () => router.push('/schedule') },
+          { text: 'OK', style: 'cancel' },
+        ]
+      );
+      setShowScheduleModal(false);
+      setSelectedDays([]);
+    } catch (error) {
+      console.error('Error scheduling workout:', error);
+      Alert.alert('Error', 'Failed to schedule workout.');
+    }
+  };
+
+  // Load a template into the workout log
+  const loadTemplate = async (template: WorkoutTemplate) => {
+    try {
+      await axios.post(`${API_URL}/api/workout-templates/load/${template.template_id}?user_id=${userId}`);
+      
+      Alert.alert('Template Loaded!', `"${template.name}" exercises have been added to your workout log.`);
+      setShowLoadTemplateModal(false);
+      loadEntries();
+    } catch (error) {
+      console.error('Error loading template:', error);
+      Alert.alert('Error', 'Failed to load template.');
+    }
+  };
+
+  // Delete a template
+  const deleteTemplate = async (templateId: string) => {
+    Alert.alert(
+      'Delete Template',
+      'Are you sure you want to delete this workout template?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/workout-templates/${templateId}`);
+              loadEntries();
+            } catch (error) {
+              console.error('Error deleting template:', error);
+              Alert.alert('Error', 'Failed to delete template.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Toggle day selection for scheduling
+  const toggleDaySelection = (date: string) => {
+    setSelectedDays(prev => 
+      prev.includes(date) 
+        ? prev.filter(d => d !== date)
+        : [...prev, date]
+    );
+  };
+
+  // Get next 14 days for scheduling
+  const getNextTwoWeeks = () => {
+    const days = [];
+    const today = new Date();
+    for (let i = 0; i < 14; i++) {
+      const date = addDays(today, i);
+      days.push({
+        date: format(date, 'yyyy-MM-dd'),
+        label: format(date, 'EEE, MMM d'),
+        isToday: i === 0,
+      });
+    }
+    return days;
   };
 
   const resetForm = () => {
