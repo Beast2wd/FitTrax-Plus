@@ -1696,6 +1696,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 14,
     marginBottom: 10,
   },
+  workoutColorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
   upcomingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
