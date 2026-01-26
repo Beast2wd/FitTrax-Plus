@@ -630,7 +630,7 @@ export default function ScheduleScreen() {
                   <Swipeable
                     key={workoutKey}
                     ref={(ref) => { swipeableRefs.current[workoutKey] = ref; }}
-                    renderRightActions={() => renderRightActions(workout.scheduled_id)}
+                    renderRightActions={() => renderRightActions(workout.scheduled_id || workout.workout_id)}
                     overshootRight={false}
                   >
                     <View style={localStyles.upcomingCard}>
