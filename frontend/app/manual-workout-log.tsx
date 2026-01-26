@@ -1295,6 +1295,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
   },
+  templateColorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 12,
+  },
   templateInfo: {
     flex: 1,
   },
@@ -1312,6 +1318,29 @@ const styles = StyleSheet.create({
   },
   templateActionBtn: {
     padding: 8,
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  colorOptionSelected: {
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalOverlay: {
     flex: 1,
