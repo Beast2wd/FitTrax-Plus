@@ -7265,12 +7265,16 @@ class ScheduleWorkoutTemplate(BaseModel):
     scheduled_days: list  # List of dates in YYYY-MM-DD format
     time: str = "08:00"  # Time for the workout
     recurring_days: Optional[list] = None  # Optional: days of week for recurring (0=Mon, 6=Sun)
+    reminder_option: str = "30min"  # Reminder option ID
+    reminder_minutes: int = 30  # Minutes before workout to send reminder
 
 class UpdateScheduledWorkout(BaseModel):
     title: Optional[str] = None
     scheduled_time: Optional[str] = None
     exercises: Optional[list] = None
     color: Optional[str] = None
+    reminder_option: Optional[str] = None
+    reminder_minutes: Optional[int] = None
 
 @api_router.get("/workout-colors")
 async def get_workout_colors():
