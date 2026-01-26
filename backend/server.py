@@ -7447,6 +7447,61 @@ async def load_template_to_workout_log(template_id: str, user_id: str = Query(..
         logger.error(f"Error loading template: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/scheduled-workout/{workout_id}")
+async def get_scheduled_workout(workout_id: str):
+    """Get a single scheduled workout by ID"""
+    try:
+        workout = await db.scheduled_workouts.find_one({
+            "$or": [
+                {"workout_id": workout_id},
+                {"scheduled_id": workout_id}
+            ]
+        })
+        if not workout:
+            raise HTTPException(status_code=404, detail="Scheduled workout not found")
+        
+        workout.pop('_id', None)
+        return {"workout": workout}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting scheduled workout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/scheduled-workout/{workout_id}")
+async def update_scheduled_workout(workout_id: str, update: UpdateScheduledWorkout):
+    """Update a scheduled workout"""
+    try:
+        update_data = {}
+        if update.title is not None:
+            update_data["title"] = update.title
+        if update.scheduled_time is not None:
+            update_data["scheduled_time"] = update.scheduled_time
+        if update.exercises is not None:
+            update_data["exercises"] = update.exercises
+            update_data["description"] = f"{len(update.exercises)} exercises"
+        if update.color is not None:
+            color_data = next((c for c in WORKOUT_COLORS if c["id"] == update.color), WORKOUT_COLORS[0])
+            update_data["color"] = update.color
+            update_data["color_hex"] = color_data["hex"]
+        
+        update_data["updated_at"] = datetime.utcnow().isoformat()
+        
+        result = await db.scheduled_workouts.update_one(
+            {"$or": [{"workout_id": workout_id}, {"scheduled_id": workout_id}]},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Scheduled workout not found")
+        
+        return {"message": "Workout updated successfully", "workout_id": workout_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating scheduled workout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # STEP TRACKER ENDPOINTS
 # ============================================================================
