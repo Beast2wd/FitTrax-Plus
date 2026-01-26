@@ -7238,11 +7238,26 @@ async def complete_workout(data: WorkoutCompleteData):
 # WORKOUT TEMPLATES - Save and Schedule Repeating Workouts
 # ============================================================================
 
+# Available colors for workout templates
+WORKOUT_COLORS = [
+    {"id": "blue", "name": "Blue", "hex": "#3B82F6"},
+    {"id": "purple", "name": "Purple", "hex": "#8B5CF6"},
+    {"id": "pink", "name": "Pink", "hex": "#EC4899"},
+    {"id": "red", "name": "Red", "hex": "#EF4444"},
+    {"id": "orange", "name": "Orange", "hex": "#F59E0B"},
+    {"id": "yellow", "name": "Yellow", "hex": "#EAB308"},
+    {"id": "green", "name": "Green", "hex": "#22C55E"},
+    {"id": "teal", "name": "Teal", "hex": "#14B8A6"},
+    {"id": "cyan", "name": "Cyan", "hex": "#06B6D4"},
+    {"id": "indigo", "name": "Indigo", "hex": "#6366F1"},
+]
+
 class WorkoutTemplateCreate(BaseModel):
     user_id: str
     name: str
     exercises: list  # List of exercise objects with name, sets, reps, weight, notes
     source: str = "manual"  # "manual" or "ai_coach"
+    color: str = "blue"  # Color ID for the template
 
 class ScheduleWorkoutTemplate(BaseModel):
     user_id: str
@@ -7251,11 +7266,25 @@ class ScheduleWorkoutTemplate(BaseModel):
     time: str = "08:00"  # Time for the workout
     recurring_days: Optional[list] = None  # Optional: days of week for recurring (0=Mon, 6=Sun)
 
+class UpdateScheduledWorkout(BaseModel):
+    title: Optional[str] = None
+    scheduled_time: Optional[str] = None
+    exercises: Optional[list] = None
+    color: Optional[str] = None
+
+@api_router.get("/workout-colors")
+async def get_workout_colors():
+    """Get available colors for workout templates"""
+    return {"colors": WORKOUT_COLORS}
+
 @api_router.post("/workout-templates")
 async def create_workout_template(template: WorkoutTemplateCreate):
     """Save current workout as a reusable template"""
     try:
         template_id = f"wt_{datetime.utcnow().timestamp()}_{template.user_id[:8]}"
+        
+        # Find the color hex
+        color_data = next((c for c in WORKOUT_COLORS if c["id"] == template.color), WORKOUT_COLORS[0])
         
         template_data = {
             "template_id": template_id,
@@ -7263,6 +7292,8 @@ async def create_workout_template(template: WorkoutTemplateCreate):
             "name": template.name,
             "exercises": template.exercises,
             "source": template.source,
+            "color": template.color,
+            "color_hex": color_data["hex"],
             "created_at": datetime.utcnow().isoformat(),
             "last_used": None,
             "times_used": 0,
@@ -7273,7 +7304,9 @@ async def create_workout_template(template: WorkoutTemplateCreate):
         return {
             "message": "Workout template saved",
             "template_id": template_id,
-            "name": template.name
+            "name": template.name,
+            "color": template.color,
+            "color_hex": color_data["hex"]
         }
     except Exception as e:
         logger.error(f"Error creating workout template: {str(e)}")
