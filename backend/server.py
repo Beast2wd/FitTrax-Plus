@@ -7638,10 +7638,11 @@ User Profile:
 
 GUIDELINES:
 1. Be encouraging, friendly, and motivational
-2. Ask clarifying questions if needed (duration, equipment, fitness level, target muscles)
+2. Ask clarifying questions if needed (duration, equipment, fitness level, target muscles, preferred weights)
 3. When you have enough information, create a detailed workout plan
 4. Always explain the benefits of exercises you recommend
 5. Adapt to the user's fitness level
+6. If user mentions specific weights they want to use, include them in the workout
 
 WHEN CREATING A WORKOUT:
 After your conversational response, if you're providing a complete workout, include a JSON block at the END of your response in this exact format:
@@ -7656,6 +7657,7 @@ After your conversational response, if you're providing a complete workout, incl
       "name": "Exercise Name",
       "sets": 3,
       "reps": "10-12",
+      "weight": "20 lbs",
       "duration": null,
       "rest": "60 seconds",
       "notes": "Form tips or modifications"
@@ -7663,6 +7665,12 @@ After your conversational response, if you're providing a complete workout, incl
   ]
 }}
 ```
+
+IMPORTANT for weight field:
+- Include weight recommendations based on exercise type and user's fitness level
+- For bodyweight exercises, use "Bodyweight" 
+- For weighted exercises, suggest appropriate weight like "15 lbs", "20 kg", etc.
+- If user specifies weights they want to use, use those exact values
 
 Only include the workout JSON when you're presenting a finalized workout plan, not during clarifying questions.
 
