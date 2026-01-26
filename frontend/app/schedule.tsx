@@ -2305,4 +2305,128 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  // Workout Detail Modal Styles
+  workoutDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  workoutDetailColorDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: 12,
+  },
+  workoutDetailInfo: {
+    flex: 1,
+  },
+  workoutDetailTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  workoutDetailDate: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  completedBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  detailSection: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  detailSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  detailSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  detailValue: {
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  timeInput: {
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+  },
+  exerciseIndexBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: theme.accentColors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  exerciseIndexText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.accentColors.primary,
+  },
+  exerciseDetailContent: {
+    flex: 1,
+  },
+  exerciseMetaRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 6,
+  },
+  exerciseMeta: {
+    fontSize: 13,
+  },
+  exerciseNote: {
+    fontSize: 12,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+  detailActions: {
+    marginTop: 8,
+    marginBottom: 40,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  completeWorkoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+    marginBottom: 12,
+  },
+  completeWorkoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });
