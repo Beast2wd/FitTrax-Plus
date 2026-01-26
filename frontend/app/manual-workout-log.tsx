@@ -146,6 +146,7 @@ export default function ManualWorkoutLogScreen() {
           notes: e.notes,
         })),
         source: 'manual',
+        color: selectedColor,
       };
 
       await axios.post(`${API_URL}/api/workout-templates`, templateData);
@@ -153,6 +154,7 @@ export default function ManualWorkoutLogScreen() {
       Alert.alert('Template Saved!', `"${templateName}" has been saved. You can now schedule it on any day.`);
       setShowTemplateModal(false);
       setTemplateName('');
+      setSelectedColor('blue');
       loadEntries();
     } catch (error) {
       console.error('Error saving template:', error);
@@ -162,7 +164,9 @@ export default function ManualWorkoutLogScreen() {
 
   // Schedule the current workout on selected days
   const scheduleWorkout = async () => {
-    if (templates.length === 0) {
+    const templateToSchedule = selectedTemplateForSchedule || (templates.length > 0 ? templates[0] : null);
+    
+    if (!templateToSchedule) {
       Alert.alert('No Templates', 'Save your workout as a template first, then schedule it.');
       return;
     }
@@ -170,14 +174,11 @@ export default function ManualWorkoutLogScreen() {
       Alert.alert('Select Days', 'Please select at least one day to schedule.');
       return;
     }
-
-    // Use the most recent template
-    const latestTemplate = templates[0];
     
     try {
       const scheduleData = {
         user_id: userId,
-        template_id: latestTemplate.template_id,
+        template_id: templateToSchedule.template_id,
         scheduled_days: selectedDays,
         time: scheduleTime,
       };
