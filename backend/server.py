@@ -7369,6 +7369,8 @@ async def schedule_workout_template(schedule: ScheduleWorkoutTemplate):
                 "completed": False,
                 "completed_at": None,
                 "recurring_days": schedule.recurring_days,
+                "color": template.get("color", "blue"),
+                "color_hex": template.get("color_hex", "#3B82F6"),
                 "created_at": datetime.utcnow().isoformat(),
             }
             
