@@ -718,13 +718,228 @@ export default function ManualWorkoutLogScreen() {
                     <Ionicons name="checkmark-done" size={24} color="#fff" />
                     <Text style={styles.completeButtonText}>Workout Complete</Text>
                   </TouchableOpacity>
+
+                  {/* Save & Schedule Actions */}
+                  <View style={styles.actionButtonsRow}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.background.card, borderColor: accent.primary }]}
+                      onPress={() => setShowTemplateModal(true)}
+                    >
+                      <Ionicons name="bookmark-outline" size={20} color={accent.primary} />
+                      <Text style={[styles.actionButtonText, { color: accent.primary }]}>Save Template</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.background.card, borderColor: '#F59E0B' }]}
+                      onPress={() => setShowScheduleModal(true)}
+                    >
+                      <Ionicons name="calendar-outline" size={20} color="#F59E0B" />
+                      <Text style={[styles.actionButtonText, { color: '#F59E0B' }]}>Schedule</Text>
+                    </TouchableOpacity>
+                  </View>
                 </>
               )}
             </View>
 
+            {/* Saved Templates Section */}
+            {templates.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionHeaderLeft}>
+                    <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                      Saved Templates ({templates.length})
+                    </Text>
+                    <Text style={[styles.sectionHint, { color: colors.text.muted }]}>
+                      Tap to load • Long press to schedule
+                    </Text>
+                  </View>
+                </View>
+
+                {templates.map((template) => (
+                  <TouchableOpacity
+                    key={template.template_id}
+                    style={[styles.templateCard, { backgroundColor: colors.background.card }]}
+                    onPress={() => loadTemplate(template)}
+                    onLongPress={() => {
+                      setShowScheduleModal(true);
+                    }}
+                  >
+                    <View style={styles.templateInfo}>
+                      <Text style={[styles.templateName, { color: colors.text.primary }]}>
+                        {template.name}
+                      </Text>
+                      <Text style={[styles.templateMeta, { color: colors.text.secondary }]}>
+                        {template.exercises.length} exercises • Used {template.times_used}x
+                      </Text>
+                    </View>
+                    <View style={styles.templateActions}>
+                      <TouchableOpacity 
+                        style={styles.templateActionBtn}
+                        onPress={() => {
+                          setShowScheduleModal(true);
+                        }}
+                      >
+                        <Ionicons name="calendar" size={20} color="#F59E0B" />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={styles.templateActionBtn}
+                        onPress={() => deleteTemplate(template.template_id)}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             <View style={{ height: 40 }} />
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* Save Template Modal */}
+        <Modal
+          visible={showTemplateModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowTemplateModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.background.card }]}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Save as Template</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.text.secondary }]}>
+                Save this workout to reuse and schedule on any day
+              </Text>
+              
+              <TextInput
+                style={[styles.modalInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
+                value={templateName}
+                onChangeText={setTemplateName}
+                placeholder="Workout name (e.g., Push Day)"
+                placeholderTextColor={colors.text.muted}
+              />
+
+              <Text style={[styles.modalInfo, { color: colors.text.muted }]}>
+                {entries.length} exercises will be saved
+              </Text>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: colors.background.elevated }]}
+                  onPress={() => setShowTemplateModal(false)}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.text.primary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: accent.primary }]}
+                  onPress={saveAsTemplate}
+                >
+                  <Text style={[styles.modalButtonText, { color: '#fff' }]}>Save Template</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Schedule Modal */}
+        <Modal
+          visible={showScheduleModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowScheduleModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.background.card, maxHeight: '80%' }]}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Schedule Workout</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.text.secondary }]}>
+                {templates.length > 0 
+                  ? `Schedule "${templates[0]?.name}" on specific days`
+                  : 'Save a template first to schedule workouts'}
+              </Text>
+
+              {templates.length > 0 ? (
+                <>
+                  <Text style={[styles.modalLabel, { color: colors.text.primary }]}>Select Days:</Text>
+                  <ScrollView style={styles.daysScrollView} showsVerticalScrollIndicator={false}>
+                    <View style={styles.daysGrid}>
+                      {getNextTwoWeeks().map((day) => (
+                        <TouchableOpacity
+                          key={day.date}
+                          style={[
+                            styles.dayOption,
+                            { 
+                              backgroundColor: selectedDays.includes(day.date) 
+                                ? accent.primary 
+                                : colors.background.input,
+                              borderColor: selectedDays.includes(day.date) 
+                                ? accent.primary 
+                                : colors.border.primary,
+                            }
+                          ]}
+                          onPress={() => toggleDaySelection(day.date)}
+                        >
+                          <Text style={[
+                            styles.dayOptionText,
+                            { color: selectedDays.includes(day.date) ? '#fff' : colors.text.primary }
+                          ]}>
+                            {day.label}
+                          </Text>
+                          {day.isToday && (
+                            <Text style={[
+                              styles.dayTodayBadge,
+                              { color: selectedDays.includes(day.date) ? '#fff' : accent.primary }
+                            ]}>
+                              TODAY
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+
+                  <Text style={[styles.selectedCount, { color: colors.text.secondary }]}>
+                    {selectedDays.length} day(s) selected
+                  </Text>
+                </>
+              ) : (
+                <View style={styles.noTemplateMessage}>
+                  <Ionicons name="bookmark-outline" size={48} color={colors.text.muted} />
+                  <Text style={[styles.noTemplateText, { color: colors.text.secondary }]}>
+                    Save your current workout as a template first
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: colors.background.elevated }]}
+                  onPress={() => {
+                    setShowScheduleModal(false);
+                    setSelectedDays([]);
+                  }}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.text.primary }]}>Cancel</Text>
+                </TouchableOpacity>
+                {templates.length > 0 && (
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton, 
+                      { backgroundColor: selectedDays.length > 0 ? '#F59E0B' : colors.background.elevated }
+                    ]}
+                    onPress={scheduleWorkout}
+                    disabled={selectedDays.length === 0}
+                  >
+                    <Text style={[
+                      styles.modalButtonText, 
+                      { color: selectedDays.length > 0 ? '#fff' : colors.text.muted }
+                    ]}>
+                      Schedule
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
