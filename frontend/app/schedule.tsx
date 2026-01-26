@@ -1426,6 +1426,157 @@ export default function ScheduleScreen() {
             </ScrollView>
           </SafeAreaView>
         </Modal>
+
+        {/* Workout Detail Modal */}
+        <Modal
+          visible={workoutDetailModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setWorkoutDetailModalVisible(false)}
+        >
+          <SafeAreaView style={[localStyles.modalContainer, { backgroundColor: colors.background.primary }]}>
+            <View style={localStyles.modalHeader}>
+              <TouchableOpacity onPress={() => setWorkoutDetailModalVisible(false)}>
+                <Ionicons name="close" size={28} color={colors.text.primary} />
+              </TouchableOpacity>
+              <Text style={[localStyles.modalTitle, { color: colors.text.primary }]}>
+                {editingWorkout ? 'Edit Workout' : 'Workout Details'}
+              </Text>
+              <TouchableOpacity onPress={() => setEditingWorkout(!editingWorkout)}>
+                <Ionicons name={editingWorkout ? "checkmark" : "pencil"} size={24} color={accent.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={localStyles.modalScroll} showsVerticalScrollIndicator={false}>
+              {selectedWorkoutDetail && (
+                <>
+                  {/* Workout Header with Color */}
+                  <View style={[localStyles.workoutDetailHeader, { 
+                    borderLeftWidth: 5, 
+                    borderLeftColor: selectedWorkoutDetail.completed ? '#22C55E' : (selectedWorkoutDetail.color_hex || '#3B82F6')
+                  }]}>
+                    <View style={[localStyles.workoutDetailColorDot, { 
+                      backgroundColor: selectedWorkoutDetail.completed ? '#22C55E' : (selectedWorkoutDetail.color_hex || '#3B82F6') 
+                    }]} />
+                    <View style={localStyles.workoutDetailInfo}>
+                      <Text style={[localStyles.workoutDetailTitle, { color: colors.text.primary }]}>
+                        {selectedWorkoutDetail.title || 'Workout'}
+                      </Text>
+                      <Text style={[localStyles.workoutDetailDate, { color: colors.text.secondary }]}>
+                        {formatDateLabel(selectedWorkoutDetail.scheduled_date)}
+                      </Text>
+                    </View>
+                    {selectedWorkoutDetail.completed && (
+                      <View style={[localStyles.completedBadge, { backgroundColor: '#22C55E' }]}>
+                        <Ionicons name="checkmark" size={16} color="#fff" />
+                        <Text style={localStyles.completedBadgeText}>Complete</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Time Section */}
+                  <View style={[localStyles.detailSection, { backgroundColor: colors.background.card }]}>
+                    <View style={localStyles.detailSectionHeader}>
+                      <Ionicons name="time-outline" size={20} color={accent.primary} />
+                      <Text style={[localStyles.detailSectionTitle, { color: colors.text.primary }]}>Scheduled Time</Text>
+                    </View>
+                    {editingWorkout ? (
+                      <TextInput
+                        style={[localStyles.timeInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
+                        value={editedWorkoutTime}
+                        onChangeText={setEditedWorkoutTime}
+                        placeholder="08:00"
+                        placeholderTextColor={colors.text.muted}
+                      />
+                    ) : (
+                      <Text style={[localStyles.detailValue, { color: colors.text.secondary }]}>
+                        {formatTime(selectedWorkoutDetail.scheduled_time)}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Exercises Section */}
+                  <Text style={[localStyles.exercisesSectionTitle, { color: colors.text.primary }]}>
+                    Exercises ({selectedWorkoutDetail.exercises?.length || 0})
+                  </Text>
+                  
+                  {selectedWorkoutDetail.exercises?.map((exercise: any, index: number) => (
+                    <View key={index} style={[localStyles.exerciseDetailCard, { backgroundColor: colors.background.card }]}>
+                      <View style={localStyles.exerciseIndexBadge}>
+                        <Text style={localStyles.exerciseIndexText}>{index + 1}</Text>
+                      </View>
+                      <View style={localStyles.exerciseDetailContent}>
+                        <Text style={[localStyles.exerciseDetailName, { color: colors.text.primary }]}>
+                          {exercise.name}
+                        </Text>
+                        <View style={localStyles.exerciseMetaRow}>
+                          {exercise.sets && (
+                            <Text style={[localStyles.exerciseMeta, { color: colors.text.secondary }]}>
+                              {exercise.sets} sets
+                            </Text>
+                          )}
+                          {exercise.reps && typeof exercise.reps === 'string' && (
+                            <Text style={[localStyles.exerciseMeta, { color: colors.text.secondary }]}>
+                              {exercise.reps} reps
+                            </Text>
+                          )}
+                          {exercise.weight && typeof exercise.weight === 'string' && (
+                            <Text style={[localStyles.exerciseMeta, { color: accent.primary, fontWeight: '600' }]}>
+                              {exercise.weight}
+                            </Text>
+                          )}
+                        </View>
+                        {exercise.notes && (
+                          <Text style={[localStyles.exerciseNote, { color: colors.text.muted }]} numberOfLines={2}>
+                            {exercise.notes}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+
+                  {/* Action Buttons */}
+                  <View style={localStyles.detailActions}>
+                    {editingWorkout ? (
+                      <TouchableOpacity
+                        style={[localStyles.saveButton, { backgroundColor: accent.primary }]}
+                        onPress={updateScheduledWorkout}
+                      >
+                        <Ionicons name="checkmark" size={20} color="#fff" />
+                        <Text style={localStyles.saveButtonText}>Save Changes</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <>
+                        {!selectedWorkoutDetail.completed && (
+                          <TouchableOpacity
+                            style={[localStyles.completeWorkoutButton, { backgroundColor: '#22C55E' }]}
+                            onPress={() => {
+                              handleCompleteWorkout(selectedWorkoutDetail.scheduled_id || selectedWorkoutDetail.workout_id);
+                              setWorkoutDetailModalVisible(false);
+                            }}
+                          >
+                            <Ionicons name="checkmark-done" size={20} color="#fff" />
+                            <Text style={localStyles.completeWorkoutText}>Mark as Complete</Text>
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                          style={localStyles.deleteWorkoutButton}
+                          onPress={() => {
+                            setWorkoutDetailModalVisible(false);
+                            confirmDeleteWorkout(selectedWorkoutDetail.scheduled_id || selectedWorkoutDetail.workout_id);
+                          }}
+                        >
+                          <Ionicons name="trash" size={20} color="#fff" />
+                          <Text style={localStyles.deleteWorkoutButtonText}>Delete Workout</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
