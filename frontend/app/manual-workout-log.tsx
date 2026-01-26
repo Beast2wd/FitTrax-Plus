@@ -839,6 +839,26 @@ export default function ManualWorkoutLogScreen() {
                 placeholderTextColor={colors.text.muted}
               />
 
+              {/* Color Selection */}
+              <Text style={[styles.modalLabel, { color: colors.text.primary, marginTop: 12 }]}>Choose Color:</Text>
+              <View style={styles.colorGrid}>
+                {WORKOUT_COLORS.map((color) => (
+                  <TouchableOpacity
+                    key={color.id}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: color.hex },
+                      selectedColor === color.id && styles.colorOptionSelected
+                    ]}
+                    onPress={() => setSelectedColor(color.id)}
+                  >
+                    {selectedColor === color.id && (
+                      <Ionicons name="checkmark" size={18} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <Text style={[styles.modalInfo, { color: colors.text.muted }]}>
                 {entries.length} exercises will be saved
               </Text>
@@ -851,7 +871,7 @@ export default function ManualWorkoutLogScreen() {
                   <Text style={[styles.modalButtonText, { color: colors.text.primary }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalButton, { backgroundColor: accent.primary }]}
+                  style={[styles.modalButton, { backgroundColor: WORKOUT_COLORS.find(c => c.id === selectedColor)?.hex || accent.primary }]}
                   onPress={saveAsTemplate}
                 >
                   <Text style={[styles.modalButtonText, { color: '#fff' }]}>Save Template</Text>
@@ -866,18 +886,23 @@ export default function ManualWorkoutLogScreen() {
           visible={showScheduleModal}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowScheduleModal(false)}
+          onRequestClose={() => {
+            setShowScheduleModal(false);
+            setSelectedTemplateForSchedule(null);
+          }}
         >
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: colors.background.card, maxHeight: '80%' }]}>
               <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Schedule Workout</Text>
               <Text style={[styles.modalSubtitle, { color: colors.text.secondary }]}>
-                {templates.length > 0 
-                  ? `Schedule "${templates[0]?.name}" on specific days`
-                  : 'Save a template first to schedule workouts'}
+                {selectedTemplateForSchedule 
+                  ? `Schedule "${selectedTemplateForSchedule.name}" on specific days`
+                  : templates.length > 0 
+                    ? `Schedule "${templates[0]?.name}" on specific days`
+                    : 'Save a template first to schedule workouts'}
               </Text>
 
-              {templates.length > 0 ? (
+              {(selectedTemplateForSchedule || templates.length > 0) ? (
                 <>
                   <Text style={[styles.modalLabel, { color: colors.text.primary }]}>Select Days:</Text>
                   <ScrollView style={styles.daysScrollView} showsVerticalScrollIndicator={false}>
