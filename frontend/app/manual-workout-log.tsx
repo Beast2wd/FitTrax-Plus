@@ -771,46 +771,45 @@ export default function ManualWorkoutLogScreen() {
                       Saved Templates ({templates.length})
                     </Text>
                     <Text style={[styles.sectionHint, { color: colors.text.muted }]}>
-                      Tap to load • Long press to schedule
+                      Tap to load • Calendar icon to schedule
                     </Text>
                   </View>
                 </View>
 
-                {templates.map((template) => (
-                  <TouchableOpacity
-                    key={template.template_id}
-                    style={[styles.templateCard, { backgroundColor: colors.background.card }]}
-                    onPress={() => loadTemplate(template)}
-                    onLongPress={() => {
-                      setShowScheduleModal(true);
-                    }}
-                  >
-                    <View style={styles.templateInfo}>
-                      <Text style={[styles.templateName, { color: colors.text.primary }]}>
-                        {template.name}
-                      </Text>
-                      <Text style={[styles.templateMeta, { color: colors.text.secondary }]}>
-                        {template.exercises.length} exercises • Used {template.times_used}x
-                      </Text>
-                    </View>
-                    <View style={styles.templateActions}>
-                      <TouchableOpacity 
-                        style={styles.templateActionBtn}
-                        onPress={() => {
-                          setShowScheduleModal(true);
-                        }}
-                      >
-                        <Ionicons name="calendar" size={20} color="#F59E0B" />
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={styles.templateActionBtn}
-                        onPress={() => deleteTemplate(template.template_id)}
-                      >
-                        <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                {templates.map((template) => {
+                  const templateColor = template.color_hex || WORKOUT_COLORS.find(c => c.id === template.color)?.hex || '#3B82F6';
+                  return (
+                    <TouchableOpacity
+                      key={template.template_id}
+                      style={[styles.templateCard, { backgroundColor: colors.background.card, borderLeftWidth: 4, borderLeftColor: templateColor }]}
+                      onPress={() => loadTemplate(template)}
+                    >
+                      <View style={[styles.templateColorDot, { backgroundColor: templateColor }]} />
+                      <View style={styles.templateInfo}>
+                        <Text style={[styles.templateName, { color: colors.text.primary }]}>
+                          {template.name}
+                        </Text>
+                        <Text style={[styles.templateMeta, { color: colors.text.secondary }]}>
+                          {template.exercises.length} exercises • Used {template.times_used}x
+                        </Text>
+                      </View>
+                      <View style={styles.templateActions}>
+                        <TouchableOpacity 
+                          style={styles.templateActionBtn}
+                          onPress={() => openScheduleForTemplate(template)}
+                        >
+                          <Ionicons name="calendar" size={20} color="#F59E0B" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.templateActionBtn}
+                          onPress={() => deleteTemplate(template.template_id)}
+                        >
+                          <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             )}
 
