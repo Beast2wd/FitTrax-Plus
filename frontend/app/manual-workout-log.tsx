@@ -153,10 +153,43 @@ export default function ManualWorkoutLogScreen() {
             try {
               await axios.delete(`${API_URL}/api/manual-workout-log/${entryId}`);
               setEntries(entries.filter(e => e.entry_id !== entryId));
-              Alert.alert('Deleted', 'Workout entry removed');
             } catch (error) {
               console.error('Error deleting entry:', error);
               Alert.alert('Error', 'Failed to delete entry');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const deleteAllEntries = async () => {
+    if (entries.length === 0) {
+      Alert.alert('No Entries', 'There are no workout entries to delete.');
+      return;
+    }
+
+    Alert.alert(
+      'Delete All Entries',
+      `Are you sure you want to delete all ${entries.length} workout entries? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Delete all entries one by one
+              for (const entry of entries) {
+                await axios.delete(`${API_URL}/api/manual-workout-log/${entry.entry_id}`);
+              }
+              setEntries([]);
+              setExpandedEntryId(null);
+              Alert.alert('Deleted', 'All workout entries have been removed.');
+            } catch (error) {
+              console.error('Error deleting all entries:', error);
+              Alert.alert('Error', 'Failed to delete some entries. Please try again.');
+              loadEntries(); // Reload to get current state
             }
           },
         },
