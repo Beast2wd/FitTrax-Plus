@@ -42,6 +42,7 @@ interface ParsedWorkout {
     name: string;
     sets?: number;
     reps?: string;
+    weight?: string;
     duration?: string;
     rest?: string;
     notes?: string;
