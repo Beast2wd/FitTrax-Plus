@@ -554,6 +554,58 @@ export default function ScanScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
             </TouchableOpacity>
 
+            {/* Add Ingredients Button */}
+            <TouchableOpacity 
+              style={[styles.addIngredientButton, { backgroundColor: colors.background.card, borderColor: '#22C55E' }]}
+              onPress={() => setAddIngredientModalVisible(true)}
+            >
+              <Ionicons name="add-circle" size={20} color="#22C55E" />
+              <View style={styles.quantityButtonText}>
+                <Text style={[styles.quantityButtonTitle, { color: colors.text.primary }]}>
+                  Add More Ingredients
+                </Text>
+                <Text style={[styles.quantityButtonHint, { color: colors.text.secondary }]}>
+                  Add toppings, sides, sauces, etc.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+            </TouchableOpacity>
+
+            {/* Additional Ingredients List */}
+            {additionalIngredients.length > 0 && (
+              <View style={[styles.ingredientsList, { backgroundColor: colors.background.elevated }]}>
+                <Text style={[styles.ingredientsListTitle, { color: colors.text.primary }]}>
+                  Added Ingredients ({additionalIngredients.length})
+                </Text>
+                {additionalIngredients.map((ingredient) => (
+                  <View key={ingredient.id} style={[styles.ingredientItem, { borderBottomColor: colors.border.primary }]}>
+                    <View style={styles.ingredientInfo}>
+                      <Text style={[styles.ingredientName, { color: colors.text.primary }]}>
+                        {ingredient.name}
+                      </Text>
+                      <Text style={[styles.ingredientQuantity, { color: colors.text.secondary }]}>
+                        {ingredient.quantity}
+                      </Text>
+                    </View>
+                    <View style={styles.ingredientNutrition}>
+                      <Text style={[styles.ingredientCal, { color: accent.primary }]}>
+                        +{ingredient.calories} cal
+                      </Text>
+                      <Text style={[styles.ingredientMacros, { color: colors.text.muted }]}>
+                        P:{ingredient.protein}g C:{ingredient.carbs}g F:{ingredient.fat}g
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      onPress={() => removeIngredient(ingredient.id)}
+                      style={styles.removeIngredientBtn}
+                    >
+                      <Ionicons name="close-circle" size={22} color="#EF4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
             <TouchableOpacity 
               style={[styles.scanAgainButton, { backgroundColor: accent.primary }]} 
               onPress={reset}
