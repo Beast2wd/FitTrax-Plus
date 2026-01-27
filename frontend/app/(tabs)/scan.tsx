@@ -833,6 +833,100 @@ export default function ScanScreen() {
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Add Ingredient Modal */}
+      <Modal
+        visible={addIngredientModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAddIngredientModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity 
+            style={styles.modalOverlay} 
+            activeOpacity={1} 
+            onPress={() => setAddIngredientModalVisible(false)}
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+              style={[styles.addIngredientModalContent, { backgroundColor: colors.background.card }]}
+            >
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
+                <TouchableOpacity onPress={() => {
+                  setAddIngredientModalVisible(false);
+                  setNewIngredientName('');
+                  setNewIngredientQuantity('1 serving');
+                }}>
+                  <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Add Ingredient</Text>
+                <TouchableOpacity onPress={analyzeIngredient} disabled={analyzingIngredient}>
+                  {analyzingIngredient ? (
+                    <ActivityIndicator size="small" color={accent.primary} />
+                  ) : (
+                    <Text style={[styles.modalDone, { color: accent.primary }]}>Add</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.addIngredientForm}>
+                <View style={[styles.aiPoweredBadge, { backgroundColor: `${accent.primary}20` }]}>
+                  <Ionicons name="sparkles" size={16} color={accent.primary} />
+                  <Text style={[styles.aiPoweredText, { color: accent.primary }]}>
+                    AI-Powered Nutrition Analysis
+                  </Text>
+                </View>
+
+                <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>
+                  INGREDIENT NAME
+                </Text>
+                <TextInput
+                  style={[styles.ingredientInput, { 
+                    backgroundColor: colors.background.input, 
+                    borderColor: colors.border.primary, 
+                    color: colors.text.primary 
+                  }]}
+                  value={newIngredientName}
+                  onChangeText={setNewIngredientName}
+                  placeholder="e.g., Avocado, Ranch Dressing, Cheese"
+                  placeholderTextColor={colors.text.muted}
+                  autoFocus
+                />
+
+                <Text style={[styles.inputLabel, { color: colors.text.secondary, marginTop: 16 }]}>
+                  QUANTITY / PORTION
+                </Text>
+                <TextInput
+                  style={[styles.ingredientInput, { 
+                    backgroundColor: colors.background.input, 
+                    borderColor: colors.border.primary, 
+                    color: colors.text.primary 
+                  }]}
+                  value={newIngredientQuantity}
+                  onChangeText={setNewIngredientQuantity}
+                  placeholder="e.g., 1 tbsp, 1/2 cup, 2 slices"
+                  placeholderTextColor={colors.text.muted}
+                />
+
+                <View style={[styles.suggestionBox, { backgroundColor: colors.background.elevated }]}>
+                  <Text style={[styles.suggestionTitle, { color: colors.text.primary }]}>
+                    💡 Suggestions
+                  </Text>
+                  <Text style={[styles.suggestionText, { color: colors.text.secondary }]}>
+                    • Sauces: "2 tbsp ketchup", "1 tbsp mayo"{'\n'}
+                    • Toppings: "1/4 cup shredded cheese", "2 strips bacon"{'\n'}
+                    • Sides: "small fries", "side salad with dressing"
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
