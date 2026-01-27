@@ -21,6 +21,9 @@ import { useUserStore } from '../../stores/userStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { foodAPI } from '../../services/api';
 import { router } from 'expo-router';
+import axios from 'axios';
+
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
 const MEAL_CATEGORIES = [
   { value: 'breakfast', label: 'Breakfast', icon: '🌅', color: '#F59E0B' },
@@ -28,6 +31,16 @@ const MEAL_CATEGORIES = [
   { value: 'snack', label: 'Snack', icon: '🍎', color: '#EC4899' },
   { value: 'dinner', label: 'Dinner', icon: '🌙', color: '#8B5CF6' },
 ];
+
+interface AdditionalIngredient {
+  id: string;
+  name: string;
+  quantity: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
 
 export default function ScanScreen() {
   const { userId } = useUserStore();
@@ -48,6 +61,13 @@ export default function ScanScreen() {
     fat: '',
   });
   const [savedMealId, setSavedMealId] = useState<string | null>(null);
+  
+  // Additional ingredients state
+  const [additionalIngredients, setAdditionalIngredients] = useState<AdditionalIngredient[]>([]);
+  const [addIngredientModalVisible, setAddIngredientModalVisible] = useState(false);
+  const [newIngredientName, setNewIngredientName] = useState('');
+  const [newIngredientQuantity, setNewIngredientQuantity] = useState('1 serving');
+  const [analyzingIngredient, setAnalyzingIngredient] = useState(false);
 
   const colors = theme.colors;
   const accent = theme.accentColors;
