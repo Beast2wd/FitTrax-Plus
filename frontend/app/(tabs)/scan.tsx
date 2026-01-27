@@ -1240,4 +1240,105 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
+  // Add Ingredient Button Styles
+  addIngredientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 12,
+  },
+  ingredientsList: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  ingredientsListTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  ingredientItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  ingredientInfo: {
+    flex: 1,
+  },
+  ingredientName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  ingredientQuantity: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  ingredientNutrition: {
+    alignItems: 'flex-end',
+    marginRight: 8,
+  },
+  ingredientCal: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  ingredientMacros: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  removeIngredientBtn: {
+    padding: 4,
+  },
+  // Add Ingredient Modal Styles
+  addIngredientModalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
+  },
+  addIngredientForm: {
+    padding: 20,
+  },
+  aiPoweredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginBottom: 20,
+    gap: 8,
+  },
+  aiPoweredText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  ingredientInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+  },
+  suggestionBox: {
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 20,
+  },
+  suggestionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  suggestionText: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
 });
