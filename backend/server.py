@@ -873,6 +873,101 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
         raise HTTPException(status_code=500, detail="Failed to analyze food")
 
 # ============================================================================
+# ANALYZE INGREDIENT ENDPOINT (AI-powered nutritional analysis)
+# ============================================================================
+
+class AnalyzeIngredientRequest(BaseModel):
+    ingredient_name: str
+    quantity: str = "1 serving"
+
+@api_router.post("/analyze-ingredient")
+async def analyze_ingredient(request: AnalyzeIngredientRequest):
+    """Analyze a single ingredient using AI to get nutritional information"""
+    try:
+        api_key = os.getenv('EMERGENT_LLM_KEY')
+        if not api_key:
+            raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
+        
+        prompt = f"""You are a nutrition expert. Analyze the following ingredient and provide accurate nutritional information.
+
+Ingredient: {request.ingredient_name}
+Quantity: {request.quantity}
+
+Provide the nutritional values for this specific quantity. Be accurate based on standard nutritional databases (USDA, etc.).
+
+RESPOND ONLY WITH A JSON OBJECT in this exact format, no other text:
+{{
+    "ingredient": "{request.ingredient_name}",
+    "quantity": "{request.quantity}",
+    "calories": <number>,
+    "protein": <number in grams>,
+    "carbs": <number in grams>,
+    "fat": <number in grams>,
+    "fiber": <number in grams>,
+    "sugar": <number in grams>
+}}
+
+Important:
+- Use realistic values based on the specified quantity
+- Round to one decimal place
+- If the ingredient is unclear, provide your best estimate for a typical serving
+"""
+
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"ingredient_{datetime.utcnow().timestamp()}",
+            system_message="You are a nutritional analysis AI. Always respond with valid JSON only."
+        ).with_model("openai", "gpt-4o")
+        
+        user_message = UserMessage(text=prompt)
+        response = await chat.send_message(user_message)
+        
+        # Parse the JSON response
+        # Clean up the response to extract JSON
+        json_str = response.strip()
+        if "```json" in json_str:
+            json_str = json_str.split("```json")[1].split("```")[0].strip()
+        elif "```" in json_str:
+            json_str = json_str.split("```")[1].split("```")[0].strip()
+        
+        try:
+            nutrition_data = json.loads(json_str)
+        except json.JSONDecodeError:
+            # Try to extract just the JSON object if there's extra text
+            import re
+            json_match = re.search(r'\{[^{}]*\}', json_str, re.DOTALL)
+            if json_match:
+                nutrition_data = json.loads(json_match.group())
+            else:
+                # Return default values if parsing fails
+                logger.warning(f"Failed to parse ingredient nutrition response: {response[:200]}")
+                nutrition_data = {
+                    "ingredient": request.ingredient_name,
+                    "quantity": request.quantity,
+                    "calories": 50,
+                    "protein": 2,
+                    "carbs": 5,
+                    "fat": 2,
+                }
+        
+        return {
+            "ingredient": nutrition_data.get("ingredient", request.ingredient_name),
+            "quantity": nutrition_data.get("quantity", request.quantity),
+            "calories": round(nutrition_data.get("calories", 0)),
+            "protein": round(nutrition_data.get("protein", 0), 1),
+            "carbs": round(nutrition_data.get("carbs", 0), 1),
+            "fat": round(nutrition_data.get("fat", 0), 1),
+            "fiber": round(nutrition_data.get("fiber", 0), 1),
+            "sugar": round(nutrition_data.get("sugar", 0), 1),
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing ingredient: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze ingredient: {str(e)}")
+
+# ============================================================================
 # MEALS ENDPOINTS
 # ============================================================================
 
