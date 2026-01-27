@@ -255,6 +255,124 @@ export default function ScanScreen() {
     setResult(null);
     setSavedMealId(null);
     setServingQuantity('1');
+    setAdditionalIngredients([]);
+  };
+
+  // Analyze an ingredient with AI to get nutritional info
+  const analyzeIngredient = async () => {
+    if (!newIngredientName.trim()) {
+      Alert.alert('Error', 'Please enter an ingredient name');
+      return;
+    }
+
+    try {
+      setAnalyzingIngredient(true);
+      
+      const response = await axios.post(`${API_URL}/api/analyze-ingredient`, {
+        ingredient_name: newIngredientName.trim(),
+        quantity: newIngredientQuantity.trim() || '1 serving',
+      });
+
+      const nutrition = response.data;
+      
+      const newIngredient: AdditionalIngredient = {
+        id: `ing_${Date.now()}`,
+        name: newIngredientName.trim(),
+        quantity: newIngredientQuantity.trim() || '1 serving',
+        calories: nutrition.calories || 0,
+        protein: nutrition.protein || 0,
+        carbs: nutrition.carbs || 0,
+        fat: nutrition.fat || 0,
+      };
+
+      setAdditionalIngredients([...additionalIngredients, newIngredient]);
+      
+      // Update the total nutrition in result
+      if (result && result.analysis) {
+        setResult((prev: any) => ({
+          ...prev,
+          analysis: {
+            ...prev.analysis,
+            calories: Math.round(prev.analysis.calories + newIngredient.calories),
+            protein: Math.round((prev.analysis.protein + newIngredient.protein) * 10) / 10,
+            carbs: Math.round((prev.analysis.carbs + newIngredient.carbs) * 10) / 10,
+            fat: Math.round((prev.analysis.fat + newIngredient.fat) * 10) / 10,
+          },
+        }));
+        
+        // Update edited nutrition values
+        setEditedNutrition(prev => ({
+          calories: Math.round(parseFloat(prev.calories || '0') + newIngredient.calories).toString(),
+          protein: Math.round((parseFloat(prev.protein || '0') + newIngredient.protein) * 10 / 10).toString(),
+          carbs: Math.round((parseFloat(prev.carbs || '0') + newIngredient.carbs) * 10 / 10).toString(),
+          fat: Math.round((parseFloat(prev.fat || '0') + newIngredient.fat) * 10 / 10).toString(),
+        }));
+      }
+
+      setAddIngredientModalVisible(false);
+      setNewIngredientName('');
+      setNewIngredientQuantity('1 serving');
+      
+      Alert.alert('Added!', `${newIngredient.name} added with ${newIngredient.calories} cal`);
+    } catch (error: any) {
+      console.error('Error analyzing ingredient:', error);
+      Alert.alert('Error', error.response?.data?.detail || 'Failed to analyze ingredient');
+    } finally {
+      setAnalyzingIngredient(false);
+    }
+  };
+
+  // Remove an additional ingredient
+  const removeIngredient = (ingredientId: string) => {
+    const ingredient = additionalIngredients.find(i => i.id === ingredientId);
+    if (!ingredient) return;
+
+    Alert.alert(
+      'Remove Ingredient',
+      `Remove ${ingredient.name} from your meal?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            setAdditionalIngredients(additionalIngredients.filter(i => i.id !== ingredientId));
+            
+            // Update the total nutrition
+            if (result && result.analysis) {
+              setResult((prev: any) => ({
+                ...prev,
+                analysis: {
+                  ...prev.analysis,
+                  calories: Math.max(0, Math.round(prev.analysis.calories - ingredient.calories)),
+                  protein: Math.max(0, Math.round((prev.analysis.protein - ingredient.protein) * 10) / 10),
+                  carbs: Math.max(0, Math.round((prev.analysis.carbs - ingredient.carbs) * 10) / 10),
+                  fat: Math.max(0, Math.round((prev.analysis.fat - ingredient.fat) * 10) / 10),
+                },
+              }));
+              
+              setEditedNutrition(prev => ({
+                calories: Math.max(0, Math.round(parseFloat(prev.calories || '0') - ingredient.calories)).toString(),
+                protein: Math.max(0, Math.round((parseFloat(prev.protein || '0') - ingredient.protein) * 10) / 10).toString(),
+                carbs: Math.max(0, Math.round((parseFloat(prev.carbs || '0') - ingredient.carbs) * 10) / 10).toString(),
+                fat: Math.max(0, Math.round((parseFloat(prev.fat || '0') - ingredient.fat) * 10) / 10).toString(),
+              }));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Calculate total nutrition including additional ingredients
+  const getTotalNutrition = () => {
+    if (!result?.analysis) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    return {
+      calories: Math.round(result.analysis.calories),
+      protein: Math.round(result.analysis.protein * 10) / 10,
+      carbs: Math.round(result.analysis.carbs * 10) / 10,
+      fat: Math.round(result.analysis.fat * 10) / 10,
+    };
   };
 
   // Apply quantity multiplier to nutrition values
