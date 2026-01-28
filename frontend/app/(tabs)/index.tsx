@@ -498,9 +498,19 @@ export default function DashboardScreen() {
                 {t('dashboard.todaysCalories')}
               </Text>
             </View>
-            <Text style={[styles.calorieGoal, { color: colors.text.muted }]}>
-              {t('dashboard.goal')}: {today.calories_goal || 2000}
-            </Text>
+            <View style={styles.calorieHeaderRight}>
+              {today.meals_count > 0 && (
+                <TouchableOpacity 
+                  onPress={clearTodaysMeals}
+                  style={styles.clearButton}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                </TouchableOpacity>
+              )}
+              <Text style={[styles.calorieGoal, { color: colors.text.muted }]}>
+                {t('dashboard.goal')}: {today.calories_goal || 2000}
+              </Text>
+            </View>
           </View>
           
           <View style={styles.calorieStats}>
