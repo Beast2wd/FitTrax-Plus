@@ -145,6 +145,12 @@ export default function ScanScreen() {
       // Get meal_id from the meal object in the response
       setSavedMealId(response.meal?.meal_id || null);
       
+      // Trigger dashboard refresh after successful meal analysis
+      if (response.meal?.meal_id) {
+        // You can add a callback here to refresh dashboard data
+        // For now, we'll use router events or global state management
+      }
+      
       // Initialize edited nutrition with result values
       if (response.analysis) {
         setEditedNutrition({
