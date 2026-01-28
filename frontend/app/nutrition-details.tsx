@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeStore } from '../../stores/themeStore';
+import { useThemeStore } from '../stores/themeStore';
 import { router } from 'expo-router';
 
 export default function NutritionDetailsScreen() {
