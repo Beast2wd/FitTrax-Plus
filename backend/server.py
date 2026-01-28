@@ -7302,9 +7302,10 @@ async def delete_all_manual_workout_entries(user_id: str, date: str = Query(...,
     """Delete all manual workout log entries for a user on a specific date"""
     try:
         # Delete all entries for the user on the specified date
+        # Match entries where created_at starts with the given date (YYYY-MM-DD)
         result = await db.manual_workout_logs.delete_many({
             "user_id": user_id,
-            "date": date
+            "created_at": {"$regex": f"^{date}"}
         })
         return {
             "message": f"Deleted {result.deleted_count} workout entries",
