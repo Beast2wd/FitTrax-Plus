@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive FitTrax API Testing Suite
+Comprehensive FitTrax+ API Testing Suite
 Tests all critical endpoints for deployment readiness
 """
 
@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import uuid
 
-class FitTraxAPITester:
+class FitTrax+APITester:
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip('/')
         self.api_url = f"{self.base_url}/api"
@@ -637,7 +637,7 @@ class FitTraxAPITester:
 
     def run_comprehensive_test(self):
         """Run all tests in sequence"""
-        print("🚀 Starting Comprehensive FitTrax API Testing Suite")
+        print("🚀 Starting Comprehensive FitTrax+ API Testing Suite")
         print(f"🌐 Testing API at: {self.api_url}")
         print("=" * 80)
         
@@ -724,8 +724,8 @@ if __name__ == "__main__":
     # Use the backend URL from environment
     BACKEND_URL = "https://fit-deploy.preview.emergentagent.com"
     
-    print(f"🎯 FitTrax API Comprehensive Testing Suite")
+    print(f"🎯 FitTrax+ API Comprehensive Testing Suite")
     print(f"🌐 Backend URL: {BACKEND_URL}")
     
-    tester = FitTraxAPITester(BACKEND_URL)
+    tester = FitTrax+APITester(BACKEND_URL)
     tester.run_comprehensive_test()

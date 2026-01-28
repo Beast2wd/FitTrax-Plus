@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Test for FitTrax Fitness App
+Comprehensive Backend API Test for FitTrax+ Fitness App
 Tests all endpoints as requested in the review.
 """
 
@@ -117,7 +117,7 @@ def test_fittrax_backend():
     """Run comprehensive backend tests"""
     
     tester = APITester()
-    print(f"🚀 Starting FitTrax Backend API Tests")
+    print(f"🚀 Starting FitTrax+ Backend API Tests")
     print(f"Backend URL: {API_BASE}")
     print(f"Test User ID: {TEST_USER_ID}")
     
@@ -502,7 +502,7 @@ def test_fittrax_backend():
     return tester.results
 
 if __name__ == "__main__":
-    print("🧪 FitTrax Backend API Comprehensive Test Suite")
+    print("🧪 FitTrax+ Backend API Comprehensive Test Suite")
     print("=" * 60)
     
     # Run the tests

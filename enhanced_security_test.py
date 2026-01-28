@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Enhanced FitTrax Security Testing Suite
+Enhanced FitTrax+ Security Testing Suite
 Tests authentication, rate limiting, input validation, and CORS with more detailed checks
 """
 
@@ -303,7 +303,7 @@ class EnhancedSecurityTester:
 
     def run_enhanced_tests(self):
         """Run enhanced security tests"""
-        print("🔒 Enhanced FitTrax Security Testing Suite")
+        print("🔒 Enhanced FitTrax+ Security Testing Suite")
         print("=" * 60)
         print()
         

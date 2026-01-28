@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Step Tracker Backend API Testing
-Tests all step tracking endpoints for the FitTrax application
+Tests all step tracking endpoints for the FitTrax+ application
 """
 
 import requests

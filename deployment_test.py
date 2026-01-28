@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FitTrax API Deployment Readiness Test
+FitTrax+ API Deployment Readiness Test
 Focused test avoiding rate limiting issues
 """
 
@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from typing import Dict, Any
 
-class FitTraxDeploymentTester:
+class FitTrax+DeploymentTester:
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip('/')
         self.api_url = f"{self.base_url}/api"
@@ -242,7 +242,7 @@ class FitTraxDeploymentTester:
 
     def run_deployment_test(self):
         """Run deployment readiness test"""
-        print("🚀 FitTrax API Deployment Readiness Test")
+        print("🚀 FitTrax+ API Deployment Readiness Test")
         print(f"🌐 Testing API at: {self.api_url}")
         print("=" * 80)
         
@@ -252,5 +252,5 @@ class FitTraxDeploymentTester:
 if __name__ == "__main__":
     BACKEND_URL = "https://fit-deploy.preview.emergentagent.com"
     
-    tester = FitTraxDeploymentTester(BACKEND_URL)
+    tester = FitTrax+DeploymentTester(BACKEND_URL)
     tester.run_deployment_test()
