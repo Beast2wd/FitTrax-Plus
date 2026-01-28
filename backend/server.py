@@ -12,6 +12,11 @@ import logging
 import base64
 import re
 import certifi
+
+# Load environment variables FIRST before any other imports that use them
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
 
@@ -32,10 +37,6 @@ from config import (
     HTTPSRedirectMiddleware, RequestSizeLimitMiddleware,
     is_production
 )
-
-# Load environment variables
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection with production settings and multi-user support
 client = AsyncIOMotorClient(
