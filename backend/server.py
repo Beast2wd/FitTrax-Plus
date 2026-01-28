@@ -8067,6 +8067,79 @@ class AIWorkoutChatRequest(BaseModel):
     user_profile: Optional[dict] = None
     conversation_history: Optional[List[dict]] = []
 
+class ChatMessageData(BaseModel):
+    id: str
+    role: str
+    content: str
+    timestamp: str
+    workout: Optional[dict] = None
+
+class SaveConversationRequest(BaseModel):
+    user_id: str
+    messages: List[ChatMessageData]
+
+@api_router.post("/ai-workout-chat/save")
+async def save_workout_chat(request: SaveConversationRequest):
+    """Save AI workout chat conversation - expires after 12 hours"""
+    try:
+        # Delete any existing conversation for this user
+        await db.workout_chat_conversations.delete_many({"user_id": request.user_id})
+        
+        # Save new conversation with expiration time (12 hours from now)
+        expiration_time = datetime.utcnow() + timedelta(hours=12)
+        
+        conversation_data = {
+            "user_id": request.user_id,
+            "messages": [msg.dict() for msg in request.messages],
+            "created_at": datetime.utcnow().isoformat(),
+            "expires_at": expiration_time.isoformat()
+        }
+        
+        await db.workout_chat_conversations.insert_one(conversation_data)
+        
+        return {"success": True, "message": "Conversation saved", "expires_at": expiration_time.isoformat()}
+    except Exception as e:
+        logger.error(f"Error saving workout chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/ai-workout-chat/load/{user_id}")
+async def load_workout_chat(user_id: str):
+    """Load AI workout chat conversation if not expired"""
+    try:
+        conversation = await db.workout_chat_conversations.find_one({"user_id": user_id})
+        
+        if not conversation:
+            return {"messages": [], "found": False}
+        
+        # Check if conversation has expired
+        expires_at = conversation.get("expires_at")
+        if expires_at:
+            expiration_time = datetime.fromisoformat(expires_at.replace('Z', '+00:00')) if 'Z' in expires_at else datetime.fromisoformat(expires_at)
+            if datetime.utcnow() > expiration_time:
+                # Conversation expired, delete it
+                await db.workout_chat_conversations.delete_one({"user_id": user_id})
+                return {"messages": [], "found": False, "expired": True}
+        
+        conversation.pop('_id', None)
+        return {
+            "messages": conversation.get("messages", []),
+            "found": True,
+            "expires_at": conversation.get("expires_at")
+        }
+    except Exception as e:
+        logger.error(f"Error loading workout chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/ai-workout-chat/clear/{user_id}")
+async def clear_workout_chat(user_id: str):
+    """Clear AI workout chat conversation"""
+    try:
+        result = await db.workout_chat_conversations.delete_many({"user_id": user_id})
+        return {"success": True, "deleted_count": result.deleted_count}
+    except Exception as e:
+        logger.error(f"Error clearing workout chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/ai-workout-chat")
 async def ai_workout_chat(request: AIWorkoutChatRequest):
     """AI-powered workout chat - creates personalized workouts through conversation"""
