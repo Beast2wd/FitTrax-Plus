@@ -2124,7 +2124,7 @@ async def get_upcoming_reminders(user_id: str):
 # ============================================================================
 
 @api_router.get("/dashboard/{user_id}")
-async def get_dashboard(user_id: str):
+async def get_dashboard(user_id: str, local_date: Optional[str] = None):
     """Get comprehensive dashboard data"""
     try:
         # Get user profile
@@ -2133,17 +2133,21 @@ async def get_dashboard(user_id: str):
             profile.pop('_id', None)
         
         # Get today's data - use local date from client for timezone handling
-        # Since we don't have client timezone, we query by both date field and timestamp
+        # If local_date is provided, use it; otherwise fall back to UTC date
+        if local_date:
+            query_date = local_date
+        else:
+            query_date = datetime.utcnow().strftime("%Y-%m-%d")
+        
         today_utc = datetime.utcnow()
-        today_utc_date = today_utc.strftime("%Y-%m-%d")
         today_start = today_utc.replace(hour=0, minute=0, second=0, microsecond=0)
         today_iso = today_start.isoformat()
         
-        # Today's meals - check both date field (new) and timestamp (backwards compatibility)
+        # Today's meals - check date field (local date) first, then timestamp for backwards compatibility
         meals_cursor = db.meals.find({
             "user_id": user_id,
             "$or": [
-                {"date": today_utc_date},
+                {"date": query_date},
                 {"date": {"$exists": False}, "timestamp": {"$gte": today_iso}}
             ]
         })
