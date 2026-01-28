@@ -10,6 +10,7 @@ import {
   Alert,
   Dimensions,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -22,11 +23,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AchievementModal } from '../../components/AchievementModal';
+import OnboardingWalkthrough from '../../components/OnboardingWalkthrough';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import i18next from 'i18next';
 import { AccentColors } from '../../constants/Colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
@@ -34,6 +37,8 @@ const { width } = Dimensions.get('window');
 export default function DashboardScreen() {
   const { userId, profile, lastMealLoggedAt, triggerMealRefresh } = useUserStore();
   const { theme, accent: accentKey } = useThemeStore();
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [walkthroughChecked, setWalkthroughChecked] = useState(false);
   const { 
     isRunning, 
     runTime, 
