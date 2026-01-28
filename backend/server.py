@@ -169,6 +169,8 @@ class FoodAnalysis(BaseModel):
     protein: float
     carbs: float
     fat: float
+    sugar: float = 0
+    fiber: float = 0
     portion_size: str
 
 class Meal(BaseModel):
@@ -179,6 +181,8 @@ class Meal(BaseModel):
     protein: float
     carbs: float
     fat: float
+    sugar: float = 0
+    fiber: float = 0
     meal_category: str
     image_base64: str
     timestamp: str
