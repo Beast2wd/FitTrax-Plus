@@ -816,6 +816,16 @@ export default function DashboardScreen() {
         achievement={achievementModal.achievement}
         onClose={() => setAchievementModal({ visible: false, achievement: null })}
       />
+
+      {/* Onboarding Walkthrough Modal */}
+      <Modal
+        visible={showWalkthrough}
+        animationType="fade"
+        presentationStyle="fullScreen"
+        statusBarTranslucent
+      >
+        <OnboardingWalkthrough onComplete={handleWalkthroughComplete} />
+      </Modal>
     </SafeAreaView>
   );
 }
