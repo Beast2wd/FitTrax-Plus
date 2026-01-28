@@ -177,21 +177,17 @@ export default function DashboardScreen() {
   }, [userId]);
 
   // Check if we should show the walkthrough on first open
-  // Disabled for existing users - only new profile creations will see it
   useEffect(() => {
     const checkWalkthrough = async () => {
       try {
-        // Mark as checked immediately
         setWalkthroughChecked(true);
         
         const completed = await AsyncStorage.getItem('onboarding_completed');
         
-        // If never set before, set it to true for existing users
-        if (completed === null) {
-          await AsyncStorage.setItem('onboarding_completed', 'true');
+        // Show walkthrough if not completed
+        if (completed !== 'true') {
+          setShowWalkthrough(true);
         }
-        // Walkthrough is only shown when explicitly triggered (e.g., from settings)
-        // setShowWalkthrough is not called here to prevent blocking existing users
       } catch (error) {
         console.error('Error checking walkthrough status:', error);
         setWalkthroughChecked(true);
