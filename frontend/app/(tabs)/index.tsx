@@ -131,6 +131,15 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
+  // Refresh dashboard when screen comes into focus (e.g., returning from scan screen)
+  useFocusEffect(
+    useCallback(() => {
+      if (userId && !loading) {
+        loadDashboard();
+      }
+    }, [userId, loading])
+  );
+
   const handleRefresh = () => {
     setRefreshing(true);
     loadDashboard();
