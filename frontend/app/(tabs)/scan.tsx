@@ -43,7 +43,7 @@ interface AdditionalIngredient {
 }
 
 export default function ScanScreen() {
-  const { userId } = useUserStore();
+  const { userId, triggerMealRefresh } = useUserStore();
   const { theme } = useThemeStore();
   const [image, setImage] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
