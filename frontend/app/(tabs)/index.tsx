@@ -266,17 +266,15 @@ export default function DashboardScreen() {
         return;
       }
 
-      // Reset state
-      setRunTime(0);
-      setRunDistance(0);
-      setRunCoordinates([]);
+      // Reset and start run via store
+      resetRun();
       setLastPosition(null);
       runStartTime.current = new Date();
-      setIsRunning(true);
+      startRunStore();
 
       // Start timer
       timerRef.current = setInterval(() => {
-        setRunTime(prev => prev + 1);
+        updateRunTime(useRunStore.getState().runTime + 1);
       }, 1000);
 
       // Start location tracking
@@ -288,18 +286,16 @@ export default function DashboardScreen() {
         },
         (location) => {
           const { latitude, longitude } = location.coords;
-          const newPoint = { latitude, longitude, timestamp: new Date().toISOString() };
+          const newPoint = { latitude, longitude, timestamp: Date.now() };
           
-          setRunCoordinates(prev => {
-            const updated = [...prev, newPoint];
-            return updated;
-          });
+          addRouteCoord(newPoint);
 
           setLastPosition((prev: { latitude: number; longitude: number } | null) => {
             if (prev) {
               const dist = calculateDistance(prev.latitude, prev.longitude, latitude, longitude);
               if (dist < 0.5) { // Filter out GPS jumps > 0.5 miles
-                setRunDistance(d => d + dist);
+                const currentDist = useRunStore.getState().distance;
+                updateRunDistance(currentDist + dist);
               }
             }
             return { latitude, longitude };
@@ -325,7 +321,7 @@ export default function DashboardScreen() {
       locationSubscription.current = null;
     }
 
-    setIsRunning(false);
+    stopRunStore();
 
     // Save the run to the backend
     if (runDistance > 0.01 && userId) {
