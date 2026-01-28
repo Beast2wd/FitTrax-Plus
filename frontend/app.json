@@ -66,7 +66,7 @@
       [
         "react-native-health-connect",
         {
-          "requestPermissionsRationale": "FitTrax uses Health Connect to sync your fitness data including steps, workouts, heart rate, and sleep for a comprehensive view of your health."
+          "requestPermissionsRationale": "FitTrax+ uses Health Connect to sync your fitness data including steps, workouts, heart rate, and sleep for a comprehensive view of your health."
         }
       ]
     ],
