@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "FitTrax",
-    "slug": "fittrax",
+    "name": "FitTrax+",
+    "slug": "fittrax-plus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "fittrax",
+    "scheme": "fittraxplus",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/images/splash-icon.png",
@@ -15,10 +15,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fittrax.app",
+      "bundleIdentifier": "com.fittraxplus.app",
       "infoPlist": {
-        "NSHealthShareUsageDescription": "FitTrax needs access to your health data to track your fitness progress, including steps, workouts, heart rate, and sleep.",
-        "NSHealthUpdateUsageDescription": "FitTrax needs permission to save your workout data to Apple Health.",
+        "NSHealthShareUsageDescription": "FitTrax+ needs access to your health data to track your fitness progress, including steps, workouts, heart rate, and sleep.",
+        "NSHealthUpdateUsageDescription": "FitTrax+ needs permission to save your workout data to Apple Health.",
         "UIBackgroundModes": ["fetch"]
       },
       "entitlements": {
