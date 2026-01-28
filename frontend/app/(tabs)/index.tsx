@@ -131,6 +131,14 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
+  // Refresh dashboard when a meal is logged from scan screen
+  useEffect(() => {
+    if (lastMealLoggedAt && userId) {
+      console.log('Meal logged, refreshing dashboard...');
+      loadDashboard();
+    }
+  }, [lastMealLoggedAt]);
+
   // Refresh dashboard when screen comes into focus (e.g., returning from scan screen)
   useFocusEffect(
     useCallback(() => {
