@@ -444,51 +444,50 @@ export default function AIWorkoutChatScreen() {
         style={styles.keyboardAvoid}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.chatContainer}>
-            {/* Messages */}
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.messagesContainer}
-              contentContainerStyle={styles.messagesContent}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={() => scrollToBottom()}
-              keyboardShouldPersistTaps="handled"
-            >
-              {messages.map(renderMessage)}
-              {isLoading && (
-                <View style={styles.loadingContainer}>
-                  <View style={[styles.avatarContainer, { backgroundColor: `${accent.primary}20` }]}>
-                    <ActivityIndicator size="small" color={accent.primary} />
-                  </View>
-                  <View style={[styles.loadingBubble, { backgroundColor: colors.background.card }]}>
-                    <Text style={[styles.loadingText, { color: colors.text.muted }]}>
-                      Creating your workout...
-                    </Text>
-                  </View>
+        <View style={styles.chatContainer}>
+          {/* Messages */}
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesContainer}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={true}
+            onContentSizeChange={() => scrollToBottom()}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            {messages.map(renderMessage)}
+            {isLoading && (
+              <View style={styles.loadingIndicatorContainer}>
+                <View style={[styles.avatarContainer, { backgroundColor: `${accent.primary}20` }]}>
+                  <ActivityIndicator size="small" color={accent.primary} />
                 </View>
-              )}
-              <View style={{ height: 20 }} />
-            </ScrollView>
-
-            {/* Quick Prompts */}
-            {messages.length <= 1 && (
-              <View style={styles.quickPromptsContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPrompts}>
-                  {quickPrompts.map((prompt, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[styles.quickPrompt, { backgroundColor: colors.background.card, borderColor: colors.border.primary }]}
-                      onPress={() => setInputText(prompt)}
-                    >
-                      <Text style={[styles.quickPromptText, { color: accent.primary }]}>{prompt}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                <View style={[styles.loadingBubble, { backgroundColor: colors.background.card }]}>
+                  <Text style={[styles.loadingTextStyle, { color: colors.text.muted }]}>
+                    Creating your workout...
+                  </Text>
+                </View>
               </View>
             )}
-          </View>
-        </TouchableWithoutFeedback>
+            <View style={{ height: 20 }} />
+          </ScrollView>
+
+          {/* Quick Prompts */}
+          {messages.length <= 1 && (
+            <View style={styles.quickPromptsContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPrompts}>
+                {quickPrompts.map((prompt, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.quickPrompt, { backgroundColor: colors.background.card, borderColor: colors.border.primary }]}
+                    onPress={() => setInputText(prompt)}
+                  >
+                    <Text style={[styles.quickPromptText, { color: accent.primary }]}>{prompt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
 
         {/* Input Area - Outside TouchableWithoutFeedback so keyboard stays open when typing */}
         <View style={[styles.inputContainer, { backgroundColor: colors.background.secondary, borderTopColor: colors.border.primary, paddingBottom: Math.max(insets.bottom, 12) }]}>
