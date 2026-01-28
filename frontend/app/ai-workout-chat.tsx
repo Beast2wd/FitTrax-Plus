@@ -59,20 +59,120 @@ export default function AIWorkoutChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [sessionId, setSessionId] = useState(`workout_chat_${Date.now()}`);
   const [currentWorkout, setCurrentWorkout] = useState<ParsedWorkout | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Initialize with a welcome message
+  // Load existing conversation on mount
   useEffect(() => {
-    const welcomeMessage: ChatMessage = {
-      id: 'welcome',
-      role: 'assistant',
-      content: `Hey${profile?.name ? ` ${profile.name.split(' ')[0]}` : ''}! 💪 I'm your AI workout coach. Tell me what kind of workout you want to create today!\n\nFor example:\n• "Create a 30-minute HIIT workout"\n• "I want a push day routine with chest and triceps"\n• "Give me a beginner leg workout"\n• "Design a full body workout for strength"\n\nWhat would you like to work on?`,
-      timestamp: new Date(),
+    const loadConversation = async () => {
+      if (!userId) {
+        setIsLoadingHistory(false);
+        return;
+      }
+      
+      try {
+        const response = await axios.get(`${API_URL}/api/ai-workout-chat/load/${userId}`);
+        
+        if (response.data.found && response.data.messages?.length > 0) {
+          // Convert loaded messages to ChatMessage format
+          const loadedMessages: ChatMessage[] = response.data.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }));
+          setMessages(loadedMessages);
+          setExpiresAt(response.data.expires_at);
+        } else {
+          // No saved conversation, show welcome message
+          const welcomeMessage: ChatMessage = {
+            id: 'welcome',
+            role: 'assistant',
+            content: `Hey${profile?.name ? ` ${profile.name.split(' ')[0]}` : ''}! 💪 I'm your AI workout coach. Tell me what kind of workout you want to create today!\n\nFor example:\n• "Create a 30-minute HIIT workout"\n• "I want a push day routine with chest and triceps"\n• "Give me a beginner leg workout"\n• "Design a full body workout for strength"\n\nWhat would you like to work on?`,
+            timestamp: new Date(),
+          };
+          setMessages([welcomeMessage]);
+        }
+      } catch (error) {
+        console.error('Error loading conversation:', error);
+        // Show welcome message on error
+        const welcomeMessage: ChatMessage = {
+          id: 'welcome',
+          role: 'assistant',
+          content: `Hey${profile?.name ? ` ${profile.name.split(' ')[0]}` : ''}! 💪 I'm your AI workout coach. Tell me what kind of workout you want to create today!\n\nFor example:\n• "Create a 30-minute HIIT workout"\n• "I want a push day routine with chest and triceps"\n• "Give me a beginner leg workout"\n• "Design a full body workout for strength"\n\nWhat would you like to work on?`,
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMessage]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
     };
-    setMessages([welcomeMessage]);
-  }, [profile]);
+    
+    loadConversation();
+  }, [userId, profile]);
+
+  // Save conversation whenever messages change (debounced)
+  useEffect(() => {
+    const saveConversation = async () => {
+      if (!userId || messages.length <= 1) return; // Don't save just welcome message
+      
+      try {
+        const messagesToSave = messages.map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp.toISOString(),
+          workout: msg.workout || null,
+        }));
+        
+        await axios.post(`${API_URL}/api/ai-workout-chat/save`, {
+          user_id: userId,
+          messages: messagesToSave,
+        });
+      } catch (error) {
+        console.error('Error saving conversation:', error);
+      }
+    };
+    
+    // Debounce save to avoid too many requests
+    const timeoutId = setTimeout(saveConversation, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [messages, userId]);
+
+  const clearConversation = async () => {
+    Alert.alert(
+      'Clear Conversation',
+      'Are you sure you want to clear this conversation? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/ai-workout-chat/clear/${userId}`);
+              
+              // Reset to welcome message
+              const welcomeMessage: ChatMessage = {
+                id: 'welcome',
+                role: 'assistant',
+                content: `Hey${profile?.name ? ` ${profile.name.split(' ')[0]}` : ''}! 💪 I'm your AI workout coach. Tell me what kind of workout you want to create today!\n\nFor example:\n• "Create a 30-minute HIIT workout"\n• "I want a push day routine with chest and triceps"\n• "Give me a beginner leg workout"\n• "Design a full body workout for strength"\n\nWhat would you like to work on?`,
+                timestamp: new Date(),
+              };
+              setMessages([welcomeMessage]);
+              setCurrentWorkout(null);
+              setExpiresAt(null);
+              Alert.alert('Cleared', 'Conversation has been cleared.');
+            } catch (error) {
+              console.error('Error clearing conversation:', error);
+              Alert.alert('Error', 'Failed to clear conversation.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const scrollToBottom = () => {
     setTimeout(() => {
