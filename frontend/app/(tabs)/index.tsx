@@ -97,6 +97,39 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
+  const clearTodaysMeals = useCallback(async () => {
+    if (!userId) return;
+    
+    Alert.alert(
+      'Clear Today\'s Meals',
+      'Are you sure you want to delete all meals logged today? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Get local date in YYYY-MM-DD format
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, '0');
+              const day = String(now.getDate()).padStart(2, '0');
+              const localDate = `${year}-${month}-${day}`;
+              
+              await axios.delete(`${API_URL}/api/meals/clear-day/${userId}?date=${localDate}`);
+              Alert.alert('Success', 'All of today\'s meals have been cleared.');
+              loadDashboard(); // Refresh dashboard
+            } catch (error) {
+              console.error('Error clearing meals:', error);
+              Alert.alert('Error', 'Failed to clear meals. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  }, [userId]);
+
   useEffect(() => {
     if (pendingAchievements.length > 0 && !achievementModal.visible) {
       const nextAchievement = pendingAchievements[0];
