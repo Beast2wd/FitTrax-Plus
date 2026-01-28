@@ -17,7 +17,7 @@ import { useUserStore } from '../../stores/userStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { dashboardAPI, waterAPI } from '../../services/api';
 import { router } from 'expo-router';
-import FitTraxLogo from '../../components/FitTraxLogo';
+import FitTrax+Logo from '../../components/FitTrax+Logo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AchievementModal } from '../../components/AchievementModal';
 import { useTranslation } from 'react-i18next';
@@ -340,7 +340,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.centered}>
-          <FitTraxLogo size="xlarge" showText={true} />
+          <FitTrax+Logo size="xlarge" showText={true} />
           <Text style={[styles.welcomeText, { color: colors.text.primary }]}>
             {t('dashboard.welcome')}
           </Text>
@@ -395,7 +395,7 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.background.secondary }]}>
           <View style={styles.headerLeft}>
-            <FitTraxLogo size="small" showText={false} />
+            <FitTrax+Logo size="small" showText={false} />
           </View>
           <View style={styles.headerCenter}>
             <Text style={[styles.greeting, { color: colors.text.primary }]}>
@@ -701,7 +701,7 @@ export default function DashboardScreen() {
             <View style={styles.premiumContent}>
               <Ionicons name="diamond" size={28} color="#fff" />
               <View style={styles.premiumText}>
-                <Text style={styles.premiumTitle}>FitTrax Premium</Text>
+                <Text style={styles.premiumTitle}>FitTrax+ Premium</Text>
                 <Text style={styles.premiumSubtitle}>AI Workouts • Body Scan • Peptides</Text>
               </View>
             </View>

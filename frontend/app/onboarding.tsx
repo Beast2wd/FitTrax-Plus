@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useThemeStore } from '../stores/themeStore';
 import { useUserStore } from '../stores/userStore';
-import FitTraxLogo from '../components/FitTraxLogo';
+import FitTrax+Logo from '../components/FitTrax+Logo';
 
 export default function OnboardingScreen() {
   const { theme } = useThemeStore();
@@ -28,10 +28,10 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <View style={styles.content}>
-        <FitTraxLogo size="xlarge" showText={true} />
+        <FitTrax+Logo size="xlarge" showText={true} />
         
         <Text style={[styles.title, { color: colors.text.primary }]}>
-          Welcome to FitTrax!
+          Welcome to FitTrax+!
         </Text>
         <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           Let's set up your profile to personalize your fitness journey

@@ -516,7 +516,7 @@ export default function ProfileScreen() {
                 <View style={styles.previewContent}>
                   <Ionicons name="diamond" size={28} color="#fff" />
                   <View>
-                    <Text style={styles.previewTitle}>FitTrax Premium</Text>
+                    <Text style={styles.previewTitle}>FitTrax+ Premium</Text>
                     <Text style={styles.previewSubtitle}>Your selected accent color</Text>
                   </View>
                 </View>

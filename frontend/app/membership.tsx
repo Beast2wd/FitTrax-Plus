@@ -159,7 +159,7 @@ export default function MembershipScreen() {
             style={styles.headerGradient}
           >
             <Ionicons name="diamond" size={48} color="#fff" />
-            <Text style={styles.headerTitle}>FitTrax Premium</Text>
+            <Text style={styles.headerTitle}>FitTrax+ Premium</Text>
             <Text style={styles.headerSubtitle}>Unlock your full potential</Text>
           </LinearGradient>
         </View>

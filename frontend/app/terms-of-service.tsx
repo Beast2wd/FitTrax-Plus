@@ -18,15 +18,15 @@ import * as storage from '../services/storage';
 
 const { width } = Dimensions.get('window');
 
-const TERMS_OF_SERVICE = `FitTrax – Terms of Service
-Welcome to FitTrax
+const TERMS_OF_SERVICE = `FitTrax+ – Terms of Service
+Welcome to FitTrax+
 
 Did you know reading Terms of Service won't burn calories—but it can save you headaches later?
-While tapping "Accept" is tempting, we encourage you to review this document carefully. Our mission is to support your health journey while delivering a smooth, reliable, and transparent experience with FitTrax. Track, Transform, Thrive
+While tapping "Accept" is tempting, we encourage you to review this document carefully. Our mission is to support your health journey while delivering a smooth, reliable, and transparent experience with FitTrax+. Track, Transform, Thrive
 
 Acceptance of These Terms
 
-The FitTrax website, mobile applications, and related tools (collectively, the "Services") are provided by FitTrax, Inc. ("FitTrax," "we," "us," or "our"). These Terms of Service ("Terms"), together with our Privacy Policy and Community Guidelines, govern your access to and use of the Services.
+The FitTrax+ website, mobile applications, and related tools (collectively, the "Services") are provided by FitTrax+, Inc. ("FitTrax+," "we," "us," or "our"). These Terms of Service ("Terms"), together with our Privacy Policy and Community Guidelines, govern your access to and use of the Services.
 
 By accessing or using the Services, creating an account, or otherwise indicating acceptance, you agree to be bound by these Terms. If you do not agree, you may not use the Services.
 
@@ -36,28 +36,28 @@ These Terms include mandatory binding arbitration and a class action waiver. Ple
 
 Eligibility
 
-You must be 18 years of age or older to use FitTrax.
+You must be 18 years of age or older to use FitTrax+.
 
-We do not knowingly collect personal information from individuals under 18. If we learn that an underage user has provided information, we will take appropriate steps to remove such data and close the associated account. FitTrax will not sell or willingly distribute personal data to a third party.
+We do not knowingly collect personal information from individuals under 18. If we learn that an underage user has provided information, we will take appropriate steps to remove such data and close the associated account. FitTrax+ will not sell or willingly distribute personal data to a third party.
 
 You are responsible for ensuring your use of the Services complies with applicable laws in your jurisdiction.
 
 Your Account
 
-To access certain features, you may need to create a FitTrax account. You agree to:
+To access certain features, you may need to create a FitTrax+ account. You agree to:
 
 • Provide accurate and complete registration information
 • Maintain and update your information as needed
 • Use only one account for personal use
 • Keep your login credentials secure
 
-You are responsible for all activity under your account. Notify FitTrax immediately of any unauthorized access or suspected security issues.
+You are responsible for all activity under your account. Notify FitTrax+ immediately of any unauthorized access or suspected security issues.
 
 You may delete your account at any time. Deleted accounts are generally not recoverable.
 
 Service Changes and Availability
 
-FitTrax may update, modify, suspend, or discontinue any part of the Services at any time, including features, pricing, or availability. Updates may be automatic and required for proper functionality.
+FitTrax+ may update, modify, suspend, or discontinue any part of the Services at any time, including features, pricing, or availability. Updates may be automatic and required for proper functionality.
 
 We are not liable for any modification, suspension, or discontinuation of the Services or any resulting impact.
 
@@ -67,25 +67,25 @@ We may revise these Terms from time to time. Material changes will be communicat
 
 Content Ownership
 
-FitTrax Content
+FitTrax+ Content
 
-All content made available through the Services—including text, graphics, software, data, nutritional information, and design elements—is owned by FitTrax or its licensors and is protected by intellectual property laws.
+All content made available through the Services—including text, graphics, software, data, nutritional information, and design elements—is owned by FitTrax+ or its licensors and is protected by intellectual property laws.
 
-You may not copy, distribute, modify, reverse engineer, or commercially exploit any FitTrax content without permission.
+You may not copy, distribute, modify, reverse engineer, or commercially exploit any FitTrax+ content without permission.
 
 User-Generated Content
 
-Content you submit—such as food logs, activity data, feedback, or comments—remains yours. However, by submitting content, you grant FitTrax a worldwide, royalty-free, transferable license to use, store, display, modify, and distribute that content as necessary to operate and improve the Services.
+Content you submit—such as food logs, activity data, feedback, or comments—remains yours. However, by submitting content, you grant FitTrax+ a worldwide, royalty-free, transferable license to use, store, display, modify, and distribute that content as necessary to operate and improve the Services.
 
 We do not use your content in ways that conflict with our Privacy Policy.
 
 Feedback
 
-Any suggestions, ideas, or feedback you provide may be used by FitTrax without obligation or compensation and is treated as non-confidential.
+Any suggestions, ideas, or feedback you provide may be used by FitTrax+ without obligation or compensation and is treated as non-confidential.
 
 Premium Services
 
-FitTrax may offer subscription-based premium features ("Premium Services").
+FitTrax+ may offer subscription-based premium features ("Premium Services").
 
 Billing
 
@@ -102,13 +102,13 @@ Deleting the app does not cancel your subscription.
 
 Free Trials and Promotions
 
-FitTrax may offer free trials or promotional access. Unless canceled before the trial ends, your subscription will convert to a paid plan automatically.
+FitTrax+ may offer free trials or promotional access. Unless canceled before the trial ends, your subscription will convert to a paid plan automatically.
 
 Discount codes are non-transferable, cannot be combined, and must be used before expiration.
 
 Health Disclaimer
 
-FitTrax provides general wellness, fitness and nutrition information only.
+FitTrax+ provides general wellness, fitness and nutrition information only.
 
 • We do not provide medical advice
 • Always consult a healthcare professional before starting a diet, fitness program and peptide regiment. It's important to emphasize that peptide usage and findings are based on preclinical studies, and more research is needed to conclusively determine the effects and safety of peptides in humans. Any use of peptides should be under the guidance of a healthcare provider to ensure safety and monitor any potential side effects or contraindications.
@@ -135,20 +135,20 @@ You may not:
 
 Third-Party Services
 
-FitTrax may integrate with third-party apps, devices, or services. We are not responsible for their content, accuracy, or availability. Use of third-party services is at your own risk.
+FitTrax+ may integrate with third-party apps, devices, or services. We are not responsible for their content, accuracy, or availability. Use of third-party services is at your own risk.
 
 Disclaimer of Warranties
 
 The Services are provided "as is" and "as available."
-FitTrax disclaims all warranties to the maximum extent permitted by law, including implied warranties of fitness, accuracy, or reliability.
+FitTrax+ disclaims all warranties to the maximum extent permitted by law, including implied warranties of fitness, accuracy, or reliability.
 
 Limitation of Liability
 
-To the fullest extent permitted by law, FitTrax shall not be liable for indirect, incidental, or consequential damages. Our total liability will not exceed the greater of $500 USD or the amount you paid to FitTrax in the previous 12 months.
+To the fullest extent permitted by law, FitTrax+ shall not be liable for indirect, incidental, or consequential damages. Our total liability will not exceed the greater of $500 USD or the amount you paid to FitTrax+ in the previous 12 months.
 
 Indemnification
 
-You agree to indemnify and hold harmless FitTrax from claims arising out of your use of the Services, violation of these Terms, or infringement of third-party rights.
+You agree to indemnify and hold harmless FitTrax+ from claims arising out of your use of the Services, violation of these Terms, or infringement of third-party rights.
 
 Governing Law
 
@@ -158,7 +158,7 @@ Dispute Resolution
 
 All disputes will be resolved through binding individual arbitration, except where prohibited by law. Class actions, jury trials, and representative actions are waived.
 
-You may opt out of arbitration within 30 days of first accepting these Terms by submitting written notice to FitTrax.
+You may opt out of arbitration within 30 days of first accepting these Terms by submitting written notice to FitTrax+.
 
 International Users
 
@@ -166,19 +166,19 @@ If you access the Services from outside the United States, you consent to the tr
 
 Contact Us
 
-If you have questions or feedback, contact FitTrax Support at:
+If you have questions or feedback, contact FitTrax+ Support at:
 
-FitTrax, Inc.
+FitTrax+, Inc.
 Attn: Legal & Support
 Email: support@fittrax.com
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-FitTrax Privacy Policy
+FitTrax+ Privacy Policy
 
 Last Updated: 1/09/26
 
-FitTrax ("FitTrax," "we," "us," or "our") values your privacy. This Privacy Policy explains how we collect, use, disclose, and protect your information when you access or use the FitTrax website, mobile applications, and related services (collectively, the "Services").
+FitTrax+ ("FitTrax+," "we," "us," or "our") values your privacy. This Privacy Policy explains how we collect, use, disclose, and protect your information when you access or use the FitTrax+ website, mobile applications, and related services (collectively, the "Services").
 
 By using the Services, you agree to the practices described in this Privacy Policy.
 
@@ -228,7 +228,7 @@ We use your information to:
 
 3. Health & Nutrition Data
 
-FitTrax allows users to enter nutrition, fitness, and wellness information. This data:
+FitTrax+ allows users to enter nutrition, fitness, and wellness information. This data:
 
 • Is used solely to provide app functionality and insights
 • Is not medical data under HIPAA
@@ -258,15 +258,15 @@ We may disclose information if required to:
 
 • Comply with laws, regulations, or legal processes
 • Respond to lawful government requests
-• Protect the rights, safety, or security of users or FitTrax
+• Protect the rights, safety, or security of users or FitTrax+
 
 C. Business Transfers
 
-If FitTrax is involved in a merger, acquisition, or asset sale, your information may be transferred as part of that transaction.
+If FitTrax+ is involved in a merger, acquisition, or asset sale, your information may be transferred as part of that transaction.
 
 5. Cookies & Tracking Technologies
 
-FitTrax may use cookies, SDKs, and similar technologies to:
+FitTrax+ may use cookies, SDKs, and similar technologies to:
 
 • Remember preferences
 • Analyze usage trends
@@ -298,7 +298,7 @@ You can manage most information directly within the app.
 
 8. Children's Privacy
 
-FitTrax is not intended for individuals under 18.
+FitTrax+ is not intended for individuals under 18.
 
 We do not knowingly collect personal information from children. If we become aware that such information has been collected, we will promptly delete it.
 
@@ -308,7 +308,7 @@ We implement reasonable administrative, technical, and physical safeguards to pr
 
 10. International Users
 
-If you access FitTrax from outside the United States, you consent to the transfer, storage, and processing of your information in the U.S. and other countries where our service providers operate.
+If you access FitTrax+ from outside the United States, you consent to the transfer, storage, and processing of your information in the U.S. and other countries where our service providers operate.
 
 11. Third-Party Links & Integrations
 
@@ -322,7 +322,7 @@ We may update this Privacy Policy periodically. If changes are material, we will
 
 If you have questions, concerns, or requests regarding this Privacy Policy, contact us at:
 
-FitTrax, Inc.
+FitTrax+, Inc.
 Attn: Privacy Team
 Email: support@fittrax.com`;
 
@@ -378,7 +378,7 @@ export default function TermsOfServiceScreen() {
   const handleDecline = () => {
     Alert.alert(
       'Terms Required',
-      'You must accept the Terms of Service to use FitTrax. Without acceptance, you cannot proceed into the app.',
+      'You must accept the Terms of Service to use FitTrax+. Without acceptance, you cannot proceed into the app.',
       [
         { text: 'Review Terms', style: 'cancel' },
         { 
