@@ -2101,10 +2101,12 @@ async def get_dashboard(user_id: str):
         })
         today_meals = await meals_cursor.to_list(length=1000)
         
-        calories_consumed = sum(m['calories'] for m in today_meals)
-        protein = sum(m['protein'] for m in today_meals)
-        carbs = sum(m['carbs'] for m in today_meals)
-        fat = sum(m['fat'] for m in today_meals)
+        calories_consumed = sum(m.get('calories', 0) for m in today_meals)
+        protein = sum(m.get('protein', 0) for m in today_meals)
+        carbs = sum(m.get('carbs', 0) for m in today_meals)
+        fat = sum(m.get('fat', 0) for m in today_meals)
+        sugar = sum(m.get('sugar', 0) for m in today_meals)
+        fiber = sum(m.get('fiber', 0) for m in today_meals)
         
         # Today's workouts
         workouts_cursor = db.workouts.find({
