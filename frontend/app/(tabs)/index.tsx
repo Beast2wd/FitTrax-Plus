@@ -17,6 +17,7 @@ import { useUserStore } from '../../stores/userStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { dashboardAPI, waterAPI } from '../../services/api';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AchievementModal } from '../../components/AchievementModal';
