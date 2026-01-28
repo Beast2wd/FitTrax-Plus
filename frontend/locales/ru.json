@@ -24,7 +24,7 @@
     "goodMorning": "Доброе Утро",
     "goodAfternoon": "Добрый День",
     "goodEvening": "Добрый Вечер",
-    "welcome": "Добро пожаловать в FitTrax",
+    "welcome": "Добро пожаловать в FitTrax+",
     "createProfile": "Создайте профиль, чтобы начать свой фитнес-путь",
     "getStarted": "Начать",
     "todaysCalories": "Калории Сегодня",
@@ -94,7 +94,7 @@
     "italian": "Итальянский"
   },
   "membership": {
-    "title": "FitTrax Премиум",
+    "title": "FitTrax+ Премиум",
     "subtitle": "Раскройте свой потенциал",
     "perYear": "/год",
     "freeTrial": "{{days}}-Дневная Пробная Версия",

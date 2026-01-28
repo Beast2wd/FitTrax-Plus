@@ -24,7 +24,7 @@
     "goodMorning": "Bonjour",
     "goodAfternoon": "Bon Après-midi",
     "goodEvening": "Bonsoir",
-    "welcome": "Bienvenue sur FitTrax",
+    "welcome": "Bienvenue sur FitTrax+",
     "createProfile": "Créez votre profil pour commencer votre parcours fitness",
     "getStarted": "Commencer",
     "todaysCalories": "Calories du Jour",
@@ -94,7 +94,7 @@
     "italian": "Italien"
   },
   "membership": {
-    "title": "FitTrax Premium",
+    "title": "FitTrax+ Premium",
     "subtitle": "Libérez tout votre potentiel",
     "perYear": "/an",
     "freeTrial": "Essai Gratuit de {{days}} Jours",
