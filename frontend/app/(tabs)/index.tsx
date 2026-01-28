@@ -272,11 +272,16 @@ export default function DashboardScreen() {
       runStartTime.current = new Date();
       startRunStore();
 
-      // Start timer
+      // Start timer - use a local counter that syncs to store
+      let timerCount = 0;
       timerRef.current = setInterval(() => {
-        updateRunTime(useRunStore.getState().runTime + 1);
+        timerCount++;
+        updateRunTime(timerCount);
       }, 1000);
 
+      // Track distance locally
+      let currentDistance = 0;
+      
       // Start location tracking
       locationSubscription.current = await Location.watchPositionAsync(
         {
@@ -294,8 +299,8 @@ export default function DashboardScreen() {
             if (prev) {
               const dist = calculateDistance(prev.latitude, prev.longitude, latitude, longitude);
               if (dist < 0.5) { // Filter out GPS jumps > 0.5 miles
-                const currentDist = useRunStore.getState().distance;
-                updateRunDistance(currentDist + dist);
+                currentDistance += dist;
+                updateRunDistance(currentDistance);
               }
             }
             return { latitude, longitude };
