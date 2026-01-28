@@ -549,6 +549,8 @@ Provide your best estimate for the portion shown in the image."""
                     protein=0,
                     carbs=0,
                     fat=0,
+                    sugar=0,
+                    fiber=0,
                     portion_size="N/A"
                 )
             else:
