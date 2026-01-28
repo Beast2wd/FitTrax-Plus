@@ -862,7 +862,7 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
         analysis = await analyze_food_with_ai(validated_image)
         
         # Use local_date from request or default to UTC date
-        meal_date = data.local_date if data.local_date else datetime.utcnow().strftime("%Y-%m-%d")
+        meal_date = food_request.local_date if food_request.local_date else datetime.utcnow().strftime("%Y-%m-%d")
         
         # Create meal record
         meal = Meal(
