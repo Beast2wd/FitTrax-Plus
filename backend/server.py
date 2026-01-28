@@ -1060,6 +1060,24 @@ async def delete_meal(meal_id: str):
     
     return {"message": "Meal deleted successfully"}
 
+@api_router.delete("/meals/clear-day/{user_id}")
+async def clear_day_meals(user_id: str, date: str = Query(..., description="Date in YYYY-MM-DD format")):
+    """Delete all meals for a user on a specific date"""
+    try:
+        result = await db.meals.delete_many({
+            "user_id": user_id,
+            "date": date
+        })
+        return {
+            "message": f"Deleted {result.deleted_count} meals",
+            "deleted_count": result.deleted_count,
+            "user_id": user_id,
+            "date": date
+        }
+    except Exception as e:
+        logger.error(f"Error clearing day meals: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # NUTRITION TRACKING ENDPOINTS
 # ============================================================================
