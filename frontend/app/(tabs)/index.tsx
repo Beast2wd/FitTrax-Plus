@@ -898,6 +898,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  calorieHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  clearButton: {
+    padding: 6,
+  },
   calorieTitle: {
     fontSize: 18,
     fontWeight: '700',
