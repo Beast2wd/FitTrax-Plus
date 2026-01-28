@@ -468,6 +468,8 @@ If you can identify food in the image, return:
   "protein": numeric value in grams,
   "carbs": numeric value in grams,
   "fat": numeric value in grams,
+  "sugar": numeric value in grams,
+  "fiber": numeric value in grams,
   "portion_size": "description like '1 cup' or '200g'",
   "is_food": true
 }
@@ -479,6 +481,8 @@ If the image does NOT contain food, return:
   "protein": 0,
   "carbs": 0,
   "fat": 0,
+  "sugar": 0,
+  "fiber": 0,
   "portion_size": "N/A",
   "is_food": false,
   "message": "This image does not appear to contain food"
