@@ -7297,6 +7297,25 @@ async def delete_manual_workout_entry(entry_id: str):
         logger.error(f"Error deleting manual workout entry: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.delete("/manual-workout-log/all/{user_id}")
+async def delete_all_manual_workout_entries(user_id: str, date: str = Query(..., description="Date in YYYY-MM-DD format")):
+    """Delete all manual workout log entries for a user on a specific date"""
+    try:
+        # Delete all entries for the user on the specified date
+        result = await db.manual_workout_logs.delete_many({
+            "user_id": user_id,
+            "date": date
+        })
+        return {
+            "message": f"Deleted {result.deleted_count} workout entries",
+            "deleted_count": result.deleted_count,
+            "user_id": user_id,
+            "date": date
+        }
+    except Exception as e:
+        logger.error(f"Error deleting all manual workout entries: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 class WorkoutCompleteData(BaseModel):
     user_id: str
     workout_date: str
