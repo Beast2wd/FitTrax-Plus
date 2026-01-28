@@ -1366,12 +1366,16 @@ async def get_daily_summary(user_id: str, date: Optional[str] = None):
         totals["fat"] += meal.get("fat", 0)
         totals["sugar"] += meal.get("sugar", 0)
     
+    # Add sugar goal default if not present
+    sugar_goal = goals.get("sugar_grams", 50)
+    
     # Calculate remaining
     remaining = {
         "calories": goals["daily_calories"] - totals["calories"],
         "protein": goals["protein_grams"] - totals["protein"],
         "carbs": goals["carbs_grams"] - totals["carbs"],
-        "fat": goals["fat_grams"] - totals["fat"]
+        "fat": goals["fat_grams"] - totals["fat"],
+        "sugar": sugar_goal - totals["sugar"]
     }
     
     # Calculate progress percentages
@@ -1379,8 +1383,12 @@ async def get_daily_summary(user_id: str, date: Optional[str] = None):
         "calories": min(100, round((totals["calories"] / goals["daily_calories"]) * 100)) if goals["daily_calories"] > 0 else 0,
         "protein": min(100, round((totals["protein"] / goals["protein_grams"]) * 100)) if goals["protein_grams"] > 0 else 0,
         "carbs": min(100, round((totals["carbs"] / goals["carbs_grams"]) * 100)) if goals["carbs_grams"] > 0 else 0,
-        "fat": min(100, round((totals["fat"] / goals["fat_grams"]) * 100)) if goals["fat_grams"] > 0 else 0
+        "fat": min(100, round((totals["fat"] / goals["fat_grams"]) * 100)) if goals["fat_grams"] > 0 else 0,
+        "sugar": min(100, round((totals["sugar"] / sugar_goal) * 100)) if sugar_goal > 0 else 0
     }
+    
+    # Add sugar_grams to goals for frontend
+    goals["sugar_grams"] = sugar_goal
     
     return {
         "date": date,
