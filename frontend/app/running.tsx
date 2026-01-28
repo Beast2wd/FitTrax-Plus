@@ -295,8 +295,19 @@ export default function RunningScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={28} color={Colors.brand.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Running Tracker</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Running Tracker</Text>
 
         {/* Daily Run Progress Section */}
         <View style={styles.dailyProgressSection}>
