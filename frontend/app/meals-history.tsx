@@ -144,7 +144,7 @@ const MacroBar = ({
 };
 
 export default function MealsHistoryScreen() {
-  const { userId, lastMealLoggedAt } = useUserStore();
+  const { userId, lastMealLoggedAt, triggerMealRefresh } = useUserStore();
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   
