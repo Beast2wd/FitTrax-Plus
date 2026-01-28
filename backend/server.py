@@ -861,6 +861,9 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
         # Analyze food with AI
         analysis = await analyze_food_with_ai(validated_image)
         
+        # Use local_date from request or default to UTC date
+        meal_date = data.local_date if data.local_date else datetime.utcnow().strftime("%Y-%m-%d")
+        
         # Create meal record
         meal = Meal(
             meal_id=f"meal_{int(datetime.now().timestamp() * 1000)}",
@@ -874,7 +877,8 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
             fiber=analysis.fiber,
             meal_category=meal_category,
             image_base64=validated_image,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
+            date=meal_date
         )
         
         # Save to database
