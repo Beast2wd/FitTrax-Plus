@@ -120,6 +120,7 @@ export default function DashboardScreen() {
               await axios.delete(`${API_URL}/api/meals/clear-day/${userId}?date=${localDate}`);
               Alert.alert('Success', 'All of today\'s meals have been cleared.');
               loadDashboard(); // Refresh dashboard
+              triggerMealRefresh(); // Notify other screens to refresh
             } catch (error) {
               console.error('Error clearing meals:', error);
               Alert.alert('Error', 'Failed to clear meals. Please try again.');
@@ -128,7 +129,7 @@ export default function DashboardScreen() {
         },
       ]
     );
-  }, [userId]);
+  }, [userId, triggerMealRefresh]);
 
   useEffect(() => {
     if (pendingAchievements.length > 0 && !achievementModal.visible) {
