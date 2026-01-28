@@ -1335,15 +1335,16 @@ async def get_daily_summary(user_id: str, date: Optional[str] = None):
         "calories": 0,
         "protein": 0,
         "carbs": 0,
-        "fat": 0
+        "fat": 0,
+        "sugar": 0
     }
     
     # Group by meal category
     by_category = {
-        "breakfast": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
-        "lunch": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
-        "dinner": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
-        "snack": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}},
+        "breakfast": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "sugar": 0}},
+        "lunch": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "sugar": 0}},
+        "dinner": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "sugar": 0}},
+        "snack": {"meals": [], "totals": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "sugar": 0}},
     }
     
     for meal in meals:
@@ -1357,11 +1358,13 @@ async def get_daily_summary(user_id: str, date: Optional[str] = None):
         by_category[category]["totals"]["protein"] += meal.get("protein", 0)
         by_category[category]["totals"]["carbs"] += meal.get("carbs", 0)
         by_category[category]["totals"]["fat"] += meal.get("fat", 0)
+        by_category[category]["totals"]["sugar"] += meal.get("sugar", 0)
         
         totals["calories"] += meal.get("calories", 0)
         totals["protein"] += meal.get("protein", 0)
         totals["carbs"] += meal.get("carbs", 0)
         totals["fat"] += meal.get("fat", 0)
+        totals["sugar"] += meal.get("sugar", 0)
     
     # Calculate remaining
     remaining = {
