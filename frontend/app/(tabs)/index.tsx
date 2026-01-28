@@ -17,7 +17,7 @@ import { useUserStore } from '../../stores/userStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { dashboardAPI, waterAPI } from '../../services/api';
 import { router } from 'expo-router';
-import FitTrax+Logo from '../../components/FitTrax+Logo';
+import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AchievementModal } from '../../components/AchievementModal';
 import { useTranslation } from 'react-i18next';
@@ -340,7 +340,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.centered}>
-          <FitTrax+Logo size="xlarge" showText={true} />
+          <FitTraxLogo size="xlarge" showText={true} />
           <Text style={[styles.welcomeText, { color: colors.text.primary }]}>
             {t('dashboard.welcome')}
           </Text>
@@ -395,7 +395,7 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.background.secondary }]}>
           <View style={styles.headerLeft}>
-            <FitTrax+Logo size="small" showText={false} />
+            <FitTraxLogo size="small" showText={false} />
           </View>
           <View style={styles.headerCenter}>
             <Text style={[styles.greeting, { color: colors.text.primary }]}>
