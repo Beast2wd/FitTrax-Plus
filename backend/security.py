@@ -1,5 +1,5 @@
 """
-Security Module for FitTrax API
+Security Module for FitTrax+ API
 Implements JWT authentication, rate limiting, input validation, and audit logging
 """
 
