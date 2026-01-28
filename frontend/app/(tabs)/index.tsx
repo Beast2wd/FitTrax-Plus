@@ -734,7 +734,7 @@ export default function DashboardScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
           {[
-            { icon: 'chatbubbles', label: 'AI Workouts', color: '#8B5CF6', route: '/ai-workout-chat' },
+            { icon: 'chatbubbles', label: 'AI Workout Coach', color: '#8B5CF6', route: '/ai-workout-chat' },
             { icon: 'camera', label: t('dashboard.scanFood'), color: accent.primary, route: '/scan' },
             { icon: 'calendar', label: t('dashboard.schedule'), color: '#F59E0B', route: '/schedule' },
             { icon: 'clipboard', label: 'Workout Log', color: '#7C3AED', route: '/manual-workout-log' },
