@@ -364,6 +364,8 @@ export default function MealsHistoryScreen() {
           try {
             await foodAPI.deleteMeal(mealId);
             loadDailySummary();
+            // Trigger refresh on dashboard
+            triggerMealRefresh();
           } catch (error) {
             Alert.alert('Error', 'Failed to delete meal');
           }
