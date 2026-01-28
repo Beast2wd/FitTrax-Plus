@@ -59,7 +59,7 @@ audit_storage = AuditLogStorage(db)
 
 # Create the main app
 app = FastAPI(
-    title="FitTrax API", 
+    title="FitTrax+ API", 
     version="2.0",
     description="Fitness tracking API with AI-powered features",
     docs_url="/api/docs" if not is_production() else None,  # Disable docs in production
@@ -8163,12 +8163,12 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"Error creating indexes (may already exist): {str(e)}")
     
-    logger.info("FitTrax API started successfully")
+    logger.info("FitTrax+ API started successfully")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     """Gracefully shutdown database connections"""
-    logger.info("Shutting down FitTrax API...")
+    logger.info("Shutting down FitTrax+ API...")
     client.close()
     logger.info("Database connection closed")
 
@@ -8176,7 +8176,7 @@ async def shutdown_db_client():
 @app.get("/")
 async def root():
     """Root endpoint for health checks"""
-    return {"status": "healthy", "app": "FitTrax API", "version": "2.0"}
+    return {"status": "healthy", "app": "FitTrax+ API", "version": "2.0"}
 
 @app.get("/healthz")
 async def healthz():

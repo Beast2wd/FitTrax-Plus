@@ -1,5 +1,5 @@
 """
-Production Configuration Module for FitTrax API
+Production Configuration Module for FitTrax+ API
 Handles environment-based configuration, security warnings, and production readiness checks
 """
 
@@ -224,7 +224,7 @@ def log_startup_checks():
     results = run_production_checks()
     
     logger.info(f"=" * 60)
-    logger.info(f"FitTrax API Starting - Environment: {results['environment'].upper()}")
+    logger.info(f"FitTrax+ API Starting - Environment: {results['environment'].upper()}")
     logger.info(f"=" * 60)
     
     if results['critical']:
