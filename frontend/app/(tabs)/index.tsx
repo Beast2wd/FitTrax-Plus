@@ -512,9 +512,6 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Nutrition Tracker */}
-        <NutritionTracker todayData={today} />
-
         {/* Quick Stats Grid */}
         <View style={styles.statsGrid}>
           <TouchableOpacity 
