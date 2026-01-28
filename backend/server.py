@@ -2722,7 +2722,7 @@ async def get_pricing():
     """Get membership pricing information"""
     return {
         "plan": "annual",
-        "name": "FitTrax Premium",
+        "name": "FitTrax+ Premium",
         "price": 75.00,
         "currency": "USD",
         "interval": "year",
@@ -2825,7 +2825,7 @@ async def create_checkout_session(request: CheckoutSessionRequest):
             else:
                 # Create product
                 product = stripe.Product.create(
-                    name="FitTrax Premium",
+                    name="FitTrax+ Premium",
                     description="Annual subscription with AI workouts, body scan, peptide calculator, and more",
                 )
             
@@ -2905,7 +2905,7 @@ async def get_payment_link():
     """Get the direct Stripe Payment Link for subscriptions"""
     return {
         "payment_link": STRIPE_PAYMENT_LINK,
-        "plan": "FitTrax Premium",
+        "plan": "FitTrax+ Premium",
         "price": "$75/year",
         "trial_days": 3
     }
