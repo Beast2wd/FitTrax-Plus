@@ -148,7 +148,14 @@ export const plansAPI = {
 // Dashboard API
 export const dashboardAPI = {
   getDashboard: async (userId: string) => {
-    const response = await api.get(`/dashboard/${userId}`);
+    // Get local date in YYYY-MM-DD format (user's local timezone)
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const localDate = `${year}-${month}-${day}`;
+    
+    const response = await api.get(`/dashboard/${userId}?local_date=${localDate}`);
     return response.data;
   },
 };
