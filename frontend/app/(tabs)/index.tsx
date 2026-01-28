@@ -20,6 +20,7 @@ import { router } from 'expo-router';
 import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AchievementModal } from '../../components/AchievementModal';
+import { NutritionTracker } from '../../components/NutritionTracker';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as Location from 'expo-location';
