@@ -400,6 +400,20 @@ export default function AIWorkoutChatScreen() {
     'Core workout',
   ];
 
+  // Show loading screen while fetching conversation history
+  if (isLoadingHistory) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={accent.primary} />
+          <Text style={[styles.loadingText, { color: colors.text.secondary }]}>
+            Loading conversation...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]} edges={['top']}>
       {/* Header */}
@@ -409,11 +423,20 @@ export default function AIWorkoutChatScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>AI Workout Coach</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.text.secondary }]}>Create your perfect workout</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.text.secondary }]}>
+            {expiresAt ? 'Conversation saves for 12 hours' : 'Create your perfect workout'}
+          </Text>
         </View>
-        <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
-          <Ionicons name="refresh" size={22} color={accent.primary} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {messages.length > 1 && (
+            <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
+            <Ionicons name="refresh" size={22} color={accent.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <KeyboardAvoidingView
