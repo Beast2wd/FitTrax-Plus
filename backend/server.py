@@ -163,6 +163,7 @@ class FoodAnalysisRequest(BaseModel):
     user_id: str
     image_base64: str
     meal_category: str  # breakfast, lunch, dinner, snack
+    local_date: str = ""  # Local date in YYYY-MM-DD format from client
 
 class FoodAnalysis(BaseModel):
     food_name: str
