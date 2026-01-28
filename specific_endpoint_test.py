@@ -115,6 +115,10 @@ def test_delete_all_manual_workout_log():
             "notes": "Test entry for delete all functionality"
         }
         
+        # Also test creating entry with date field directly in database
+        # Since the API doesn't support date field, we'll test the delete functionality
+        # by creating an entry and then manually adding date field via direct database access
+        
         print(f"POST {create_url}")
         print(f"Data: {json.dumps(test_entry_data, indent=2)}")
         
