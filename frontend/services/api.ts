@@ -27,10 +27,16 @@ export const userAPI = {
 export const foodAPI = {
   analyzeFood: async (data: { user_id: string; image_base64: string; meal_category: string; local_date?: string }) => {
     try {
-      // Include local date for correct timezone handling
+      // Get local date in YYYY-MM-DD format (user's local timezone, not UTC)
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const localDate = `${year}-${month}-${day}`;
+      
       const requestData = {
         ...data,
-        local_date: data.local_date || new Date().toISOString().split('T')[0]
+        local_date: data.local_date || localDate
       };
       const response = await api.post('/analyze-food', requestData, {
         timeout: 90000, // 90 second timeout for AI analysis
