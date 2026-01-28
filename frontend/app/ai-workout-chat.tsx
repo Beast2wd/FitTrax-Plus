@@ -525,6 +525,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -548,11 +557,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  newChatButton: {
-    width: 40,
-    height: 40,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  clearButton: {
+    width: 36,
+    height: 36,
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+  },
+  newChatButton: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   keyboardAvoid: {
     flex: 1,
