@@ -11,8 +11,6 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  Keyboard,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
