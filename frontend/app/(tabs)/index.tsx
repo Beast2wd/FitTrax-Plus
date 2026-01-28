@@ -568,22 +568,6 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Nutrition Tracker */}
-        <NutritionTracker 
-          todayData={{
-            calories_consumed: today.calories_consumed || 0,
-            calories_goal: today.calories_goal || 2000,
-            sugar_consumed: today.sugar || 0,
-            sugar_goal: 50, // Default sugar goal
-            protein_consumed: today.protein || 0,
-            protein_goal: 150, // Default protein goal
-            carbs_consumed: today.carbs || 0,
-            carbs_goal: 200, // Default carbs goal
-            fat_consumed: today.fat || 0,
-            fat_goal: 65, // Default fat goal
-          }}
-        />
-
         {/* Hydration Quick Add */}
         <TouchableOpacity 
           style={[styles.waterSection, { backgroundColor: colors.background.card }]}
