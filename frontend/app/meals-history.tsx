@@ -200,6 +200,25 @@ export default function MealsHistoryScreen() {
     }
   }, [userId, selectedDate]);
 
+  // Refresh when meal is logged from scan screen
+  useEffect(() => {
+    if (lastMealLoggedAt && userId) {
+      console.log('Meal logged, refreshing meals history...');
+      loadDailySummary();
+      loadWeeklyData();
+    }
+  }, [lastMealLoggedAt]);
+
+  // Refresh when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (userId && !loading) {
+        loadDailySummary();
+        loadWeeklyData();
+      }
+    }, [userId, selectedDate])
+  );
+
   const loadDailySummary = async () => {
     try {
       setLoading(true);
