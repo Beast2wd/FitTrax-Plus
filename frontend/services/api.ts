@@ -25,9 +25,14 @@ export const userAPI = {
 
 // Food/Meal APIs
 export const foodAPI = {
-  analyzeFood: async (data: { user_id: string; image_base64: string; meal_category: string }) => {
+  analyzeFood: async (data: { user_id: string; image_base64: string; meal_category: string; local_date?: string }) => {
     try {
-      const response = await api.post('/analyze-food', data, {
+      // Include local date for correct timezone handling
+      const requestData = {
+        ...data,
+        local_date: data.local_date || new Date().toISOString().split('T')[0]
+      };
+      const response = await api.post('/analyze-food', requestData, {
         timeout: 90000, // 90 second timeout for AI analysis
       });
       return response.data;
