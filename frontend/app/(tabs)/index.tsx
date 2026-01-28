@@ -54,12 +54,6 @@ export default function DashboardScreen() {
   const [achievementModal, setAchievementModal] = useState<any>({ visible: false, achievement: null });
   const [pendingAchievements, setPendingAchievements] = useState<any[]>([]);
 
-  // Quick Run tracking state
-  const [isRunning, setIsRunning] = useState(false);
-  const [runTime, setRunTime] = useState(0); // in seconds
-  const [runDistance, setRunDistance] = useState(0); // in miles
-  const [runCoordinates, setRunCoordinates] = useState<any[]>([]);
-  
   // Get accent color gradient for running button
   const runningButtonGradient = AccentColors[accentKey]?.gradient || ['#EC4899', '#BE185D'];
   const runningButtonPrimary = AccentColors[accentKey]?.primary || '#EC4899';
