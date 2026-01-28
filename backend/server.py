@@ -564,6 +564,8 @@ Provide your best estimate for the portion shown in the image."""
                 protein=0,
                 carbs=0,
                 fat=0,
+                sugar=0,
+                fiber=0,
                 portion_size="N/A"
             )
         
@@ -573,6 +575,8 @@ Provide your best estimate for the portion shown in the image."""
             protein=float(json_data.get("protein", 0)),
             carbs=float(json_data.get("carbs", 0)),
             fat=float(json_data.get("fat", 0)),
+            sugar=float(json_data.get("sugar", 0)),
+            fiber=float(json_data.get("fiber", 0)),
             portion_size=json_data.get("portion_size", "1 serving")
         )
     
