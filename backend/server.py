@@ -865,6 +865,8 @@ async def analyze_food(request: Request, food_request: FoodAnalysisRequest):
             protein=analysis.protein,
             carbs=analysis.carbs,
             fat=analysis.fat,
+            sugar=analysis.sugar,
+            fiber=analysis.fiber,
             meal_category=meal_category,
             image_base64=validated_image,
             timestamp=datetime.utcnow().isoformat()
