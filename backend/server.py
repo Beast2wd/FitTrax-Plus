@@ -2132,14 +2132,20 @@ async def get_dashboard(user_id: str):
         if profile:
             profile.pop('_id', None)
         
-        # Get today's data
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        # Get today's data - use local date from client for timezone handling
+        # Since we don't have client timezone, we query by both date field and timestamp
+        today_utc = datetime.utcnow()
+        today_utc_date = today_utc.strftime("%Y-%m-%d")
+        today_start = today_utc.replace(hour=0, minute=0, second=0, microsecond=0)
         today_iso = today_start.isoformat()
         
-        # Today's meals
+        # Today's meals - check both date field (new) and timestamp (backwards compatibility)
         meals_cursor = db.meals.find({
             "user_id": user_id,
-            "timestamp": {"$gte": today_iso}
+            "$or": [
+                {"date": today_utc_date},
+                {"date": {"$exists": False}, "timestamp": {"$gte": today_iso}}
+            ]
         })
         today_meals = await meals_cursor.to_list(length=1000)
         
