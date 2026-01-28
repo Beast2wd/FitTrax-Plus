@@ -26,6 +26,20 @@ const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
 export default function RunningScreen() {
   const { userId } = useUserStore();
+  const { 
+    isRunning: isSharedRunning,
+    runTime: sharedRunTime,
+    distance: sharedDistance,
+    routeCoords: sharedRouteCoords,
+    startRun: startSharedRun,
+    stopRun: stopSharedRun,
+    updateRunTime: updateSharedRunTime,
+    updateDistance: updateSharedDistance,
+    addRouteCoord: addSharedRouteCoord,
+    resetRun: resetSharedRun
+  } = useRunStore();
+
+  // Use shared state if a run is in progress from dashboard, otherwise use local state
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [distance, setDistance] = useState(0);
@@ -45,6 +59,17 @@ export default function RunningScreen() {
   const locationSubscription = useRef<any>(null);
   const timerInterval = useRef<any>(null);
   const lastLocation = useRef<any>(null);
+
+  // Sync shared run state to local state when coming from dashboard
+  useEffect(() => {
+    if (isSharedRunning) {
+      setIsTracking(true);
+      setDistance(sharedDistance);
+      setDuration(sharedRunTime);
+      setRouteCoords(sharedRouteCoords);
+      setCalories(sharedDistance * 100); // Approximate calories
+    }
+  }, [isSharedRunning, sharedDistance, sharedRunTime, sharedRouteCoords]);
 
   useEffect(() => {
     if (userId) {
