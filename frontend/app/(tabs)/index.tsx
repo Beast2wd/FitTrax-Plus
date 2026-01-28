@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '../../stores/userStore';
 import { useThemeStore } from '../../stores/themeStore';
+import { useRunStore } from '../../stores/runStore';
 import { dashboardAPI, waterAPI } from '../../services/api';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -33,6 +34,18 @@ const { width } = Dimensions.get('window');
 export default function DashboardScreen() {
   const { userId, profile, lastMealLoggedAt, triggerMealRefresh } = useUserStore();
   const { theme, accent: accentKey } = useThemeStore();
+  const { 
+    isRunning, 
+    runTime, 
+    distance: runDistance, 
+    routeCoords: runCoordinates,
+    startRun: startRunStore,
+    stopRun: stopRunStore,
+    updateRunTime,
+    updateDistance: updateRunDistance,
+    addRouteCoord,
+    resetRun
+  } = useRunStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
