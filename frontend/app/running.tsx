@@ -16,6 +16,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Colors } from '../constants/Colors';
 import { useUserStore } from '../stores/userStore';
+import { useRunStore } from '../stores/runStore';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
