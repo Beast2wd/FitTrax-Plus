@@ -1324,13 +1324,17 @@ async def get_daily_summary(user_id: str, date: Optional[str] = None):
     if not date:
         date = datetime.utcnow().strftime("%Y-%m-%d")
     
+    # Query by date field first (for newer records), fall back to timestamp for older records
     start_time = f"{date}T00:00:00"
     end_time = f"{date}T23:59:59"
     
-    # Get meals for the day
+    # Get meals for the day - check both date field and timestamp for backwards compatibility
     meals_cursor = db.meals.find({
         "user_id": user_id,
-        "timestamp": {"$gte": start_time, "$lte": end_time}
+        "$or": [
+            {"date": date},  # New format with date field
+            {"date": {"$exists": False}, "timestamp": {"$gte": start_time, "$lte": end_time}}  # Old format
+        ]
     }).sort("timestamp", 1)
     
     meals = await meals_cursor.to_list(length=100)
