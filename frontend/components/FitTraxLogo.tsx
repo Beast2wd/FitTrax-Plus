@@ -100,7 +100,7 @@ export const FitTraxLogo: React.FC<FitTraxLogoProps> = ({
             styles.title, 
             { fontSize, color: theme.colors.text.primary }
           ]}>
-            Fit<Text style={{ color: theme.accentColors.primary }}>Trax</Text>
+            Fit<Text style={{ color: theme.accentColors.primary }}>Trax+</Text>
           </Text>
           <Text style={[
             styles.subtitle, 
