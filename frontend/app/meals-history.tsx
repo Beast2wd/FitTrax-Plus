@@ -588,7 +588,7 @@ export default function MealsHistoryScreen() {
                           {meal.food_name}
                         </Text>
                         <Text style={localStyles.mealItemMacros}>
-                          P: {Math.round(meal.protein)}g • C: {Math.round(meal.carbs)}g • F: {Math.round(meal.fat)}g
+                          P: {Math.round(meal.protein)}g • C: {Math.round(meal.carbs)}g • F: {Math.round(meal.fat)}g • S: {Math.round(meal.sugar || 0)}g
                         </Text>
                       </View>
                     </View>
