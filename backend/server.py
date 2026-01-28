@@ -2179,6 +2179,8 @@ async def get_dashboard(user_id: str):
                 "protein": round(protein, 1),
                 "carbs": round(carbs, 1),
                 "fat": round(fat, 1),
+                "sugar": round(sugar, 1),
+                "fiber": round(fiber, 1),
                 "water_intake": round(water_intake, 1),
                 "meals_count": len(today_meals),
                 "workouts_count": len(today_workouts),
