@@ -187,6 +187,7 @@ class Meal(BaseModel):
     meal_category: str
     image_base64: str
     timestamp: str
+    date: str = ""  # Local date in YYYY-MM-DD format for easier querying
 
 # Workout Models
 class Workout(BaseModel):
