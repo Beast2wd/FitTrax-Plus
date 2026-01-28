@@ -31,7 +31,7 @@ const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
-  const { userId, profile, lastMealLoggedAt } = useUserStore();
+  const { userId, profile, lastMealLoggedAt, triggerMealRefresh } = useUserStore();
   const { theme, accent: accentKey } = useThemeStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
