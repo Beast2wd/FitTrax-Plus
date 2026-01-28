@@ -484,7 +484,7 @@ export default function MealsHistoryScreen() {
                 label="Carbs" 
                 current={dailySummary.totals.carbs} 
                 goal={dailySummary.goals.carbs_grams}
-                color="#F59E0B"
+                color="#3B82F6"
                 theme={theme}
               />
               <MacroBar 
@@ -492,6 +492,13 @@ export default function MealsHistoryScreen() {
                 current={dailySummary.totals.fat} 
                 goal={dailySummary.goals.fat_grams}
                 color="#8B5CF6"
+                theme={theme}
+              />
+              <MacroBar 
+                label="Sugar" 
+                current={dailySummary.totals.sugar || 0} 
+                goal={dailySummary.goals.sugar_grams || 50}
+                color="#F59E0B"
                 theme={theme}
               />
             </View>
