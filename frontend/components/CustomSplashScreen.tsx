@@ -70,7 +70,7 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) =>
       {/* App Name */}
       <Animated.View style={[styles.textContainer, { opacity: textOpacity }]}>
         <Text style={styles.title}>
-          Fit<Text style={styles.titleAccent}>Trax</Text>
+          Fit<Text style={styles.titleAccent}>Trax+</Text>
         </Text>
       </Animated.View>
 
