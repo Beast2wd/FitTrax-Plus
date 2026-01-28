@@ -176,6 +176,30 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
+  // Check if we should show the walkthrough on first open
+  useEffect(() => {
+    const checkWalkthrough = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('onboarding_completed');
+        if (completed !== 'true' && !walkthroughChecked) {
+          setShowWalkthrough(true);
+        }
+        setWalkthroughChecked(true);
+      } catch (error) {
+        console.error('Error checking walkthrough status:', error);
+        setWalkthroughChecked(true);
+      }
+    };
+    
+    if (userId && profile) {
+      checkWalkthrough();
+    }
+  }, [userId, profile, walkthroughChecked]);
+
+  const handleWalkthroughComplete = () => {
+    setShowWalkthrough(false);
+  };
+
   // Refresh dashboard when a meal is logged from scan screen
   useEffect(() => {
     if (lastMealLoggedAt && userId) {
