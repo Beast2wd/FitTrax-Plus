@@ -825,5 +825,5 @@ if __name__ == "__main__":
     print(f"🎯 FitTrax+ API Comprehensive Testing Suite")
     print(f"🌐 Backend URL: {BACKEND_URL}")
     
-    tester = FitTrax+APITester(BACKEND_URL)
+    tester = FitTraxAPITester(BACKEND_URL)
     tester.run_comprehensive_test()
