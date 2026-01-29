@@ -1609,6 +1609,92 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 12,
     color: theme.colors.text.secondary,
   },
+  // Subsection styles
+  subsection: {
+    marginBottom: 20,
+  },
+  subsectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    flex: 1,
+  },
+  subsectionBadge: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#EF4444',
+    backgroundColor: '#EF444420',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  // Functional Training Card Styles
+  functionalCard: {
+    height: 180,
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.background.card,
+  },
+  functionalImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  functionalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  functionalContent: {
+    padding: 16,
+  },
+  functionalBadges: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  typeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  functionalName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  functionalDescription: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 8,
+  },
+  functionalMeta: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  functionalMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  functionalMetaText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
+  },
   muscleGroups: {
     flexDirection: 'row',
     flexWrap: 'wrap',
