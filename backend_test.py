@@ -759,7 +759,19 @@ class FitTrax+APITester:
         print("\n📈 Testing Dashboard Endpoint...")
         self.test_dashboard_endpoint()
         
-        # 9. Security Tests
+        # 9. Membership Endpoints (Review Request)
+        print("\n💳 Testing Membership Endpoints...")
+        self.test_membership_endpoints()
+        
+        # 10. Gamification Endpoints (Review Request)
+        print("\n🎮 Testing Gamification Endpoints...")
+        self.test_gamification_endpoints()
+        
+        # 11. Dashboard with Date (Review Request)
+        print("\n📅 Testing Dashboard with Date Parameter...")
+        self.test_dashboard_with_date()
+        
+        # 12. Security Tests
         print("\n🔒 Testing Security Features...")
         self.test_security_features()
         
