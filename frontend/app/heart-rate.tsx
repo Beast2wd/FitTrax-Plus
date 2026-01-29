@@ -969,7 +969,22 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 32,
+    marginBottom: 16,
+  },
+  cameraAdvice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(252,211,77,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 24,
+    gap: 8,
+  },
+  cameraAdviceText: {
+    color: '#FCD34D',
+    fontSize: 14,
+    fontWeight: '600',
   },
   readyButton: {
     backgroundColor: '#EF4444',
