@@ -166,14 +166,52 @@ export default function HeartRateScreen() {
 
   // Camera-based heart rate detection
   const startCameraDetection = async () => {
+    // Check and request camera permission
     if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) {
-        Alert.alert('Permission Required', 'Camera permission is needed to measure heart rate');
-        return;
-      }
+      // Show permission explanation first
+      Alert.alert(
+        'Camera & Flashlight Access Required',
+        'To measure your heart rate, FitTrax+ needs access to:\n\n' +
+        '📷 Camera - To detect blood flow through your fingertip\n' +
+        '💡 Flashlight - To illuminate your finger for accurate readings\n\n' +
+        '📱 Tip: Use the BACK camera (main camera) and place your finger over both the camera lens AND flashlight for best results.',
+        [
+          { 
+            text: 'Cancel', 
+            style: 'cancel' 
+          },
+          { 
+            text: 'Grant Permission', 
+            onPress: async () => {
+              const result = await requestPermission();
+              if (result.granted) {
+                openCameraModal();
+              } else {
+                // Permission denied - show settings option
+                Alert.alert(
+                  'Permission Denied',
+                  'Camera permission is required to measure heart rate. Please enable it in your device settings.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Open Settings', 
+                      onPress: () => Linking.openSettings() 
+                    }
+                  ]
+                );
+              }
+            }
+          }
+        ]
+      );
+      return;
     }
     
+    // Permission already granted
+    openCameraModal();
+  };
+
+  const openCameraModal = () => {
     setShowCameraModal(true);
     setDetectedBPM(null);
     setCountdown(15);
@@ -182,6 +220,9 @@ export default function HeartRateScreen() {
     setTorchOn(true); // Turn on flashlight immediately
     redValues.current = [];
     timestamps.current = [];
+    
+    // Haptic feedback to indicate flash is on
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   const startDetection = () => {
