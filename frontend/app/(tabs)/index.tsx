@@ -804,22 +804,40 @@ export default function DashboardScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
           {[
-            { icon: 'chatbubbles', label: 'AI Workout Coach', color: '#8B5CF6', route: '/ai-workout-chat' },
-            { icon: 'camera', label: t('dashboard.scanFood'), color: accent.primary, route: '/scan' },
-            { icon: 'calendar', label: t('dashboard.schedule'), color: '#F59E0B', route: '/schedule' },
-            { icon: 'clipboard', label: 'Workout Log', color: '#7C3AED', route: '/manual-workout-log' },
-            { icon: 'footsteps', label: t('dashboard.run'), color: '#EC4899', route: '/running' },
-            { icon: 'walk', label: 'Step Tracker', color: '#14B8A6', route: '/step-tracker' },
-            { icon: 'body', label: t('dashboard.bodyScan'), color: '#10B981', route: '/body-scan' },
-            { icon: 'flask', label: t('dashboard.peptides'), color: '#6366F1', route: '/peptides' },
-            { icon: 'trophy', label: t('dashboard.rewards'), color: '#EF4444', route: '/badges' },
-            { icon: 'stats-chart', label: t('dashboard.analytics'), color: '#0EA5E9', route: '/analytics' },
+            { icon: 'chatbubbles', label: 'AI Workout Coach', color: '#8B5CF6', route: '/ai-workout-chat', premium: true },
+            { icon: 'camera', label: t('dashboard.scanFood'), color: accent.primary, route: '/scan', premium: false },
+            { icon: 'calendar', label: t('dashboard.schedule'), color: '#F59E0B', route: '/schedule', premium: false },
+            { icon: 'clipboard', label: 'Workout Log', color: '#7C3AED', route: '/manual-workout-log', premium: false },
+            { icon: 'footsteps', label: t('dashboard.run'), color: '#EC4899', route: '/running', premium: false },
+            { icon: 'walk', label: 'Step Tracker', color: '#14B8A6', route: '/step-tracker', premium: false },
+            { icon: 'body', label: t('dashboard.bodyScan'), color: '#10B981', route: '/body-scan', premium: false },
+            { icon: 'flask', label: t('dashboard.peptides'), color: '#6366F1', route: '/peptides', premium: false },
+            { icon: 'trophy', label: t('dashboard.rewards'), color: '#EF4444', route: '/badges', premium: false },
+            { icon: 'stats-chart', label: t('dashboard.analytics'), color: '#0EA5E9', route: '/analytics', premium: false },
           ].map((action, index) => (
             <TouchableOpacity
               key={index}
               style={[styles.actionCard, { backgroundColor: colors.background.card }]}
-              onPress={() => router.push(action.route as any)}
+              onPress={() => {
+                if (action.premium && !isPremium) {
+                  Alert.alert(
+                    'Premium Feature',
+                    `${action.label} is a premium feature. Upgrade to FitTrax+ Premium to unlock this feature.`,
+                    [
+                      { text: 'Maybe Later', style: 'cancel' },
+                      { text: 'Upgrade Now', onPress: () => router.push('/membership') }
+                    ]
+                  );
+                } else {
+                  router.push(action.route as any);
+                }
+              }}
             >
+              {action.premium && !isPremium && (
+                <View style={styles.premiumBadge}>
+                  <Ionicons name="diamond" size={10} color="#fff" />
+                </View>
+              )}
               <View style={[styles.actionIcon, { backgroundColor: `${action.color}20` }]}>
                 <Ionicons name={action.icon as any} size={24} color={action.color} />
               </View>
