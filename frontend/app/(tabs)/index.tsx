@@ -35,7 +35,7 @@ const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
-  const { userId, profile, lastMealLoggedAt, triggerMealRefresh } = useUserStore();
+  const { userId, profile, lastMealLoggedAt, triggerMealRefresh, membershipStatus, setMembershipStatus } = useUserStore();
   const { theme, accent: accentKey } = useThemeStore();
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [walkthroughChecked, setWalkthroughChecked] = useState(false);
@@ -58,6 +58,9 @@ export default function DashboardScreen() {
   const [streakData, setStreakData] = useState<any>(null);
   const [achievementModal, setAchievementModal] = useState<any>({ visible: false, achievement: null });
   const [pendingAchievements, setPendingAchievements] = useState<any[]>([]);
+  
+  // Premium status
+  const isPremium = membershipStatus?.is_premium || false;
 
   // Get accent color gradient for running button
   const runningButtonGradient = AccentColors[accentKey]?.gradient || ['#EC4899', '#BE185D'];
