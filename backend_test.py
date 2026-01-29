@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import uuid
 
-class FitTrax+APITester:
+class FitTraxAPITester:
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip('/')
         self.api_url = f"{self.base_url}/api"
