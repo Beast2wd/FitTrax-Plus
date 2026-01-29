@@ -387,7 +387,7 @@ export default function HeartRateScreen() {
             <Text style={[styles.cardTitle, { color: colors.text.primary }]}>Measure with Camera</Text>
           </View>
           <Text style={[styles.cameraDescription, { color: colors.text.secondary }]}>
-            Place your fingertip over the camera lens and flashlight to measure your heart rate
+            Use your phone's back camera and flashlight to measure your heart rate through your fingertip
           </Text>
           <TouchableOpacity
             style={[styles.measureButton, { backgroundColor: '#EF4444' }]}
@@ -398,18 +398,28 @@ export default function HeartRateScreen() {
           </TouchableOpacity>
           
           <View style={styles.measureTips}>
-            <Text style={[styles.tipTitle, { color: colors.text.primary }]}>Tips for accurate reading:</Text>
+            <Text style={[styles.tipTitle, { color: colors.text.primary }]}>📱 Which Camera to Use:</Text>
+            <View style={styles.tipItem}>
+              <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Use the BACK camera (main lens)</Text>
+            </View>
+            <View style={styles.tipItem}>
+              <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Place finger over camera + flashlight</Text>
+            </View>
+            
+            <Text style={[styles.tipTitle, { color: colors.text.primary, marginTop: 12 }]}>💡 Tips for accurate reading:</Text>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
               <Text style={[styles.tipText, { color: colors.text.secondary }]}>Stay still during measurement</Text>
             </View>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Cover the camera completely with your finger</Text>
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Apply gentle, steady pressure</Text>
             </View>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Apply gentle, steady pressure</Text>
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Ensure good lighting through finger</Text>
             </View>
           </View>
         </View>
