@@ -4418,6 +4418,11 @@ async def get_weight_programs():
     """Get all weight training programs"""
     return {"programs": WEIGHT_TRAINING_PROGRAMS}
 
+@api_router.get("/weight-training/functional-programs")
+async def get_functional_programs():
+    """Get all functional/HIIT training programs"""
+    return {"programs": FUNCTIONAL_TRAINING_PROGRAMS}
+
 @api_router.get("/weight-training/programs/{program_id}")
 async def get_weight_program(program_id: str):
     """Get a specific weight training program"""
