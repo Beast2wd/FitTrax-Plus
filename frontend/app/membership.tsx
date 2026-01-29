@@ -328,6 +328,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  backHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
   centered: {
     flex: 1,
     justifyContent: 'center',
