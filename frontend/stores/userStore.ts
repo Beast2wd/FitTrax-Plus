@@ -20,15 +20,24 @@ interface TosAcceptance {
   version: string;
 }
 
+interface MembershipStatus {
+  is_premium: boolean;
+  is_trial: boolean;
+  trial_days_remaining?: number;
+  subscription_status?: string;
+}
+
 interface UserStore {
   userId: string | null;
   profile: UserProfile | null;
   tosAccepted: TosAcceptance | null;
+  membershipStatus: MembershipStatus | null;
   isLoading: boolean;
   lastMealLoggedAt: number | null; // Timestamp to trigger dashboard refresh
   setUserId: (userId: string) => void;
   setProfile: (profile: UserProfile) => void;
   setTosAccepted: (tos: TosAcceptance) => void;
+  setMembershipStatus: (status: MembershipStatus) => void;
   setLoading: (loading: boolean) => void;
   triggerMealRefresh: () => void; // Call this after logging a meal
   clearUser: () => void;
@@ -38,12 +47,14 @@ export const useUserStore = create<UserStore>((set) => ({
   userId: null,
   profile: null,
   tosAccepted: null,
+  membershipStatus: null,
   isLoading: false,
   lastMealLoggedAt: null,
   setUserId: (userId) => set({ userId }),
   setProfile: (profile) => set({ profile }),
   setTosAccepted: (tosAccepted) => set({ tosAccepted }),
+  setMembershipStatus: (membershipStatus) => set({ membershipStatus }),
   setLoading: (isLoading) => set({ isLoading }),
   triggerMealRefresh: () => set({ lastMealLoggedAt: Date.now() }),
-  clearUser: () => set({ userId: null, profile: null, tosAccepted: null, lastMealLoggedAt: null }),
+  clearUser: () => set({ userId: null, profile: null, tosAccepted: null, membershipStatus: null, lastMealLoggedAt: null }),
 }));
