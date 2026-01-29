@@ -619,8 +619,26 @@ export default function DashboardScreen() {
         <View style={styles.statsGrid}>
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: colors.background.card }]}
-            onPress={() => router.push('/meals-history')}
+            onPress={() => {
+              if (isPremium) {
+                router.push('/meals-history');
+              } else {
+                Alert.alert(
+                  'Premium Feature',
+                  'Meal Tracking & Nutrition is a premium feature. Upgrade to FitTrax+ Premium to access meal planning and nutrition tracking.',
+                  [
+                    { text: 'Maybe Later', style: 'cancel' },
+                    { text: 'Upgrade Now', onPress: () => router.push('/membership') }
+                  ]
+                );
+              }
+            }}
           >
+            {!isPremium && (
+              <View style={styles.premiumBadge}>
+                <Ionicons name="diamond" size={10} color="#fff" />
+              </View>
+            )}
             <View style={[styles.statIcon, { backgroundColor: `${accent.primary}20` }]}>
               <Ionicons name="restaurant" size={22} color={accent.primary} />
             </View>
