@@ -538,35 +538,98 @@ export default function WeightTrainingScreen() {
         {/* Training Programs */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Training Programs</Text>
-          {Object.entries(programs).map(([key, program]: [string, any]) => (
-            <TouchableOpacity
-              key={key}
-              style={styles.programCard}
-              onPress={() => openProgram(key)}
-            >
-              <View style={styles.programLeft}>
-                <View style={[styles.programIcon, { backgroundColor: '#7C3AED20' }]}>
-                  <MaterialCommunityIcons name="weight-lifter" size={28} color="#7C3AED" />
-                </View>
-                <View style={styles.programInfo}>
-                  <Text style={styles.programName}>{program.name}</Text>
-                  <Text style={styles.programDescription}>{program.description}</Text>
-                  <View style={styles.programMeta}>
-                    <View style={styles.programBadge}>
-                      <Ionicons name="calendar" size={12} color={theme.colors.text.secondary} />
-                      <Text style={styles.programBadgeText}>{program.frequency}</Text>
-                    </View>
-                    <View style={[styles.programBadge, { backgroundColor: getLevelColor(program.level) + '20' }]}>
-                      <Text style={[styles.programBadgeText, { color: getLevelColor(program.level) }]}>
-                        {program.level}
-                      </Text>
+          
+          {/* Weight Training Subsection */}
+          <View style={styles.subsection}>
+            <View style={styles.subsectionHeader}>
+              <MaterialCommunityIcons name="weight-lifter" size={20} color="#7C3AED" />
+              <Text style={styles.subsectionTitle}>Weight Training</Text>
+            </View>
+            {Object.entries(programs).map(([key, program]: [string, any]) => (
+              <TouchableOpacity
+                key={key}
+                style={styles.programCard}
+                onPress={() => openProgram(key)}
+              >
+                <View style={styles.programLeft}>
+                  <View style={[styles.programIcon, { backgroundColor: '#7C3AED20' }]}>
+                    <MaterialCommunityIcons name="dumbbell" size={28} color="#7C3AED" />
+                  </View>
+                  <View style={styles.programInfo}>
+                    <Text style={styles.programName}>{program.name}</Text>
+                    <Text style={styles.programDescription}>{program.description}</Text>
+                    <View style={styles.programMeta}>
+                      <View style={styles.programBadge}>
+                        <Ionicons name="calendar" size={12} color={theme.colors.text.secondary} />
+                        <Text style={styles.programBadgeText}>{program.frequency}</Text>
+                      </View>
+                      <View style={[styles.programBadge, { backgroundColor: getLevelColor(program.level) + '20' }]}>
+                        <Text style={[styles.programBadgeText, { color: getLevelColor(program.level) }]}>
+                          {program.level}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color={theme.colors.text.muted} />
-            </TouchableOpacity>
-          ))}
+                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.muted} />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Functional Training Subsection */}
+          <View style={styles.subsection}>
+            <View style={styles.subsectionHeader}>
+              <MaterialCommunityIcons name="fire" size={20} color="#EF4444" />
+              <Text style={styles.subsectionTitle}>Functional Training</Text>
+              <Text style={styles.subsectionBadge}>F45-Style HIIT</Text>
+            </View>
+            {Object.entries(functionalPrograms).map(([key, program]: [string, any]) => (
+              <TouchableOpacity
+                key={key}
+                style={styles.functionalCard}
+                onPress={() => {
+                  setSelectedFunctionalProgram({ id: key, ...program });
+                  setShowFunctionalModal(true);
+                }}
+              >
+                <Image 
+                  source={{ uri: program.image }} 
+                  style={styles.functionalImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.functionalOverlay}>
+                  <View style={styles.functionalContent}>
+                    <View style={styles.functionalBadges}>
+                      <View style={[styles.typeBadge, { backgroundColor: getTypeColor(program.type) }]}>
+                        <Text style={styles.typeBadgeText}>{program.type.toUpperCase()}</Text>
+                      </View>
+                      <View style={[styles.programBadge, { backgroundColor: getLevelColor(program.level) + '40' }]}>
+                        <Text style={[styles.programBadgeText, { color: '#fff' }]}>
+                          {program.level === 'all_levels' ? 'ALL LEVELS' : program.level.toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.functionalName}>{program.name}</Text>
+                    <Text style={styles.functionalDescription}>{program.description}</Text>
+                    <View style={styles.functionalMeta}>
+                      <View style={styles.functionalMetaItem}>
+                        <Ionicons name="time-outline" size={14} color="#fff" />
+                        <Text style={styles.functionalMetaText}>{program.duration}</Text>
+                      </View>
+                      <View style={styles.functionalMetaItem}>
+                        <Ionicons name="repeat" size={14} color="#fff" />
+                        <Text style={styles.functionalMetaText}>{program.rounds} rounds</Text>
+                      </View>
+                      <View style={styles.functionalMetaItem}>
+                        <Ionicons name="fitness" size={14} color="#fff" />
+                        <Text style={styles.functionalMetaText}>{program.stations?.length} stations</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Exercise Library */}
