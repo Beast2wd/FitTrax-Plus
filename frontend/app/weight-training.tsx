@@ -90,8 +90,9 @@ export default function WeightTrainingScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [programsRes, exercisesRes, statsRes, prsRes, historyRes] = await Promise.all([
+      const [programsRes, functionalRes, exercisesRes, statsRes, prsRes, historyRes] = await Promise.all([
         axios.get(`${API_URL}/api/weight-training/programs`),
+        axios.get(`${API_URL}/api/weight-training/functional-programs`),
         axios.get(`${API_URL}/api/weight-training/exercises`),
         userId ? axios.get(`${API_URL}/api/weight-training/stats/${userId}`) : null,
         userId ? axios.get(`${API_URL}/api/weight-training/prs/${userId}`) : null,
@@ -99,6 +100,7 @@ export default function WeightTrainingScreen() {
       ]);
       
       setPrograms(programsRes.data.programs || {});
+      setFunctionalPrograms(functionalRes.data.programs || {});
       setExercises(exercisesRes.data.exercises || {});
       if (statsRes) setStats(statsRes.data);
       if (prsRes) setPrs(prsRes.data.personal_records || []);
