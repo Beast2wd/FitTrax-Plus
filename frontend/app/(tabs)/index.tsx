@@ -82,6 +82,7 @@ export default function DashboardScreen() {
       const data = await dashboardAPI.getDashboard(userId);
       setDashboardData(data);
       await syncGamification();
+      await loadMembershipStatus();
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -89,6 +90,16 @@ export default function DashboardScreen() {
       setRefreshing(false);
     }
   };
+
+  const loadMembershipStatus = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`${API_URL}/api/membership/status/${userId}`);
+      setMembershipStatus(response.data);
+    } catch (error) {
+      console.error('Error loading membership status:', error);
+    }
+  }, [userId, setMembershipStatus]);
 
   const syncGamification = useCallback(async () => {
     if (!userId) return;
