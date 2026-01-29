@@ -592,7 +592,7 @@ export default function WeightTrainingScreen() {
             <View style={styles.subsectionHeader}>
               <MaterialCommunityIcons name="fire" size={20} color="#EF4444" />
               <Text style={styles.subsectionTitle}>Functional Training</Text>
-              <Text style={styles.subsectionBadge}>F45-Style HIIT</Text>
+              <Text style={styles.subsectionBadge}>FitTrax HIIT</Text>
             </View>
             {Object.entries(functionalPrograms).map(([key, program]: [string, any]) => (
               <TouchableOpacity
