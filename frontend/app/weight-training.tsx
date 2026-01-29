@@ -698,6 +698,104 @@ export default function WeightTrainingScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
+      {/* Functional Training Modal */}
+      <Modal
+        visible={showFunctionalModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowFunctionalModal(false)}
+      >
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowFunctionalModal(false)} style={styles.closeButtonContainer}>
+              <Ionicons name="close" size={28} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{selectedFunctionalProgram?.name || 'Workout'}</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Workout Header Image */}
+            {selectedFunctionalProgram?.image && (
+              <Image 
+                source={{ uri: selectedFunctionalProgram.image }}
+                style={{ width: '100%', height: 200, borderRadius: 16, marginBottom: 16 }}
+                resizeMode="cover"
+              />
+            )}
+            
+            {/* Workout Info */}
+            <View style={[styles.functionalInfoCard, { backgroundColor: theme.colors.background.card }]}>
+              <Text style={[styles.functionalInfoTitle, { color: theme.colors.text.primary }]}>
+                {selectedFunctionalProgram?.description}
+              </Text>
+              <View style={styles.functionalInfoRow}>
+                <View style={styles.functionalInfoItem}>
+                  <Ionicons name="time-outline" size={20} color={getTypeColor(selectedFunctionalProgram?.type || 'mixed')} />
+                  <Text style={[styles.functionalInfoLabel, { color: theme.colors.text.secondary }]}>Duration</Text>
+                  <Text style={[styles.functionalInfoValue, { color: theme.colors.text.primary }]}>{selectedFunctionalProgram?.duration}</Text>
+                </View>
+                <View style={styles.functionalInfoItem}>
+                  <Ionicons name="repeat" size={20} color={getTypeColor(selectedFunctionalProgram?.type || 'mixed')} />
+                  <Text style={[styles.functionalInfoLabel, { color: theme.colors.text.secondary }]}>Rounds</Text>
+                  <Text style={[styles.functionalInfoValue, { color: theme.colors.text.primary }]}>{selectedFunctionalProgram?.rounds}</Text>
+                </View>
+                <View style={styles.functionalInfoItem}>
+                  <Ionicons name="fitness" size={20} color={getTypeColor(selectedFunctionalProgram?.type || 'mixed')} />
+                  <Text style={[styles.functionalInfoLabel, { color: theme.colors.text.secondary }]}>Stations</Text>
+                  <Text style={[styles.functionalInfoValue, { color: theme.colors.text.primary }]}>{selectedFunctionalProgram?.stations?.length}</Text>
+                </View>
+              </View>
+            </View>
+            
+            {/* Stations List */}
+            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Workout Stations</Text>
+            {selectedFunctionalProgram?.stations?.map((station: any, index: number) => (
+              <View key={index} style={[styles.stationCard, { backgroundColor: theme.colors.background.card }]}>
+                <Image 
+                  source={{ uri: station.image }}
+                  style={styles.stationImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.stationContent}>
+                  <View style={styles.stationHeader}>
+                    <View style={[styles.stationNumber, { backgroundColor: getTypeColor(selectedFunctionalProgram?.type || 'mixed') }]}>
+                      <Text style={styles.stationNumberText}>{index + 1}</Text>
+                    </View>
+                    <Text style={[styles.stationName, { color: theme.colors.text.primary }]}>{station.name}</Text>
+                  </View>
+                  <Text style={[styles.stationDescription, { color: theme.colors.text.secondary }]}>{station.description}</Text>
+                  <View style={styles.stationTiming}>
+                    <View style={styles.stationTimingItem}>
+                      <Ionicons name="play" size={14} color="#10B981" />
+                      <Text style={[styles.stationTimingText, { color: theme.colors.text.primary }]}>{station.duration}</Text>
+                    </View>
+                    <View style={styles.stationTimingItem}>
+                      <Ionicons name="pause" size={14} color="#EF4444" />
+                      <Text style={[styles.stationTimingText, { color: theme.colors.text.secondary }]}>{station.rest} rest</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ))}
+            
+            {/* Start Workout Button */}
+            <TouchableOpacity 
+              style={[styles.startWorkoutButton, { backgroundColor: getTypeColor(selectedFunctionalProgram?.type || 'mixed') }]}
+              onPress={() => {
+                setShowFunctionalModal(false);
+                Alert.alert('Coming Soon', 'Timer-based workout tracking will be available in the next update!');
+              }}
+            >
+              <Ionicons name="play" size={24} color="#fff" />
+              <Text style={styles.startWorkoutButtonText}>Start Workout</Text>
+            </TouchableOpacity>
+            
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
       {/* Exercise Library Modal */}
       <Modal
         visible={showExerciseLibraryModal}
