@@ -591,24 +591,30 @@ export default function HeartRateScreen() {
               <View style={{ width: 50 }} />
             </SafeAreaView>
 
-            {/* Torch Status Indicator */}
-            <View style={styles.torchIndicator}>
-              <Ionicons name={torchOn ? "flashlight" : "flashlight-outline"} size={20} color={torchOn ? "#FCD34D" : "#fff"} />
+            {/* Torch Status Indicator - Now a Button */}
+            <TouchableOpacity 
+              style={[styles.torchIndicator, torchOn && styles.torchIndicatorOn]}
+              onPress={toggleFlashlight}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={torchOn ? "flashlight" : "flashlight-outline"} size={24} color={torchOn ? "#FCD34D" : "#fff"} />
               <Text style={[styles.torchText, torchOn && { color: '#FCD34D' }]}>
-                {torchOn ? "Flashlight ON" : "Flashlight OFF"}
+                {torchOn ? "Flashlight ON" : "Tap to Turn ON Flashlight"}
               </Text>
-            </View>
+              {!torchOn && <Ionicons name="hand-left" size={16} color="#fff" style={{ marginLeft: 8 }} />}
+            </TouchableOpacity>
 
             {/* Center Content */}
             <View style={styles.cameraCenter}>
-              {!fingerDetected ? (
+              {!torchOn ? (
+                // Step 1: Turn on flashlight first
                 <View style={styles.instructionBox}>
                   <View style={styles.fingerIcon}>
-                    <MaterialCommunityIcons name="hand-pointing-up" size={64} color="#fff" />
+                    <Ionicons name="flashlight" size={64} color="#FCD34D" />
                   </View>
-                  <Text style={styles.instructionTitle}>Place Your Finger</Text>
+                  <Text style={styles.instructionTitle}>Step 1: Turn On Flashlight</Text>
                   <Text style={styles.instructionText}>
-                    Cover BOTH the camera lens AND flashlight completely with your fingertip. You should see a red glow through your finger.
+                    Tap the button above to turn on the flashlight. You need the light to illuminate your fingertip for accurate readings.
                   </Text>
                   <View style={styles.cameraAdvice}>
                     <Ionicons name="information-circle" size={20} color="#FCD34D" />
@@ -617,10 +623,34 @@ export default function HeartRateScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
+                    style={[styles.readyButton, { backgroundColor: '#FCD34D' }]}
+                    onPress={toggleFlashlight}
+                  >
+                    <Ionicons name="flashlight" size={20} color="#000" />
+                    <Text style={[styles.readyButtonText, { color: '#000', marginLeft: 8 }]}>Turn On Flashlight</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : !fingerDetected ? (
+                // Step 2: Place finger
+                <View style={styles.instructionBox}>
+                  <View style={styles.fingerIcon}>
+                    <MaterialCommunityIcons name="hand-pointing-up" size={64} color="#fff" />
+                  </View>
+                  <Text style={styles.instructionTitle}>Step 2: Place Your Finger</Text>
+                  <Text style={styles.instructionText}>
+                    Cover BOTH the camera lens AND flashlight completely with your fingertip. You should see a red glow through your finger.
+                  </Text>
+                  <View style={styles.cameraAdvice}>
+                    <Ionicons name="checkmark-circle" size={20} color="#22C55E" />
+                    <Text style={[styles.cameraAdviceText, { color: '#22C55E' }]}>
+                      Flashlight is ON - Ready to measure
+                    </Text>
+                  </View>
+                  <TouchableOpacity
                     style={styles.readyButton}
                     onPress={handleFingerDetection}
                   >
-                    <Text style={styles.readyButtonText}>I've Placed My Finger</Text>
+                    <Text style={styles.readyButtonText}>I've Placed My Finger - Start</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
