@@ -238,9 +238,17 @@ export default function FunctionalWorkoutTimerScreen() {
     if (isRunning && !isPaused && !workoutComplete) {
       timerRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
-          // Countdown sound at 3, 2, 1
-          if (prev <= 4 && prev > 1) {
-            playSound('countdown');
+          // Countdown beeps at 5, 4, 3, 2, 1 seconds
+          if (prev === 6) {
+            playSound('countdown'); // 5 seconds warning
+          } else if (prev === 5) {
+            playSound('countdown'); // 4 seconds
+          } else if (prev === 4) {
+            playSound('countdown'); // 3 seconds
+          } else if (prev === 3) {
+            playSound('countdown'); // 2 seconds
+          } else if (prev === 2) {
+            playSound('final'); // 1 second - louder beep
           }
 
           if (prev <= 1) {
