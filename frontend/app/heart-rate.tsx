@@ -166,6 +166,16 @@ export default function HeartRateScreen() {
 
   // Camera-based heart rate detection
   const startCameraDetection = async () => {
+    // Check if running on web - show warning
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Feature Not Available on Web',
+        'Heart rate measurement with camera requires a mobile device. Please use the Expo Go app on your phone for this feature.\n\nAlternatively, you can manually enter your heart rate below.',
+        [{ text: 'OK', style: 'default' }]
+      );
+      return;
+    }
+
     // Check and request camera permission
     if (!permission?.granted) {
       // Show permission explanation first
@@ -217,11 +227,14 @@ export default function HeartRateScreen() {
     setCountdown(15);
     setFingerDetected(false);
     setSignalStrength(0);
-    setTorchOn(true); // Turn on flashlight immediately
+    setTorchOn(false); // Start with flashlight OFF - user will turn it on manually
     redValues.current = [];
     timestamps.current = [];
-    
-    // Haptic feedback to indicate flash is on
+  };
+
+  // Toggle flashlight manually
+  const toggleFlashlight = () => {
+    setTorchOn(!torchOn);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
