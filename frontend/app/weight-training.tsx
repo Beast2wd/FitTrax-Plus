@@ -484,7 +484,7 @@ export default function WeightTrainingScreen() {
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerText}>
-            <Text style={styles.title}>Weight Training</Text>
+            <Text style={styles.title}>Training Programs</Text>
             <Text style={styles.subtitle}>Build strength & track progress</Text>
           </View>
           <View style={{ width: 40 }} />
