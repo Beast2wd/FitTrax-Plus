@@ -1061,6 +1061,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
+    position: 'relative',
   },
   statIcon: {
     width: 44,
