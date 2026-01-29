@@ -9,6 +9,9 @@ import {
   Vibration,
   Alert,
   Dimensions,
+  Switch,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,8 +53,19 @@ export default function FunctionalWorkoutTimerScreen() {
   const [totalElapsed, setTotalElapsed] = useState(0);
   const [workoutComplete, setWorkoutComplete] = useState(false);
   
+  // Audio settings
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Custom duration settings
+  const [useCustomDurations, setUseCustomDurations] = useState(false);
+  const [customWorkDuration, setCustomWorkDuration] = useState('45');
+  const [customRestDuration, setCustomRestDuration] = useState('15');
+  const [customRounds, setCustomRounds] = useState(totalRounds.toString());
+  
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const countdownSoundRef = useRef<Audio.Sound | null>(null);
 
   // Parse duration string like "40s" to seconds
   const parseDuration = (duration: string): number => {
@@ -59,17 +73,84 @@ export default function FunctionalWorkoutTimerScreen() {
     return match ? parseInt(match[1]) : 30;
   };
 
+  // Get effective durations (custom or preset)
+  const getWorkDuration = (station: Station): number => {
+    if (useCustomDurations) {
+      return parseInt(customWorkDuration) || 45;
+    }
+    return parseDuration(station.duration);
+  };
+
+  const getRestDuration = (station: Station): number => {
+    if (useCustomDurations) {
+      return parseInt(customRestDuration) || 15;
+    }
+    return parseDuration(station.rest);
+  };
+
+  const getEffectiveRounds = (): number => {
+    if (useCustomDurations) {
+      return parseInt(customRounds) || 3;
+    }
+    return totalRounds;
+  };
+
   // Get current station
   const currentStation = stations[currentStationIndex];
-  const stationDuration = currentStation ? parseDuration(currentStation.duration) : 30;
-  const restDuration = currentStation ? parseDuration(currentStation.rest) : 15;
+  const stationDuration = currentStation ? getWorkDuration(currentStation) : 30;
+  const restDuration = currentStation ? getRestDuration(currentStation) : 15;
 
-  // Play beep sound
-  const playBeep = async (type: 'start' | 'rest' | 'end') => {
+  // Initialize audio
+  useEffect(() => {
+    const setupAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+        });
+      } catch (error) {
+        console.log('Audio setup error:', error);
+      }
+    };
+    setupAudio();
+
+    return () => {
+      // Cleanup sounds on unmount
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+      if (countdownSoundRef.current) {
+        countdownSoundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // Play sound effect
+  const playSound = async (type: 'start' | 'rest' | 'end' | 'countdown') => {
+    if (!soundEnabled) {
+      // Still vibrate even if sound is off
+      Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : type === 'countdown' ? 100 : 200);
+      return;
+    }
+
     try {
-      Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : 200);
+      // Vibration feedback
+      Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : type === 'countdown' ? 100 : 200);
+      
+      // For now, we'll use the system sounds via vibration
+      // In a production app, you would load custom audio files here
+      // Example:
+      // const { sound } = await Audio.Sound.createAsync(
+      //   type === 'start' ? require('../assets/sounds/start.mp3') :
+      //   type === 'rest' ? require('../assets/sounds/rest.mp3') :
+      //   type === 'end' ? require('../assets/sounds/complete.mp3') :
+      //   require('../assets/sounds/countdown.mp3')
+      // );
+      // await sound.playAsync();
+      
     } catch (error) {
-      console.log('Vibration not available');
+      console.log('Sound playback error:', error);
     }
   };
 
@@ -80,15 +161,18 @@ export default function FunctionalWorkoutTimerScreen() {
     setCurrentStationIndex(0);
     setCurrentRound(1);
     setIsResting(false);
-    setTimeRemaining(parseDuration(stations[0]?.duration || '30s'));
+    setTimeRemaining(getWorkDuration(stations[0]));
     setTotalElapsed(0);
     setWorkoutComplete(false);
-    playBeep('start');
+    playSound('start');
   };
 
   // Pause/Resume
   const togglePause = () => {
     setIsPaused(!isPaused);
+    if (isPaused) {
+      playSound('start');
+    }
   };
 
   // Stop workout
@@ -113,11 +197,34 @@ export default function FunctionalWorkoutTimerScreen() {
     );
   };
 
+  // Skip to next station
+  const skipStation = () => {
+    if (currentStationIndex < stations.length - 1) {
+      const nextIndex = currentStationIndex + 1;
+      setCurrentStationIndex(nextIndex);
+      setIsResting(false);
+      setTimeRemaining(getWorkDuration(stations[nextIndex]));
+      playSound('start');
+    } else if (currentRound < getEffectiveRounds()) {
+      // Move to next round
+      setCurrentRound(prev => prev + 1);
+      setCurrentStationIndex(0);
+      setIsResting(false);
+      setTimeRemaining(getWorkDuration(stations[0]));
+      playSound('start');
+    }
+  };
+
   // Timer logic
   useEffect(() => {
     if (isRunning && !isPaused && !workoutComplete) {
       timerRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
+          // Countdown sound at 3, 2, 1
+          if (prev <= 4 && prev > 1) {
+            playSound('countdown');
+          }
+
           if (prev <= 1) {
             // Time's up for current phase
             if (isResting) {
@@ -126,32 +233,33 @@ export default function FunctionalWorkoutTimerScreen() {
               
               if (nextStationIndex >= stations.length) {
                 // Round complete
-                if (currentRound >= totalRounds) {
+                if (currentRound >= getEffectiveRounds()) {
                   // Workout complete!
-                  playBeep('end');
+                  playSound('end');
                   setWorkoutComplete(true);
                   setIsRunning(false);
+                  logCompletedWorkout();
                   return 0;
                 } else {
                   // Next round
                   setCurrentRound((r) => r + 1);
                   setCurrentStationIndex(0);
                   setIsResting(false);
-                  playBeep('start');
-                  return parseDuration(stations[0].duration);
+                  playSound('start');
+                  return getWorkDuration(stations[0]);
                 }
               } else {
                 // Next station
                 setCurrentStationIndex(nextStationIndex);
                 setIsResting(false);
-                playBeep('start');
-                return parseDuration(stations[nextStationIndex].duration);
+                playSound('start');
+                return getWorkDuration(stations[nextStationIndex]);
               }
             } else {
               // Work phase is over, start rest
               setIsResting(true);
-              playBeep('rest');
-              return parseDuration(currentStation?.rest || '15s');
+              playSound('rest');
+              return getRestDuration(currentStation);
             }
           }
           return prev - 1;
@@ -166,7 +274,26 @@ export default function FunctionalWorkoutTimerScreen() {
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning, isPaused, isResting, currentStationIndex, currentRound, workoutComplete]);
+  }, [isRunning, isPaused, isResting, currentStationIndex, currentRound, workoutComplete, currentStation]);
+
+  // Log completed workout to backend
+  const logCompletedWorkout = async () => {
+    if (!userId) return;
+    
+    try {
+      await axios.post(`${API_URL}/api/workouts`, {
+        workout_id: `func_${Date.now()}`,
+        user_id: userId,
+        workout_type: 'hiit',
+        duration: Math.round(totalElapsed / 60),
+        calories_burned: Math.round(totalElapsed * 0.15), // Rough estimate
+        notes: `Completed ${workout?.name || 'Functional Training'} - ${getEffectiveRounds()} rounds`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error logging workout:', error);
+    }
+  };
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -176,7 +303,8 @@ export default function FunctionalWorkoutTimerScreen() {
   };
 
   // Calculate progress
-  const totalStations = stations.length * totalRounds;
+  const effectiveRounds = getEffectiveRounds();
+  const totalStations = stations.length * effectiveRounds;
   const completedStations = (currentRound - 1) * stations.length + currentStationIndex + (isResting ? 0.5 : 0);
   const progress = (completedStations / totalStations) * 100;
 
@@ -186,6 +314,191 @@ export default function FunctionalWorkoutTimerScreen() {
     if (isResting) return '#F59E0B';
     return '#EF4444';
   };
+
+  // Settings Modal
+  const renderSettingsModal = () => (
+    <Modal
+      visible={showSettings}
+      animationType="slide"
+      transparent
+      onRequestClose={() => setShowSettings(false)}
+    >
+      <View style={styles.settingsOverlay}>
+        <View style={[styles.settingsContainer, { backgroundColor: colors.background.primary }]}>
+          <View style={styles.settingsHeader}>
+            <Text style={[styles.settingsTitle, { color: colors.text.primary }]}>Workout Settings</Text>
+            <TouchableOpacity onPress={() => setShowSettings(false)}>
+              <Ionicons name="close" size={28} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.settingsContent}>
+            {/* Sound Toggle */}
+            <View style={[styles.settingRow, { backgroundColor: colors.background.card }]}>
+              <View style={styles.settingInfo}>
+                <Ionicons name={soundEnabled ? "volume-high" : "volume-mute"} size={24} color={getStateColor()} />
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Sound Effects</Text>
+                  <Text style={[styles.settingDescription, { color: colors.text.secondary }]}>
+                    Audio cues for work/rest transitions
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={soundEnabled}
+                onValueChange={setSoundEnabled}
+                trackColor={{ false: colors.background.elevated, true: getStateColor() + '60' }}
+                thumbColor={soundEnabled ? getStateColor() : '#f4f3f4'}
+              />
+            </View>
+
+            {/* Custom Duration Toggle */}
+            <View style={[styles.settingRow, { backgroundColor: colors.background.card }]}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="timer-outline" size={24} color={getStateColor()} />
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Custom Durations</Text>
+                  <Text style={[styles.settingDescription, { color: colors.text.secondary }]}>
+                    Override preset work/rest times
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={useCustomDurations}
+                onValueChange={setUseCustomDurations}
+                trackColor={{ false: colors.background.elevated, true: getStateColor() + '60' }}
+                thumbColor={useCustomDurations ? getStateColor() : '#f4f3f4'}
+              />
+            </View>
+
+            {/* Custom Duration Inputs */}
+            {useCustomDurations && (
+              <View style={[styles.customDurationsCard, { backgroundColor: colors.background.card }]}>
+                <Text style={[styles.customDurationsTitle, { color: colors.text.primary }]}>
+                  Custom Timer Settings
+                </Text>
+                
+                <View style={styles.durationInputRow}>
+                  <View style={styles.durationInputGroup}>
+                    <Text style={[styles.durationLabel, { color: colors.text.secondary }]}>Work (sec)</Text>
+                    <TextInput
+                      style={[styles.durationInput, { 
+                        backgroundColor: colors.background.elevated,
+                        color: colors.text.primary,
+                        borderColor: '#EF4444'
+                      }]}
+                      value={customWorkDuration}
+                      onChangeText={setCustomWorkDuration}
+                      keyboardType="numeric"
+                      maxLength={3}
+                      placeholder="45"
+                      placeholderTextColor={colors.text.muted}
+                    />
+                  </View>
+                  
+                  <View style={styles.durationInputGroup}>
+                    <Text style={[styles.durationLabel, { color: colors.text.secondary }]}>Rest (sec)</Text>
+                    <TextInput
+                      style={[styles.durationInput, { 
+                        backgroundColor: colors.background.elevated,
+                        color: colors.text.primary,
+                        borderColor: '#F59E0B'
+                      }]}
+                      value={customRestDuration}
+                      onChangeText={setCustomRestDuration}
+                      keyboardType="numeric"
+                      maxLength={3}
+                      placeholder="15"
+                      placeholderTextColor={colors.text.muted}
+                    />
+                  </View>
+                  
+                  <View style={styles.durationInputGroup}>
+                    <Text style={[styles.durationLabel, { color: colors.text.secondary }]}>Rounds</Text>
+                    <TextInput
+                      style={[styles.durationInput, { 
+                        backgroundColor: colors.background.elevated,
+                        color: colors.text.primary,
+                        borderColor: '#10B981'
+                      }]}
+                      value={customRounds}
+                      onChangeText={setCustomRounds}
+                      keyboardType="numeric"
+                      maxLength={2}
+                      placeholder="3"
+                      placeholderTextColor={colors.text.muted}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.presetButtons}>
+                  <Text style={[styles.presetTitle, { color: colors.text.secondary }]}>Quick Presets:</Text>
+                  <View style={styles.presetRow}>
+                    <TouchableOpacity 
+                      style={[styles.presetBtn, { backgroundColor: colors.background.elevated }]}
+                      onPress={() => { setCustomWorkDuration('30'); setCustomRestDuration('10'); }}
+                    >
+                      <Text style={[styles.presetBtnText, { color: colors.text.primary }]}>30/10</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.presetBtn, { backgroundColor: colors.background.elevated }]}
+                      onPress={() => { setCustomWorkDuration('40'); setCustomRestDuration('20'); }}
+                    >
+                      <Text style={[styles.presetBtnText, { color: colors.text.primary }]}>40/20</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.presetBtn, { backgroundColor: colors.background.elevated }]}
+                      onPress={() => { setCustomWorkDuration('45'); setCustomRestDuration('15'); }}
+                    >
+                      <Text style={[styles.presetBtnText, { color: colors.text.primary }]}>45/15</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.presetBtn, { backgroundColor: colors.background.elevated }]}
+                      onPress={() => { setCustomWorkDuration('60'); setCustomRestDuration('30'); }}
+                    >
+                      <Text style={[styles.presetBtnText, { color: colors.text.primary }]}>60/30</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Workout Summary */}
+            <View style={[styles.summaryCard, { backgroundColor: colors.background.card }]}>
+              <Text style={[styles.summaryTitle, { color: colors.text.primary }]}>Workout Summary</Text>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>Stations:</Text>
+                <Text style={[styles.summaryValue, { color: colors.text.primary }]}>{stations.length}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>Rounds:</Text>
+                <Text style={[styles.summaryValue, { color: colors.text.primary }]}>{getEffectiveRounds()}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>Work Duration:</Text>
+                <Text style={[styles.summaryValue, { color: '#EF4444' }]}>
+                  {useCustomDurations ? `${customWorkDuration}s` : 'Preset'}
+                </Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>Rest Duration:</Text>
+                <Text style={[styles.summaryValue, { color: '#F59E0B' }]}>
+                  {useCustomDurations ? `${customRestDuration}s` : 'Preset'}
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          <TouchableOpacity 
+            style={[styles.closeSettingsBtn, { backgroundColor: getStateColor() }]}
+            onPress={() => setShowSettings(false)}
+          >
+            <Text style={styles.closeSettingsBtnText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
   if (!workout) {
     return (
@@ -208,10 +521,12 @@ export default function FunctionalWorkoutTimerScreen() {
         <View style={styles.headerCenter}>
           <Text style={[styles.workoutName, { color: colors.text.primary }]}>{workout.name}</Text>
           <Text style={[styles.roundText, { color: colors.text.secondary }]}>
-            Round {currentRound} of {totalRounds}
+            Round {currentRound} of {getEffectiveRounds()}
           </Text>
         </View>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsButton}>
+          <Ionicons name="settings-outline" size={24} color={colors.text.primary} />
+        </TouchableOpacity>
       </View>
 
       {workoutComplete ? (
@@ -232,12 +547,12 @@ export default function FunctionalWorkoutTimerScreen() {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text.primary }]}>{totalRounds}</Text>
+              <Text style={[styles.statValue, { color: colors.text.primary }]}>{getEffectiveRounds()}</Text>
               <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Rounds</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text.primary }]}>{stations.length * totalRounds}</Text>
+              <Text style={[styles.statValue, { color: colors.text.primary }]}>{stations.length * getEffectiveRounds()}</Text>
               <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Exercises</Text>
             </View>
           </View>
@@ -265,7 +580,7 @@ export default function FunctionalWorkoutTimerScreen() {
               <View style={styles.infoItem}>
                 <Ionicons name="repeat" size={24} color={getStateColor()} />
                 <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Rounds</Text>
-                <Text style={[styles.infoValue, { color: colors.text.primary }]}>{totalRounds}</Text>
+                <Text style={[styles.infoValue, { color: colors.text.primary }]}>{getEffectiveRounds()}</Text>
               </View>
               <View style={styles.infoItem}>
                 <Ionicons name="fitness" size={24} color={getStateColor()} />
@@ -273,6 +588,29 @@ export default function FunctionalWorkoutTimerScreen() {
                 <Text style={[styles.infoValue, { color: colors.text.primary }]}>{stations.length}</Text>
               </View>
             </View>
+          </View>
+
+          {/* Quick Settings Row */}
+          <View style={[styles.quickSettingsRow, { backgroundColor: colors.background.card }]}>
+            <View style={styles.quickSetting}>
+              <Ionicons name={soundEnabled ? "volume-high" : "volume-mute"} size={20} color={colors.text.secondary} />
+              <Text style={[styles.quickSettingLabel, { color: colors.text.secondary }]}>Sound</Text>
+              <Switch
+                value={soundEnabled}
+                onValueChange={setSoundEnabled}
+                trackColor={{ false: colors.background.elevated, true: getStateColor() + '60' }}
+                thumbColor={soundEnabled ? getStateColor() : '#f4f3f4'}
+                style={{ transform: [{ scale: 0.8 }] }}
+              />
+            </View>
+            <View style={styles.quickSettingDivider} />
+            <TouchableOpacity style={styles.quickSetting} onPress={() => setShowSettings(true)}>
+              <Ionicons name="options-outline" size={20} color={colors.text.secondary} />
+              <Text style={[styles.quickSettingLabel, { color: colors.text.secondary }]}>
+                {useCustomDurations ? `${customWorkDuration}/${customRestDuration}s` : 'Preset'}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
           </View>
 
           <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Stations Preview</Text>
@@ -284,7 +622,10 @@ export default function FunctionalWorkoutTimerScreen() {
               <View style={styles.stationInfo}>
                 <Text style={[styles.stationName, { color: colors.text.primary }]}>{station.name}</Text>
                 <Text style={[styles.stationTiming, { color: colors.text.secondary }]}>
-                  {station.duration} work • {station.rest} rest
+                  {useCustomDurations 
+                    ? `${customWorkDuration}s work • ${customRestDuration}s rest`
+                    : `${station.duration} work • ${station.rest} rest`
+                  }
                 </Text>
               </View>
             </View>
@@ -369,24 +710,33 @@ export default function FunctionalWorkoutTimerScreen() {
 
             <TouchableOpacity
               style={[styles.controlButton, { backgroundColor: colors.background.card }]}
-              onPress={() => {
-                if (currentStationIndex < stations.length - 1) {
-                  setCurrentStationIndex((prev) => prev + 1);
-                  setIsResting(false);
-                  setTimeRemaining(parseDuration(stations[currentStationIndex + 1].duration));
-                }
-              }}
+              onPress={skipStation}
             >
               <Ionicons name="play-skip-forward" size={32} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
 
-          {/* Total Time */}
-          <Text style={[styles.totalTimeText, { color: colors.text.secondary }]}>
-            Total Time: {formatTime(totalElapsed)}
-          </Text>
+          {/* Sound indicator & Total Time */}
+          <View style={styles.bottomInfo}>
+            <TouchableOpacity 
+              style={styles.soundToggle} 
+              onPress={() => setSoundEnabled(!soundEnabled)}
+            >
+              <Ionicons 
+                name={soundEnabled ? "volume-high" : "volume-mute"} 
+                size={18} 
+                color={colors.text.secondary} 
+              />
+            </TouchableOpacity>
+            <Text style={[styles.totalTimeText, { color: colors.text.secondary }]}>
+              Total Time: {formatTime(totalElapsed)}
+            </Text>
+          </View>
         </View>
       )}
+
+      {/* Settings Modal */}
+      {renderSettingsModal()}
     </SafeAreaView>
   );
 }
@@ -418,6 +768,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
   errorText: {
     fontSize: 18,
     textAlign: 'center',
@@ -436,7 +792,7 @@ const styles = StyleSheet.create({
   infoCard: {
     borderRadius: 16,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   infoTitle: {
     fontSize: 16,
@@ -459,6 +815,28 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginTop: 2,
+  },
+  quickSettingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 24,
+  },
+  quickSetting: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  quickSettingLabel: {
+    fontSize: 13,
+  },
+  quickSettingDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(128,128,128,0.3)',
   },
   sectionTitle: {
     fontSize: 18,
@@ -622,6 +1000,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  bottomInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  soundToggle: {
+    padding: 8,
+  },
   totalTimeText: {
     fontSize: 14,
     textAlign: 'center',
@@ -682,6 +1069,146 @@ const styles = StyleSheet.create({
   doneButtonText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: '700',
+  },
+  // Settings Modal styles
+  settingsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  settingsContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+  },
+  settingsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128,128,128,0.2)',
+  },
+  settingsTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  settingsContent: {
+    padding: 16,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  settingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  settingText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  settingLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  settingDescription: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  customDurationsCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  customDurationsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  durationInputRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  durationInputGroup: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  durationLabel: {
+    fontSize: 12,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  durationInput: {
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  presetButtons: {
+    marginTop: 8,
+  },
+  presetTitle: {
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  presetBtn: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  presetBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  summaryCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128,128,128,0.1)',
+  },
+  summaryLabel: {
+    fontSize: 14,
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  closeSettingsBtn: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  closeSettingsBtnText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '700',
   },
 });
