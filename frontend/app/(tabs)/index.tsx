@@ -632,15 +632,33 @@ export default function DashboardScreen() {
 
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: colors.background.card }]}
-            onPress={() => router.push('/weight-training')}
+            onPress={() => {
+              if (isPremium) {
+                router.push('/weight-training');
+              } else {
+                Alert.alert(
+                  'Premium Feature',
+                  'Training Programs is a premium feature. Upgrade to FitTrax+ Premium to access all training programs.',
+                  [
+                    { text: 'Maybe Later', style: 'cancel' },
+                    { text: 'Upgrade Now', onPress: () => router.push('/membership') }
+                  ]
+                );
+              }
+            }}
           >
+            {!isPremium && (
+              <View style={styles.premiumBadge}>
+                <Ionicons name="diamond" size={10} color="#fff" />
+              </View>
+            )}
             <View style={[styles.statIcon, { backgroundColor: '#22C55E20' }]}>
               <MaterialIcons name="fitness-center" size={22} color="#22C55E" />
             </View>
             <Text style={[styles.statValue, { color: colors.text.primary }]}>
               {today.workouts_count || 0}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>{t('dashboard.workouts')}</Text>
+            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Training</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
