@@ -63,7 +63,7 @@ export default function FunctionalWorkoutTimerScreen() {
   const [customRestDuration, setCustomRestDuration] = useState('15');
   const [customRounds, setCustomRounds] = useState(totalRounds.toString());
   
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const countdownSoundRef = useRef<Audio.Sound | null>(null);
 
