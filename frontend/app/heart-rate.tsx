@@ -595,8 +595,14 @@ export default function HeartRateScreen() {
                   </View>
                   <Text style={styles.instructionTitle}>Place Your Finger</Text>
                   <Text style={styles.instructionText}>
-                    Gently cover the camera lens and flashlight completely with your fingertip. The flash should illuminate your finger.
+                    Cover BOTH the camera lens AND flashlight completely with your fingertip. You should see a red glow through your finger.
                   </Text>
+                  <View style={styles.cameraAdvice}>
+                    <Ionicons name="information-circle" size={20} color="#FCD34D" />
+                    <Text style={styles.cameraAdviceText}>
+                      Using BACK camera (main lens) for best accuracy
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.readyButton}
                     onPress={handleFingerDetection}
