@@ -172,7 +172,7 @@ export default function FunctionalWorkoutTimerScreen() {
 
   // Play sound effect
   const playSound = async (type: 'start' | 'rest' | 'end' | 'countdown' | 'final') => {
-    // Always vibrate
+    // Always vibrate for haptic feedback
     Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : type === 'countdown' ? 50 : 100);
     
     if (!soundEnabled) {
@@ -180,14 +180,32 @@ export default function FunctionalWorkoutTimerScreen() {
     }
 
     try {
-      if (type === 'countdown' && soundRef.current) {
-        // Short beep for 5, 4, 3, 2 seconds
-        await soundRef.current.setPositionAsync(0);
-        await soundRef.current.playAsync();
-      } else if ((type === 'final' || type === 'start' || type === 'rest' || type === 'end') && countdownSoundRef.current) {
-        // Longer beep for transitions and final second
-        await countdownSoundRef.current.setPositionAsync(0);
-        await countdownSoundRef.current.playAsync();
+      // Use Web Audio API for beeps
+      switch (type) {
+        case 'countdown':
+          // Short high beep for countdown (5, 4, 3, 2 seconds)
+          playWebBeep(880, 0.1, 0.6);
+          break;
+        case 'final':
+          // Longer higher beep for final second (1 second)
+          playWebBeep(1100, 0.2, 0.8);
+          break;
+        case 'start':
+          // Two quick beeps for WORK start
+          playWebBeep(660, 0.15, 0.7);
+          setTimeout(() => playWebBeep(880, 0.15, 0.7), 180);
+          break;
+        case 'rest':
+          // Lower tone for REST start  
+          playWebBeep(440, 0.3, 0.6);
+          break;
+        case 'end':
+          // Celebratory ascending tones for workout complete
+          playWebBeep(523, 0.2, 0.7); // C
+          setTimeout(() => playWebBeep(659, 0.2, 0.7), 200); // E
+          setTimeout(() => playWebBeep(784, 0.2, 0.7), 400); // G
+          setTimeout(() => playWebBeep(1047, 0.4, 0.8), 600); // High C
+          break;
       }
     } catch (error) {
       console.log('Sound playback error:', error);
