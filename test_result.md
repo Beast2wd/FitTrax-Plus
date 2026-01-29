@@ -360,6 +360,18 @@ backend:
         agent: "testing"
         comment: "DELETE ALL MANUAL WORKOUT LOG TESTING COMPLETED: Tested DELETE /api/manual-workout-log/all/{user_id}?date=YYYY-MM-DD endpoint. Results: ✅ Endpoint accessible (200 status), ✅ Returns proper response structure with 'deleted_count' and 'message' fields, ✅ Response format correct (JSON with user_id and date confirmation). IMPORTANT FINDING: API design issue detected - the DELETE endpoint looks for a 'date' field in database entries, but the POST /api/manual-workout-log endpoint doesn't store a 'date' field (only created_at/updated_at timestamps). This means the delete endpoint will always return 0 deletions. Endpoint is technically working as coded but may need design review to either: 1) Add 'date' field to POST endpoint, or 2) Modify DELETE logic to use created_at timestamp for date filtering. Current behavior is consistent and predictable."
 
+  - task: "Review Request Endpoint Testing"
+    implemented: true
+    working: true
+    file: "/app/review_test.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "REVIEW REQUEST TESTING COMPLETED: Tested all 5 specific backend endpoints requested in review for user_1769564539081. Results: 5/5 tests passed (100% success rate). ✅ GET /api/membership/status/{user_id} working correctly (returns user_id, is_premium, is_trial, trial_days_remaining, subscription_status, subscription_ends_at, features), ✅ GET /api/membership/pricing working correctly (returns plan details with name, price, currency, interval, trial_days, payment_link, features, free_features), ✅ GET /api/dashboard/{user_id}?local_date=2026-01-29 working correctly (returns comprehensive dashboard data with profile, today, weekly_meals, weekly_workouts, weekly_heart_rates), ✅ GET /api/gamification/streak/{user_id} working correctly (returns current_streak, longest_streak, streak_active_today), ✅ POST /api/gamification/sync-progress/{user_id} working correctly (returns success, challenge_updates, new_badges, summary, streak). All endpoints return 200 OK status and proper JSON responses. No server errors detected. Backend API is fully functional for the requested endpoints."
+
 frontend:
   - task: "Tab Navigation Setup"
     implemented: true
