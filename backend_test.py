@@ -544,6 +544,92 @@ class FitTrax+APITester:
         except Exception as e:
             self.log_test("Get Dashboard Data", False, f"Exception: {str(e)}")
 
+    def test_membership_endpoints(self):
+        """Test membership endpoints"""
+        # Test with specific user ID from review request
+        test_user_id = "user_1769564539081"
+        
+        # Test Membership Status
+        try:
+            response = self.make_request("GET", f"/membership/status/{test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Membership Status", True, f"Membership status retrieved for {test_user_id}", data)
+            else:
+                self.log_test("Membership Status", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Membership Status", False, f"Exception: {str(e)}")
+
+        # Test Membership Pricing
+        try:
+            response = self.make_request("GET", "/membership/pricing")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Membership Pricing", True, f"Pricing information retrieved", data)
+            else:
+                self.log_test("Membership Pricing", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Membership Pricing", False, f"Exception: {str(e)}")
+
+    def test_gamification_endpoints(self):
+        """Test gamification endpoints"""
+        # Test with specific user ID from review request
+        test_user_id = "user_1769564539081"
+        
+        # Test Gamification Streak
+        try:
+            response = self.make_request("GET", f"/gamification/streak/{test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Gamification Streak", True, f"Streak data retrieved for {test_user_id}", data)
+            else:
+                self.log_test("Gamification Streak", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Gamification Streak", False, f"Exception: {str(e)}")
+
+        # Test Sync Gamification Progress
+        try:
+            sync_data = {
+                "activity_type": "workout",
+                "points": 50,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            response = self.make_request("POST", f"/gamification/sync-progress/{test_user_id}", sync_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Sync Gamification Progress", True, f"Progress synced for {test_user_id}", data)
+            else:
+                self.log_test("Sync Gamification Progress", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Sync Gamification Progress", False, f"Exception: {str(e)}")
+
+    def test_dashboard_with_date(self):
+        """Test dashboard endpoint with specific date parameter"""
+        # Test with specific user ID and date from review request
+        test_user_id = "user_1769564539081"
+        test_date = "2026-01-29"
+        
+        try:
+            response = self.make_request("GET", f"/dashboard/{test_user_id}", params={"local_date": test_date})
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Dashboard with Date", True, f"Dashboard data retrieved for {test_user_id} on {test_date}", data)
+            else:
+                self.log_test("Dashboard with Date", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Dashboard with Date", False, f"Exception: {str(e)}")
+
     def test_security_features(self):
         """Test security features"""
         
