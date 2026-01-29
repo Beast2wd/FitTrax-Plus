@@ -33,6 +33,7 @@ export default function WeightTrainingScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [programs, setPrograms] = useState<any>({});
+  const [functionalPrograms, setFunctionalPrograms] = useState<any>({});
   const [exercises, setExercises] = useState<any>({});
   const [stats, setStats] = useState<any>(null);
   const [prs, setPrs] = useState<any[]>([]);
@@ -48,6 +49,10 @@ export default function WeightTrainingScreen() {
   const [editingExercise, setEditingExercise] = useState<any>(null);
   const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
   const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
+  
+  // Functional Training Modal states
+  const [showFunctionalModal, setShowFunctionalModal] = useState(false);
+  const [selectedFunctionalProgram, setSelectedFunctionalProgram] = useState<any>(null);
   
   // Inline editing state (replaces nested modal)
   const [expandedExerciseKey, setExpandedExerciseKey] = useState<string | null>(null);
