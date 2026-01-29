@@ -784,7 +784,10 @@ export default function WeightTrainingScreen() {
               style={[styles.startWorkoutButton, { backgroundColor: getTypeColor(selectedFunctionalProgram?.type || 'mixed') }]}
               onPress={() => {
                 setShowFunctionalModal(false);
-                Alert.alert('Coming Soon', 'Timer-based workout tracking will be available in the next update!');
+                router.push({
+                  pathname: '/functional-workout-timer',
+                  params: { workout: JSON.stringify(selectedFunctionalProgram) }
+                });
               }}
             >
               <Ionicons name="play" size={24} color="#fff" />
