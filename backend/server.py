@@ -4255,6 +4255,130 @@ WEIGHT_TRAINING_PROGRAMS = {
     }
 }
 
+# Functional Training Programs (F45-style HIIT workouts)
+FUNCTIONAL_TRAINING_PROGRAMS = {
+    "cardio_blast": {
+        "name": "Cardio Blast",
+        "description": "High-intensity bodyweight cardio circuit - no equipment needed",
+        "frequency": "3-5 days/week",
+        "level": "all_levels",
+        "type": "bodyweight",
+        "duration": "45 min",
+        "image": "https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=400",
+        "stations": [
+            {"name": "Burpees", "duration": "40s", "rest": "20s", "description": "Full body explosive movement", "image": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400"},
+            {"name": "High Knees", "duration": "40s", "rest": "20s", "description": "Run in place driving knees up", "image": "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400"},
+            {"name": "Mountain Climbers", "duration": "40s", "rest": "20s", "description": "Plank position alternating knee drives", "image": "https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=400"},
+            {"name": "Jump Squats", "duration": "40s", "rest": "20s", "description": "Squat down and explode up", "image": "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400"},
+            {"name": "Jumping Jacks", "duration": "40s", "rest": "20s", "description": "Classic cardio movement", "image": "https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=400"},
+            {"name": "Tuck Jumps", "duration": "40s", "rest": "20s", "description": "Jump and bring knees to chest", "image": "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=400"},
+            {"name": "Speed Skaters", "duration": "40s", "rest": "20s", "description": "Lateral bounds side to side", "image": "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400"},
+            {"name": "Box Jumps", "duration": "40s", "rest": "20s", "description": "Jump onto elevated surface", "image": "https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?w=400"},
+        ],
+        "rounds": 3
+    },
+    "kettlebell_fury": {
+        "name": "Kettlebell Fury",
+        "description": "Full body kettlebell circuit for strength and cardio",
+        "frequency": "3-4 days/week",
+        "level": "intermediate",
+        "type": "kettlebell",
+        "duration": "45 min",
+        "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400",
+        "stations": [
+            {"name": "Kettlebell Swings", "duration": "45s", "rest": "15s", "description": "Hip hinge explosive swing", "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400"},
+            {"name": "Goblet Squats", "duration": "45s", "rest": "15s", "description": "Hold kettlebell at chest, squat deep", "image": "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400"},
+            {"name": "KB Clean & Press", "duration": "45s", "rest": "15s", "description": "Clean to shoulder then press overhead", "image": "https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=400"},
+            {"name": "KB Deadlifts", "duration": "45s", "rest": "15s", "description": "Hip hinge keeping back flat", "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400"},
+            {"name": "KB Rows", "duration": "45s", "rest": "15s", "description": "Bent over row each arm", "image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400"},
+            {"name": "KB Turkish Get Up", "duration": "45s", "rest": "15s", "description": "Floor to standing holding KB overhead", "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400"},
+            {"name": "KB Lunges", "duration": "45s", "rest": "15s", "description": "Walking lunges with KB at chest", "image": "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=400"},
+            {"name": "KB High Pulls", "duration": "45s", "rest": "15s", "description": "Explosive pull to chin height", "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400"},
+        ],
+        "rounds": 3
+    },
+    "barbell_power": {
+        "name": "Barbell Power",
+        "description": "Olympic-style barbell circuit for explosive strength",
+        "frequency": "3-4 days/week", 
+        "level": "advanced",
+        "type": "barbell",
+        "duration": "50 min",
+        "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400",
+        "stations": [
+            {"name": "Barbell Thrusters", "duration": "40s", "rest": "20s", "description": "Front squat into overhead press", "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400"},
+            {"name": "Power Cleans", "duration": "40s", "rest": "20s", "description": "Explosive clean from floor to shoulders", "image": "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400"},
+            {"name": "Barbell Rows", "duration": "40s", "rest": "20s", "description": "Bent over row for back", "image": "https://images.unsplash.com/photo-1597347316205-36f6c451902a?w=400"},
+            {"name": "Push Press", "duration": "40s", "rest": "20s", "description": "Dip and drive overhead", "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400"},
+            {"name": "Deadlifts", "duration": "40s", "rest": "20s", "description": "Full deadlift from floor", "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400"},
+            {"name": "Front Squats", "duration": "40s", "rest": "20s", "description": "Barbell in front rack position", "image": "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400"},
+            {"name": "Hang Cleans", "duration": "40s", "rest": "20s", "description": "Clean from hang position", "image": "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400"},
+            {"name": "Barbell Lunges", "duration": "40s", "rest": "20s", "description": "Alternating lunges with barbell", "image": "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=400"},
+        ],
+        "rounds": 4
+    },
+    "hybrid_hiit": {
+        "name": "Hybrid HIIT",
+        "description": "Mix of bodyweight, kettlebell and cardio stations",
+        "frequency": "4-5 days/week",
+        "level": "intermediate",
+        "type": "mixed",
+        "duration": "45 min",
+        "image": "https://images.unsplash.com/photo-1549576490-b0b4831ef60a?w=400",
+        "stations": [
+            {"name": "Battle Ropes", "duration": "30s", "rest": "15s", "description": "Alternating waves with ropes", "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400"},
+            {"name": "Box Jumps", "duration": "30s", "rest": "15s", "description": "Explosive jump onto box", "image": "https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?w=400"},
+            {"name": "KB Swings", "duration": "30s", "rest": "15s", "description": "Russian style swings", "image": "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400"},
+            {"name": "Burpees", "duration": "30s", "rest": "15s", "description": "Full burpee with jump", "image": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400"},
+            {"name": "Rowing Machine", "duration": "30s", "rest": "15s", "description": "Max effort row", "image": "https://images.unsplash.com/photo-1519505907962-0a6cb0167c73?w=400"},
+            {"name": "Medicine Ball Slams", "duration": "30s", "rest": "15s", "description": "Overhead slam with med ball", "image": "https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=400"},
+            {"name": "Push-Ups", "duration": "30s", "rest": "15s", "description": "Standard or modified", "image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400"},
+            {"name": "Assault Bike", "duration": "30s", "rest": "15s", "description": "All out sprint", "image": "https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=400"},
+        ],
+        "rounds": 4
+    },
+    "core_crusher": {
+        "name": "Core Crusher",
+        "description": "Intense core-focused circuit to build abs and stability",
+        "frequency": "3-4 days/week",
+        "level": "all_levels",
+        "type": "bodyweight",
+        "duration": "30 min",
+        "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
+        "stations": [
+            {"name": "Plank Hold", "duration": "45s", "rest": "15s", "description": "Forearm plank, keep core tight", "image": "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400"},
+            {"name": "Mountain Climbers", "duration": "45s", "rest": "15s", "description": "Fast knee drives in plank", "image": "https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=400"},
+            {"name": "Russian Twists", "duration": "45s", "rest": "15s", "description": "Seated rotation side to side", "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400"},
+            {"name": "Bicycle Crunches", "duration": "45s", "rest": "15s", "description": "Alternating elbow to knee", "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400"},
+            {"name": "Leg Raises", "duration": "45s", "rest": "15s", "description": "Lying leg raises for lower abs", "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400"},
+            {"name": "Dead Bug", "duration": "45s", "rest": "15s", "description": "Opposite arm/leg extension", "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400"},
+            {"name": "Side Plank (R)", "duration": "30s", "rest": "10s", "description": "Right side plank hold", "image": "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400"},
+            {"name": "Side Plank (L)", "duration": "30s", "rest": "10s", "description": "Left side plank hold", "image": "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400"},
+        ],
+        "rounds": 3
+    },
+    "athletica": {
+        "name": "Athletica",
+        "description": "Athletic performance training with agility and power",
+        "frequency": "3-4 days/week",
+        "level": "intermediate",
+        "type": "mixed",
+        "duration": "45 min",
+        "image": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400",
+        "stations": [
+            {"name": "Ladder Drills", "duration": "40s", "rest": "20s", "description": "Quick feet through agility ladder", "image": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400"},
+            {"name": "Broad Jumps", "duration": "40s", "rest": "20s", "description": "Explosive horizontal jumps", "image": "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=400"},
+            {"name": "Sprint Intervals", "duration": "40s", "rest": "20s", "description": "Max effort sprints", "image": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400"},
+            {"name": "Cone Shuffles", "duration": "40s", "rest": "20s", "description": "Lateral shuffles between cones", "image": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400"},
+            {"name": "Box Step Ups", "duration": "40s", "rest": "20s", "description": "Alternating step ups on box", "image": "https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?w=400"},
+            {"name": "Plyo Push-Ups", "duration": "40s", "rest": "20s", "description": "Explosive clapping push-ups", "image": "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400"},
+            {"name": "Bear Crawl", "duration": "40s", "rest": "20s", "description": "Crawl forward on hands and feet", "image": "https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=400"},
+            {"name": "Vertical Jumps", "duration": "40s", "rest": "20s", "description": "Max height vertical jumps", "image": "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=400"},
+        ],
+        "rounds": 3
+    }
+}
+
 # Weight Training Models
 class WeightSet(BaseModel):
     set_number: int
