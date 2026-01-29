@@ -1036,6 +1036,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   readyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#EF4444',
     paddingHorizontal: 32,
     paddingVertical: 16,
