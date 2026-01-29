@@ -16,7 +16,7 @@ index 0000000..efd0536
 +from datetime import datetime
 +
 +# Backend URL from frontend .env
-+BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
++BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 +
 +def test_dashboard_sugar_fiber():
 +    """Test Dashboard endpoint with sugar/fiber data"""
@@ -774,7 +774,7 @@ index 9bef8ee..4e37c40 100644
 -------+import os
 -------+
 -------+# Test Configuration - Using exact values from user request
--------+BACKEND_URL = "https://fittracker-188.preview.emergentagent.com/api"
+-------+BACKEND_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 -------+TEST_USER_ID = "user_1767657116540"
 -------+
 -------+# Test Results Tracking
@@ -1756,7 +1756,7 @@ index 9bef8ee..4e37c40 100644
 --------+def main():
 --------+    """Main function to run tests"""
 --------+    # Use the production URL from environment
---------+    base_url = "https://fittracker-188.preview.emergentagent.com"
+--------+    base_url = "https://fittrax-sync.preview.emergentagent.com"
 --------+    test_user_id = "user_1767657116540"
 --------+    
 --------+    tester = FitTraxSpecificTester(base_url, test_user_id)
@@ -1808,7 +1808,7 @@ index 9bef8ee..4e37c40 100644
 -------------+from datetime import datetime
 -------------+
 -------------+# Configuration
--------------+BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+-------------+BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 -------------+TEST_USER_ID = "food_scanner_real_test"
 -------------+
 -------------+# Create a simple food-like image (red square that might be interpreted as food)
@@ -1967,7 +1967,7 @@ index 9bef8ee..4e37c40 100644
 -------------+import sys
 -------------+
 -------------+# Configuration
--------------+BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+-------------+BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 -------------+TEST_USER_ID = "food_scanner_test_user_2024"
 -------------+
 -------------+# Test image - small 1x1 pixel PNG (valid base64)
@@ -2554,7 +2554,7 @@ index 9bef8ee..4e37c40 100644
 ---------------+        self.generate_summary()
 ---------------+
 ---------------+if __name__ == "__main__":
----------------+    BACKEND_URL = "https://fittracker-188.preview.emergentagent.com"
+---------------+    BACKEND_URL = "https://fittrax-sync.preview.emergentagent.com"
 ---------------+    
 ---------------+    tester = FitTraxDeploymentTester(BACKEND_URL)
 ---------------+    tester.run_deployment_test()
@@ -2584,7 +2584,7 @@ index 9bef8ee..4e37c40 100644
 ----------------+from typing import Dict, Any, Optional
 ----------------+
 ----------------+# Configuration
-----------------+BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+----------------+BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 ----------------+TIMEOUT = 30
 ----------------+
 ----------------+class EnhancedSecurityTester:
@@ -2991,7 +2991,7 @@ index 9bef8ee..4e37c40 100644
 ------------------------ /dev/null
 ---------------------+++ b/frontend/.metro-cache/cache/63/d27dc9af159a2d9edd0628d155d9c5ed5b08ad5d2f812c859fd93bfe669f981a1d8fe1
 ---------------------@@ -0,0 +1 @@
----------------------+{"dependencies":[],"output":[{"data":{"code":"__d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {\n  \"use strict\";\n\n  Object.defineProperty(exports, '__esModule', {\n    value: true\n  });\n  Object.defineProperty(exports, \"default\", {\n    enumerable: true,\n    get: function () {\n      return _default;\n    }\n  });\n  var _default = {\n    \"EXPO_PUBLIC_BACKEND_URL\": \"https://fittracker-188.preview.emergentagent.com\"\n  };\n});","lineCount":16,"map":[[7,2,1,0,"Object"],[7,8,1,0],[7,9,1,0,"defineProperty"],[7,23,1,0],[7,24,1,0,"exports"],[7,31,1,0],[8,4,1,0,"enumerable"],[8,14,1,0],[9,4,1,0,"get"],[9,7,1,0],[9,18,1,0,"get"],[9,19,1,0],[10,6,1,0],[10,13,1,0,"_default"],[10,21,1,0],[11,4,1,0],[12,2,1,0],[13,2,1,0],[13,6,1,0,"_default"],[13,14,1,0],[13,17,1,15],[14,4,1,16],[14,29,1,41],[14,31,1,42],[15,2,1,98],[15,3,1,99],[16,0,1,100],[16,3]],"functionMap":{"names":["<global>"],"mappings":"AAA"},"hasCjsExports":false},"type":"js/module"}]}
+---------------------+{"dependencies":[],"output":[{"data":{"code":"__d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {\n  \"use strict\";\n\n  Object.defineProperty(exports, '__esModule', {\n    value: true\n  });\n  Object.defineProperty(exports, \"default\", {\n    enumerable: true,\n    get: function () {\n      return _default;\n    }\n  });\n  var _default = {\n    \"EXPO_PUBLIC_BACKEND_URL\": \"https://fittrax-sync.preview.emergentagent.com\"\n  };\n});","lineCount":16,"map":[[7,2,1,0,"Object"],[7,8,1,0],[7,9,1,0,"defineProperty"],[7,23,1,0],[7,24,1,0,"exports"],[7,31,1,0],[8,4,1,0,"enumerable"],[8,14,1,0],[9,4,1,0,"get"],[9,7,1,0],[9,18,1,0,"get"],[9,19,1,0],[10,6,1,0],[10,13,1,0,"_default"],[10,21,1,0],[11,4,1,0],[12,2,1,0],[13,2,1,0],[13,6,1,0,"_default"],[13,14,1,0],[13,17,1,15],[14,4,1,16],[14,29,1,41],[14,31,1,42],[15,2,1,98],[15,3,1,99],[16,0,1,100],[16,3]],"functionMap":{"names":["<global>"],"mappings":"AAA"},"hasCjsExports":false},"type":"js/module"}]}
 ---------------------\ No newline at end of file
 ---------------------diff --git a/frontend/.metro-cache/cache/ce/e8c1b9e11f5b8d442ab0c7d92fe7fced5b08ad5d2f812c859fd93bfe669f981a1d8fe1 b/frontend/.metro-cache/cache/ce/e8c1b9e11f5b8d442ab0c7d92fe7fced5b08ad5d2f812c859fd93bfe669f981a1d8fe1
 ---------------------new file mode 100644
@@ -2999,7 +2999,7 @@ index 9bef8ee..4e37c40 100644
 ------------------------ /dev/null
 ---------------------+++ b/frontend/.metro-cache/cache/ce/e8c1b9e11f5b8d442ab0c7d92fe7fced5b08ad5d2f812c859fd93bfe669f981a1d8fe1
 ---------------------@@ -0,0 +1 @@
----------------------+{"dependencies":[],"output":[{"data":{"code":"__d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {\n  \"use strict\";\n\n  Object.defineProperty(exports, '__esModule', {\n    value: true\n  });\n  Object.defineProperty(exports, \"default\", {\n    enumerable: true,\n    get: function () {\n      return _default;\n    }\n  });\n  var _default = {\n    \"EXPO_PUBLIC_BACKEND_URL\": \"https://fittracker-188.preview.emergentagent.com\"\n  };\n});","lineCount":16,"map":[[7,2,1,0,"Object"],[7,8,1,0],[7,9,1,0,"defineProperty"],[7,23,1,0],[7,24,1,0,"exports"],[7,31,1,0],[8,4,1,0,"enumerable"],[8,14,1,0],[9,4,1,0,"get"],[9,7,1,0],[9,18,1,0,"get"],[9,19,1,0],[10,6,1,0],[10,13,1,0,"_default"],[10,21,1,0],[11,4,1,0],[12,2,1,0],[13,2,1,0],[13,6,1,0,"_default"],[13,14,1,0],[13,17,1,15],[14,4,1,16],[14,29,1,41],[14,31,1,42],[15,2,1,98],[15,3,1,99],[16,0,1,100],[16,3]],"functionMap":{"names":["<global>"],"mappings":"AAA"},"hasCjsExports":false},"type":"js/module"}]}
+---------------------+{"dependencies":[],"output":[{"data":{"code":"__d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {\n  \"use strict\";\n\n  Object.defineProperty(exports, '__esModule', {\n    value: true\n  });\n  Object.defineProperty(exports, \"default\", {\n    enumerable: true,\n    get: function () {\n      return _default;\n    }\n  });\n  var _default = {\n    \"EXPO_PUBLIC_BACKEND_URL\": \"https://fittrax-sync.preview.emergentagent.com\"\n  };\n});","lineCount":16,"map":[[7,2,1,0,"Object"],[7,8,1,0],[7,9,1,0,"defineProperty"],[7,23,1,0],[7,24,1,0,"exports"],[7,31,1,0],[8,4,1,0,"enumerable"],[8,14,1,0],[9,4,1,0,"get"],[9,7,1,0],[9,18,1,0,"get"],[9,19,1,0],[10,6,1,0],[10,13,1,0,"_default"],[10,21,1,0],[11,4,1,0],[12,2,1,0],[13,2,1,0],[13,6,1,0,"_default"],[13,14,1,0],[13,17,1,15],[14,4,1,16],[14,29,1,41],[14,31,1,42],[15,2,1,98],[15,3,1,99],[16,0,1,100],[16,3]],"functionMap":{"names":["<global>"],"mappings":"AAA"},"hasCjsExports":false},"type":"js/module"}]}
 ---------------------\ No newline at end of file
 ---------------------diff --git a/model.patch b/model.patch
 ---------------------index e166d73..e69de29 100644
@@ -3103,7 +3103,7 @@ index 9bef8ee..4e37c40 100644
 -----------------------+import uuid
 -----------------------+
 -----------------------+# Get backend URL from environment
------------------------+BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://fittracker-188.preview.emergentagent.com')
+-----------------------+BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://fittrax-sync.preview.emergentagent.com')
 -----------------------+API_BASE = f"{BACKEND_URL}/api"
 -----------------------+
 -----------------------+# Test user ID
@@ -5327,7 +5327,7 @@ index 9bef8ee..4e37c40 100644
 -----------------+import sys
 -----------------+
 -----------------+# Backend URL from environment
------------------+BACKEND_URL = "https://fittracker-188.preview.emergentagent.com/api"
+-----------------+BACKEND_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 -----------------+
 -----------------+def test_health_endpoint():
 -----------------+    """Test health check endpoint"""
@@ -5708,7 +5708,7 @@ index 9bef8ee..4e37c40 100644
 ----------------+import time
 ----------------+from datetime import datetime
 ----------------+
-----------------+BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+----------------+BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 ----------------+
 ----------------+def test_rate_limit_simple():
 ----------------+    """Test rate limiting with exactly 11 requests to trigger the 10/minute limit"""
@@ -5947,7 +5947,7 @@ index 9bef8ee..4e37c40 100644
 ------------- from datetime import datetime
 ------------- 
 -------------+# Configuration
-------------- BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+------------- BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 -------------+TEST_USER_ID = "rate_limit_test_user"
 ------------- 
 --------------def test_rate_limit_simple():
@@ -6261,7 +6261,7 @@ index 9bef8ee..4e37c40 100644
 ------------+import uuid
 ------------+
 ------------+# Configuration from frontend .env
-------------+BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+------------+BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 ------------+TEST_USER_EMAIL = f"prod_test_{int(time.time())}@fittrax.com"
 ------------+TEST_USER_PASSWORD = "SecurePass123!"
 ------------+
@@ -6647,7 +6647,7 @@ index 9bef8ee..4e37c40 100644
 ------------+# FitTrax API Production Readiness Test - Using curl
 ------------+# Tests all critical endpoints for production deployment
 ------------+
-------------+BASE_URL="https://fittracker-188.preview.emergentagent.com/api"
+------------+BASE_URL="https://fittrax-sync.preview.emergentagent.com/api"
 ------------+TEST_EMAIL="prod_test_$(date +%s)@fittrax.com"
 ------------+TEST_PASSWORD="SecurePass123!"
 ------------+
@@ -7060,7 +7060,7 @@ index 0000000..d0e3f42
 +from datetime import datetime
 +
 +# Backend URL from frontend .env
-+BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
++BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 +
 +def test_dashboard_sugar_fiber():
 +    """Test Dashboard endpoint with sugar/fiber data"""

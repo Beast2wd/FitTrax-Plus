@@ -13,7 +13,7 @@ import sys
 import os
 
 # Test Configuration - Using exact values from user request
-BACKEND_URL = "https://fittracker-188.preview.emergentagent.com/api"
+BACKEND_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 TEST_USER_ID = "user_1767657116540"
 
 # Test Results Tracking

@@ -12,7 +12,7 @@ from datetime import datetime
 import sys
 
 # Configuration
-BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 TEST_USER_ID = "food_scanner_test_user_2024"
 
 # Test image - small 1x1 pixel PNG (valid base64)

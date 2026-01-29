@@ -8401,7 +8401,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=CORSConfig.ALLOWED_ORIGINS + [
-        "https://fittracker-188.preview.emergentagent.com",  # Preview URL
+        "https://fittrax-sync.preview.emergentagent.com",  # Preview URL
     ],
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],

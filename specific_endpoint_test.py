@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from frontend .env
-BASE_URL = "https://fittracker-188.preview.emergentagent.com/api"
+BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 
 def test_dashboard_sugar_fiber():
     """Test Dashboard endpoint with sugar/fiber data"""

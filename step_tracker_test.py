@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import sys
 
 # Backend URL from environment
-BACKEND_URL = "https://fittracker-188.preview.emergentagent.com/api"
+BACKEND_URL = "https://fittrax-sync.preview.emergentagent.com/api"
 
 def test_health_endpoint():
     """Test health check endpoint"""
