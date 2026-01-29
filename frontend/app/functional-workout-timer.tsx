@@ -149,28 +149,24 @@ export default function FunctionalWorkoutTimerScreen() {
   }, []);
 
   // Play sound effect
-  const playSound = async (type: 'start' | 'rest' | 'end' | 'countdown') => {
+  const playSound = async (type: 'start' | 'rest' | 'end' | 'countdown' | 'final') => {
+    // Always vibrate
+    Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : type === 'countdown' ? 50 : 100);
+    
     if (!soundEnabled) {
-      // Still vibrate even if sound is off
-      Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : type === 'countdown' ? 100 : 200);
       return;
     }
 
     try {
-      // Vibration feedback
-      Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : type === 'countdown' ? 100 : 200);
-      
-      // For now, we'll use the system sounds via vibration
-      // In a production app, you would load custom audio files here
-      // Example:
-      // const { sound } = await Audio.Sound.createAsync(
-      //   type === 'start' ? require('../assets/sounds/start.mp3') :
-      //   type === 'rest' ? require('../assets/sounds/rest.mp3') :
-      //   type === 'end' ? require('../assets/sounds/complete.mp3') :
-      //   require('../assets/sounds/countdown.mp3')
-      // );
-      // await sound.playAsync();
-      
+      if (type === 'countdown' && soundRef.current) {
+        // Short beep for 5, 4, 3, 2 seconds
+        await soundRef.current.setPositionAsync(0);
+        await soundRef.current.playAsync();
+      } else if ((type === 'final' || type === 'start' || type === 'rest' || type === 'end') && countdownSoundRef.current) {
+        // Longer beep for transitions and final second
+        await countdownSoundRef.current.setPositionAsync(0);
+        await countdownSoundRef.current.playAsync();
+      }
     } catch (error) {
       console.log('Sound playback error:', error);
     }
