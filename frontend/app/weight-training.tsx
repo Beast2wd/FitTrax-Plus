@@ -431,7 +431,18 @@ export default function WeightTrainingScreen() {
       case 'beginner': return '#10B981';
       case 'intermediate': return '#F59E0B';
       case 'advanced': return '#EF4444';
+      case 'all_levels': return '#3B82F6';
       default: return theme.colors.text.secondary;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'bodyweight': return '#10B981';
+      case 'kettlebell': return '#F59E0B';
+      case 'barbell': return '#EF4444';
+      case 'mixed': return '#8B5CF6';
+      default: return '#3B82F6';
     }
   };
 
