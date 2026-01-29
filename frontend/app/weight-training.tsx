@@ -1793,6 +1793,103 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  // Functional Training Modal Styles
+  functionalInfoCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  functionalInfoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  functionalInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  functionalInfoItem: {
+    alignItems: 'center',
+  },
+  functionalInfoLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  functionalInfoValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  stationCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  stationImage: {
+    width: 100,
+    height: 100,
+  },
+  stationContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'center',
+  },
+  stationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  stationNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  stationNumberText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  stationName: {
+    fontSize: 16,
+    fontWeight: '700',
+    flex: 1,
+  },
+  stationDescription: {
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  stationTiming: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  stationTimingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  stationTimingText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  startWorkoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 16,
+    gap: 8,
+  },
+  startWorkoutButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
   muscleGroups: {
     flexDirection: 'row',
     flexWrap: 'wrap',
