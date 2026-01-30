@@ -853,7 +853,11 @@ class FitTraxAPITester:
         print("\n📅 Testing Dashboard with Date Parameter...")
         self.test_dashboard_with_date()
         
-        # 12. Security Tests
+        # 12. Peptide Features (Review Request)
+        print("\n🧪 Testing Peptide Features...")
+        self.test_peptide_endpoints()
+        
+        # 13. Security Tests
         print("\n🔒 Testing Security Features...")
         self.test_security_features()
         
