@@ -120,6 +120,32 @@ export default function PeptideCalculatorScreen() {
   const [newStackGoal, setNewStackGoal] = useState('');
   const [selectedStackPeptides, setSelectedStackPeptides] = useState<string[]>([]);
   const [aiStackLoading, setAiStackLoading] = useState(false);
+  const [expandedStackId, setExpandedStackId] = useState<string | null>(null);
+  const [viewStackDetails, setViewStackDetails] = useState<PeptideStack | null>(null);
+  
+  // Delete stack function
+  const deleteStack = async (stackId: string) => {
+    Alert.alert(
+      'Delete Stack',
+      'Are you sure you want to delete this stack? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/peptides/stacks/${userId}/${stackId}`);
+              setStacks(prev => prev.filter(s => s.id !== stackId));
+              setViewStackDetails(null);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete stack');
+            }
+          }
+        }
+      ]
+    );
+  };
   
   // Peptide info modal
   const [infoModalVisible, setInfoModalVisible] = useState(false);
