@@ -1051,7 +1051,7 @@ export default function PeptideCalculatorScreen() {
             </View>
           </Modal>
 
-          {activeTab !== 'ai' && activeTab === 'protocols' && (
+          {activeTab === 'protocols' && (
                   'What is the best way to stack BPC-157 and TB-500?',
                   'How should I titrate Semaglutide for weight loss?',
                   'What are the benefits of MOTS-c for metabolism?',
