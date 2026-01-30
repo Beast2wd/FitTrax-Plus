@@ -179,13 +179,14 @@ export default function PeptideCalculatorScreen() {
     try {
       setLoading(true);
       
-      const [dbRes, historyRes, protocolsRes, missedRes, statsRes, siteRes] = await Promise.all([
+      const [dbRes, historyRes, protocolsRes, missedRes, statsRes, siteRes, stacksRes] = await Promise.all([
         axios.get(`${API_URL}/api/peptides/database`),
         userId ? axios.get(`${API_URL}/api/peptides/injections/${userId}?limit=20`) : null,
         userId ? axios.get(`${API_URL}/api/peptides/protocols/${userId}`) : null,
         userId ? axios.get(`${API_URL}/api/peptides/missed-doses/${userId}`) : null,
         userId ? axios.get(`${API_URL}/api/peptides/stats/${userId}`) : null,
         userId ? axios.get(`${API_URL}/api/peptides/site-rotation/${userId}`) : null,
+        userId ? axios.get(`${API_URL}/api/peptides/stacks/${userId}`) : null,
       ]);
       
       setPeptideDatabase(dbRes.data.peptides);
@@ -199,6 +200,7 @@ export default function PeptideCalculatorScreen() {
         setSiteRotation(siteRes.data.sites || []);
         setRecommendedSite(siteRes.data.recommended_next || '');
       }
+      if (stacksRes) setStacks(stacksRes.data.stacks || []);
     } catch (error) {
       console.error('Error loading peptide data:', error);
     } finally {
