@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
+BASE_URL = "https://premium-fittrax.preview.emergentagent.com/api"
 TEST_USER_ID = "rate_limit_test_user"
 
 # Working test image - small 1x1 pixel PNG (this worked in previous tests)

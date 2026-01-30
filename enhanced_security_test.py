@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://fittrax-sync.preview.emergentagent.com/api"
+BASE_URL = "https://premium-fittrax.preview.emergentagent.com/api"
 TIMEOUT = 30
 
 class EnhancedSecurityTester:
