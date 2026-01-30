@@ -658,12 +658,18 @@ export default function HeartRateScreen() {
                   </View>
                   <Text style={styles.instructionTitle}>Step 2: Place Your Finger</Text>
                   <Text style={styles.instructionText}>
-                    Cover BOTH the camera lens AND flashlight completely with your fingertip. You should see a red glow through your finger.
+                    Cover the MAIN camera lens (1x, closest to flashlight) AND the flashlight with your fingertip. You should see a red glow.
                   </Text>
                   <View style={styles.cameraAdvice}>
                     <Ionicons name="checkmark-circle" size={20} color="#22C55E" />
                     <Text style={[styles.cameraAdviceText, { color: '#22C55E' }]}>
                       Flashlight is ON - Ready to measure
+                    </Text>
+                  </View>
+                  <View style={[styles.cameraAdvice, { marginTop: -16 }]}>
+                    <Ionicons name="information-circle" size={20} color="#FCD34D" />
+                    <Text style={styles.cameraAdviceText}>
+                      iPhone Pro: Use bottom-right lens near flash
                     </Text>
                   </View>
                   <TouchableOpacity
