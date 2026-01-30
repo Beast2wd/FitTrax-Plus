@@ -427,20 +427,24 @@ export default function HeartRateScreen() {
           </TouchableOpacity>
           
           <View style={styles.measureTips}>
-            <Text style={[styles.tipTitle, { color: colors.text.primary }]}>📱 Which Camera to Use:</Text>
+            <Text style={[styles.tipTitle, { color: colors.text.primary }]}>📱 Camera Lens Guide:</Text>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Use the BACK camera (main lens)</Text>
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Use the MAIN camera (1x) - closest to flashlight</Text>
             </View>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Place finger over camera + flashlight</Text>
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>On iPhone Pro: Use bottom-right lens near flash</Text>
+            </View>
+            <View style={styles.tipItem}>
+              <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Cover BOTH camera lens AND flashlight with finger</Text>
             </View>
             
-            <Text style={[styles.tipTitle, { color: colors.text.primary, marginTop: 12 }]}>💡 Tips for accurate reading:</Text>
+            <Text style={[styles.tipTitle, { color: colors.text.primary, marginTop: 12 }]}>💡 For accurate reading:</Text>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Stay still during measurement</Text>
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Stay still during 15-second measurement</Text>
             </View>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
@@ -448,7 +452,7 @@ export default function HeartRateScreen() {
             </View>
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-              <Text style={[styles.tipText, { color: colors.text.secondary }]}>Ensure good lighting through finger</Text>
+              <Text style={[styles.tipText, { color: colors.text.secondary }]}>You should see red glow through your finger</Text>
             </View>
           </View>
         </View>
