@@ -1053,25 +1053,6 @@ export default function PeptideCalculatorScreen() {
             </View>
           </Modal>
 
-          {activeTab === 'protocols' && (
-                  'What is the best way to stack BPC-157 and TB-500?',
-                  'How should I titrate Semaglutide for weight loss?',
-                  'What are the benefits of MOTS-c for metabolism?',
-                  'When is the best time to inject Ipamorelin?',
-                ].map((q, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={styles.aiSuggestion}
-                    onPress={() => setAiQuestion(q)}
-                  >
-                    <Ionicons name="chatbubble-outline" size={16} color={Colors.brand.primary} />
-                    <Text style={styles.aiSuggestionText}>{q}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-
           <View style={{ height: 40 }} />
         </ScrollView>
 
