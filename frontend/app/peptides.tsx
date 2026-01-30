@@ -1593,10 +1593,37 @@ export default function PeptideCalculatorScreen() {
                             goal: newStackGoal,
                             created_by: 'manual'
                           });
-                          // Refresh stacks
-                          const stacksRes = await axios.get(`${API_URL}/api/peptides/stacks/${userId}`);
+                          
+                          // Create protocols for each peptide in the stack
+                          const today = new Date().toISOString().split('T')[0];
+                          for (const peptideName of selectedStackPeptides) {
+                            try {
+                              const peptideInfo = peptideDatabase[peptideName];
+                              await axios.post(`${API_URL}/api/peptides/protocol`, {
+                                user_id: userId,
+                                protocol_name: `${newStackName} - ${peptideName}`,
+                                peptide_id: peptideName,
+                                peptide_name: peptideInfo?.name || peptideName,
+                                dose_mcg: peptideInfo?.common_doses?.[0] || 250,
+                                frequency: peptideInfo?.frequency || 'daily',
+                                start_date: today,
+                                notes: `Part of ${newStackName} stack. Goal: ${newStackGoal}`,
+                                active: true
+                              });
+                            } catch (protocolError) {
+                              console.log('Protocol creation error:', protocolError);
+                            }
+                          }
+                          
+                          // Refresh stacks and protocols
+                          const [stacksRes, protocolsRes] = await Promise.all([
+                            axios.get(`${API_URL}/api/peptides/stacks/${userId}`),
+                            axios.get(`${API_URL}/api/peptides/protocols/${userId}`)
+                          ]);
                           setStacks(stacksRes.data.stacks || []);
-                          Alert.alert('Stack Saved!', `${newStackName} has been created`);
+                          setProtocols(protocolsRes.data.protocols || []);
+                          
+                          Alert.alert('Stack Saved!', `${newStackName} has been created.\n\nProtocols have been added to your Protocols tab.`);
                           setShowStackModal(false);
                           setStackCreationMode(null);
                           setNewStackName('');
@@ -1613,8 +1640,9 @@ export default function PeptideCalculatorScreen() {
                   </View>
                 )}
               </ScrollView>
-            </View>
-          </View>
+              </TouchableOpacity>
+            </KeyboardAvoidingView>
+          </TouchableOpacity>
         </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
