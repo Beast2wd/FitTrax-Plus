@@ -2368,4 +2368,174 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'right',
   },
+  // AI Tab Container - for fixed bottom input
+  aiTabContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  // Conversation Bar
+  conversationBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 12,
+    gap: 12,
+  },
+  conversationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    gap: 8,
+  },
+  conversationButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  newConversationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    gap: 6,
+  },
+  newConversationText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Chat scroll area
+  chatScrollArea: {
+    flex: 1,
+    minHeight: 200,
+  },
+  chatScrollContent: {
+    paddingBottom: 16,
+  },
+  // Fixed input at bottom
+  aiInputFixed: {
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderTopWidth: 1,
+  },
+  // Conversation picker
+  conversationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  conversationItemContent: {
+    flex: 1,
+  },
+  conversationTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  conversationMeta: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  // Stack modal styles
+  stackModalContent: {
+    padding: 16,
+  },
+  stackAiHeader: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  stackAiTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 12,
+  },
+  stackAiSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  stackInputGroup: {
+    marginBottom: 20,
+  },
+  stackInputLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  stackNameInput: {
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+  },
+  stackGoalInput: {
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  stackGenerateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#667eea',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  stackGenerateBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  stackSaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+    marginTop: 20,
+  },
+  stackSaveBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  peptideSelectionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  peptideSelectCard: {
+    width: '47%',
+    padding: 12,
+    borderRadius: 12,
+    position: 'relative',
+  },
+  peptideSelectCheck: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  peptideSelectName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  peptideSelectCategory: {
+    fontSize: 11,
+    marginTop: 2,
+  },
 });
