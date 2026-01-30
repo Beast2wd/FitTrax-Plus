@@ -215,13 +215,32 @@ export default function PeptideCalculatorScreen() {
   const askAI = async () => {
     if (!aiQuestion.trim()) return;
     
+    // Add user message to history
+    const userMessage: AIChatMessage = {
+      role: 'user',
+      content: aiQuestion,
+      timestamp: new Date().toISOString(),
+    };
+    setAiChatHistory(prev => [...prev, userMessage]);
+    
+    const currentQuestion = aiQuestion;
+    setAiQuestion('');
     setAiLoading(true);
+    
     try {
       const response = await axios.post(`${API_URL}/api/peptides/ai-insights`, {
         user_id: userId,
-        question: aiQuestion,
+        question: currentQuestion,
         context: selectedPeptide || '',
       });
+      
+      // Add assistant message to history
+      const assistantMessage: AIChatMessage = {
+        role: 'assistant',
+        content: response.data.response,
+        timestamp: new Date().toISOString(),
+      };
+      setAiChatHistory(prev => [...prev, assistantMessage]);
       setAiResponse(response.data.response);
     } catch (error) {
       Alert.alert('Error', 'Failed to get AI response');
