@@ -822,23 +822,76 @@ export default function PeptideCalculatorScreen() {
                 style={styles.aiHeader}
               >
                 <MaterialCommunityIcons name="robot" size={32} color="#fff" />
-                <Text style={styles.aiHeaderTitle}>Peptide Research Assistant</Text>
+                <Text style={styles.aiHeaderTitle}>AI Research Assistant</Text>
                 <Text style={styles.aiHeaderSubtitle}>
-                  Ask questions about peptides, protocols, and research
+                  Ask questions anytime and get research-backed insights on peptides, stacks, safety, and recovery
                 </Text>
+                <View style={styles.aiFeatures}>
+                  <View style={styles.aiFeatureItem}>
+                    <Ionicons name="checkmark-circle" size={14} color="#fff" />
+                    <Text style={styles.aiFeatureText}>Always Learning</Text>
+                  </View>
+                  <View style={styles.aiFeatureItem}>
+                    <Ionicons name="checkmark-circle" size={14} color="#fff" />
+                    <Text style={styles.aiFeatureText}>Always Up to Date</Text>
+                  </View>
+                </View>
               </LinearGradient>
 
-              <View style={styles.aiInputContainer}>
+              {/* Chat History */}
+              {aiChatHistory.length > 0 && (
+                <View style={styles.chatHistoryContainer}>
+                  <View style={styles.chatHistoryHeader}>
+                    <Text style={[styles.chatHistoryTitle, { color: colors.text.primary }]}>Conversation</Text>
+                    <TouchableOpacity onPress={() => setAiChatHistory([])}>
+                      <Text style={{ color: colors.text.muted, fontSize: 13 }}>Clear</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView style={styles.chatHistory} nestedScrollEnabled>
+                    {aiChatHistory.map((msg, i) => (
+                      <View 
+                        key={i} 
+                        style={[
+                          styles.chatMessage,
+                          msg.role === 'user' ? styles.chatMessageUser : styles.chatMessageAssistant,
+                          { backgroundColor: msg.role === 'user' ? accent.primary : colors.background.card }
+                        ]}
+                      >
+                        {msg.role === 'assistant' && (
+                          <View style={styles.chatMessageHeader}>
+                            <MaterialCommunityIcons name="robot" size={16} color="#667eea" />
+                            <Text style={[styles.chatMessageRole, { color: '#667eea' }]}>AI Assistant</Text>
+                          </View>
+                        )}
+                        <Text style={[
+                          styles.chatMessageText,
+                          { color: msg.role === 'user' ? '#fff' : colors.text.primary }
+                        ]}>
+                          {msg.content}
+                        </Text>
+                      </View>
+                    ))}
+                    {aiLoading && (
+                      <View style={[styles.chatMessage, styles.chatMessageAssistant, { backgroundColor: colors.background.card }]}>
+                        <ActivityIndicator size="small" color="#667eea" />
+                        <Text style={[styles.chatMessageText, { color: colors.text.muted, marginLeft: 8 }]}>Researching...</Text>
+                      </View>
+                    )}
+                  </ScrollView>
+                </View>
+              )}
+
+              <View style={[styles.aiInputContainer, { backgroundColor: colors.background.card }]}>
                 <TextInput
-                  style={styles.aiInput}
+                  style={[styles.aiInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
                   value={aiQuestion}
                   onChangeText={setAiQuestion}
-                  placeholder="Ask about peptides, dosing, stacking..."
-                  placeholderTextColor={Colors.text.muted}
+                  placeholder="Ask about peptides, dosing, stacking, safety..."
+                  placeholderTextColor={colors.text.muted}
                   multiline
                 />
                 <TouchableOpacity 
-                  style={styles.aiSendButton}
+                  style={[styles.aiSendButton, { backgroundColor: aiQuestion.trim() ? '#667eea' : colors.background.elevated }]}
                   onPress={askAI}
                   disabled={aiLoading || !aiQuestion.trim()}
                 >
