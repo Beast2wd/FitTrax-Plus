@@ -833,6 +833,80 @@ async def get_profile(user_id: str):
     profile.pop('_id', None)
     return profile
 
+class FitnessGoalsRequest(BaseModel):
+    user_id: str
+    fitness_goals: List[str]
+
+@api_router.post("/profile/fitness-goals")
+async def save_fitness_goals(data: FitnessGoalsRequest):
+    """Save user's fitness goals and return workout recommendations"""
+    try:
+        # Map goals to workout types
+        goal_workout_mapping = {
+            'weight_loss': {'types': ['hiit', 'cardio'], 'focus': 'High intensity, calorie burn'},
+            'muscle_gain': {'types': ['strength', 'weight_training'], 'focus': 'Progressive overload'},
+            'endurance': {'types': ['cardio', 'circuit'], 'focus': 'Stamina building'},
+            'flexibility': {'types': ['yoga', 'stretching'], 'focus': 'Mobility and recovery'},
+            'tone': {'types': ['full_body', 'resistance'], 'focus': 'Lean muscle definition'},
+            'general': {'types': ['mixed', 'functional'], 'focus': 'Overall fitness'},
+        }
+        
+        # Get recommended workout types based on goals
+        recommended_workouts = []
+        for goal in data.fitness_goals:
+            if goal in goal_workout_mapping:
+                recommended_workouts.extend(goal_workout_mapping[goal]['types'])
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_workouts = []
+        for w in recommended_workouts:
+            if w not in seen:
+                seen.add(w)
+                unique_workouts.append(w)
+        
+        # Update user profile with fitness goals
+        await db.users.update_one(
+            {"user_id": data.user_id},
+            {
+                "$set": {
+                    "fitness_goals": data.fitness_goals,
+                    "recommended_workout_types": unique_workouts,
+                    "goals_updated_at": datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "fitness_goals": data.fitness_goals,
+            "recommended_workout_types": unique_workouts,
+            "message": "Fitness goals saved successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error saving fitness goals: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/profile/fitness-goals/{user_id}")
+async def get_fitness_goals(user_id: str):
+    """Get user's fitness goals and workout recommendations"""
+    try:
+        profile = await db.users.find_one({"user_id": user_id})
+        if not profile:
+            return {
+                "fitness_goals": [],
+                "recommended_workout_types": []
+            }
+        
+        return {
+            "fitness_goals": profile.get("fitness_goals", []),
+            "recommended_workout_types": profile.get("recommended_workout_types", [])
+        }
+    except Exception as e:
+        logger.error(f"Error getting fitness goals: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # FOOD ANALYSIS ENDPOINTS
 # ============================================================================
