@@ -107,6 +107,10 @@ export default function PeptideCalculatorScreen() {
   const [aiResponse, setAiResponse] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiChatHistory, setAiChatHistory] = useState<AIChatMessage[]>([]);
+  const [savedConversations, setSavedConversations] = useState<{id: string, title: string, timestamp: string, messages: AIChatMessage[]}[]>([]);
+  const [showConversationPicker, setShowConversationPicker] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const chatScrollRef = useRef<ScrollView>(null);
   
   // Stacks state
   const [stacks, setStacks] = useState<PeptideStack[]>([]);
@@ -124,6 +128,52 @@ export default function PeptideCalculatorScreen() {
   // Peptide selector modal
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [selectorCallback, setSelectorCallback] = useState<((id: string) => void) | null>(null);
+
+  // Load saved conversations on mount
+  useEffect(() => {
+    loadSavedConversations();
+  }, [userId]);
+
+  const loadSavedConversations = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`${API_URL}/api/peptides/chat/history/${userId}`);
+      setSavedConversations(response.data.conversations || []);
+    } catch (error) {
+      console.log('No saved conversations');
+    }
+  };
+
+  const saveConversation = async () => {
+    if (!userId || aiChatHistory.length === 0) return;
+    try {
+      const title = aiChatHistory[0]?.content?.substring(0, 50) + '...' || 'New Conversation';
+      await axios.post(`${API_URL}/api/peptides/chat/save`, {
+        user_id: userId,
+        conversation_id: currentConversationId || `conv_${Date.now()}`,
+        title,
+        messages: aiChatHistory,
+      });
+      loadSavedConversations();
+    } catch (error) {
+      console.error('Error saving conversation:', error);
+    }
+  };
+
+  const loadConversation = (conv: any) => {
+    setAiChatHistory(conv.messages);
+    setCurrentConversationId(conv.id);
+    setShowConversationPicker(false);
+  };
+
+  const startNewConversation = () => {
+    if (aiChatHistory.length > 0) {
+      saveConversation();
+    }
+    setAiChatHistory([]);
+    setCurrentConversationId(null);
+    setShowConversationPicker(false);
+  };
 
   const loadData = useCallback(async () => {
     try {
