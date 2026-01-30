@@ -1299,6 +1299,194 @@ export default function PeptideCalculatorScreen() {
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
+
+        {/* Stack Creation Modal */}
+        <Modal
+          visible={showStackModal}
+          animationType="slide"
+          transparent
+          onRequestClose={() => { setShowStackModal(false); setStackCreationMode(null); }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.background.primary, maxHeight: '90%' }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>
+                  {stackCreationMode === 'ai' ? 'AI-Powered Stack' : 'Manual Selection'}
+                </Text>
+                <TouchableOpacity onPress={() => { setShowStackModal(false); setStackCreationMode(null); }}>
+                  <Ionicons name="close" size={24} color={colors.text.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                {stackCreationMode === 'ai' ? (
+                  // AI Stack Builder
+                  <View style={styles.stackModalContent}>
+                    <LinearGradient
+                      colors={['#667eea', '#764ba2']}
+                      style={styles.stackAiHeader}
+                    >
+                      <MaterialCommunityIcons name="robot" size={40} color="#fff" />
+                      <Text style={styles.stackAiTitle}>Let AI Build Your Stack</Text>
+                      <Text style={styles.stackAiSubtitle}>Describe your goals and we'll recommend the perfect combination</Text>
+                    </LinearGradient>
+
+                    <View style={styles.stackInputGroup}>
+                      <Text style={[styles.stackInputLabel, { color: colors.text.primary }]}>What's your goal?</Text>
+                      <TextInput
+                        style={[styles.stackGoalInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                        value={newStackGoal}
+                        onChangeText={setNewStackGoal}
+                        placeholder="e.g., Muscle recovery after injury, weight loss, anti-aging..."
+                        placeholderTextColor={colors.text.muted}
+                        multiline
+                        numberOfLines={3}
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.stackGenerateBtn, { opacity: newStackGoal.trim() ? 1 : 0.5 }]}
+                      disabled={aiStackLoading || !newStackGoal.trim()}
+                      onPress={async () => {
+                        if (!newStackGoal.trim()) return;
+                        setAiStackLoading(true);
+                        try {
+                          const response = await axios.post(`${API_URL}/api/peptides/stacks/ai-generate`, {
+                            user_id: userId,
+                            goal: newStackGoal
+                          });
+                          if (response.data.success && response.data.stack) {
+                            const stack = response.data.stack;
+                            // Save the stack
+                            await axios.post(`${API_URL}/api/peptides/stacks/save`, {
+                              user_id: userId,
+                              name: stack.name,
+                              peptides: stack.peptides,
+                              goal: newStackGoal,
+                              created_by: 'ai'
+                            });
+                            // Refresh stacks
+                            const stacksRes = await axios.get(`${API_URL}/api/peptides/stacks/${userId}`);
+                            setStacks(stacksRes.data.stacks || []);
+                            Alert.alert('Stack Created!', `${stack.name}\n\nPeptides: ${stack.peptides.join(', ')}\n\n${stack.reasoning}`);
+                            setShowStackModal(false);
+                            setStackCreationMode(null);
+                            setNewStackGoal('');
+                          } else {
+                            Alert.alert('Error', 'Could not generate stack. Please try again.');
+                          }
+                        } catch (error) {
+                          console.error('Error generating stack:', error);
+                          Alert.alert('Error', 'Failed to generate stack');
+                        } finally {
+                          setAiStackLoading(false);
+                        }
+                      }}
+                    >
+                      {aiStackLoading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <MaterialCommunityIcons name="magic-staff" size={20} color="#fff" />
+                          <Text style={styles.stackGenerateBtnText}>Generate Stack</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // Manual Stack Builder
+                  <View style={styles.stackModalContent}>
+                    <View style={styles.stackInputGroup}>
+                      <Text style={[styles.stackInputLabel, { color: colors.text.primary }]}>Stack Name</Text>
+                      <TextInput
+                        style={[styles.stackNameInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                        value={newStackName}
+                        onChangeText={setNewStackName}
+                        placeholder="My Recovery Stack"
+                        placeholderTextColor={colors.text.muted}
+                      />
+                    </View>
+
+                    <View style={styles.stackInputGroup}>
+                      <Text style={[styles.stackInputLabel, { color: colors.text.primary }]}>Goal / Purpose</Text>
+                      <TextInput
+                        style={[styles.stackGoalInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                        value={newStackGoal}
+                        onChangeText={setNewStackGoal}
+                        placeholder="What is this stack for?"
+                        placeholderTextColor={colors.text.muted}
+                      />
+                    </View>
+
+                    <View style={styles.stackInputGroup}>
+                      <Text style={[styles.stackInputLabel, { color: colors.text.primary }]}>Select Peptides</Text>
+                      <View style={styles.peptideSelectionGrid}>
+                        {peptides.map((peptide) => {
+                          const isSelected = selectedStackPeptides.includes(peptide.name);
+                          return (
+                            <TouchableOpacity
+                              key={peptide.name}
+                              style={[
+                                styles.peptideSelectCard,
+                                { backgroundColor: colors.background.card },
+                                isSelected && { borderColor: accent.primary, borderWidth: 2 }
+                              ]}
+                              onPress={() => {
+                                if (isSelected) {
+                                  setSelectedStackPeptides(prev => prev.filter(p => p !== peptide.name));
+                                } else {
+                                  setSelectedStackPeptides(prev => [...prev, peptide.name]);
+                                }
+                              }}
+                            >
+                              {isSelected && (
+                                <View style={[styles.peptideSelectCheck, { backgroundColor: accent.primary }]}>
+                                  <Ionicons name="checkmark" size={12} color="#fff" />
+                                </View>
+                              )}
+                              <Text style={[styles.peptideSelectName, { color: colors.text.primary }]}>{peptide.name}</Text>
+                              <Text style={[styles.peptideSelectCategory, { color: colors.text.muted }]}>{peptide.category}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.stackSaveBtn, { backgroundColor: accent.primary, opacity: (newStackName.trim() && selectedStackPeptides.length > 0) ? 1 : 0.5 }]}
+                      disabled={!newStackName.trim() || selectedStackPeptides.length === 0}
+                      onPress={async () => {
+                        try {
+                          await axios.post(`${API_URL}/api/peptides/stacks/save`, {
+                            user_id: userId,
+                            name: newStackName,
+                            peptides: selectedStackPeptides,
+                            goal: newStackGoal,
+                            created_by: 'manual'
+                          });
+                          // Refresh stacks
+                          const stacksRes = await axios.get(`${API_URL}/api/peptides/stacks/${userId}`);
+                          setStacks(stacksRes.data.stacks || []);
+                          Alert.alert('Stack Saved!', `${newStackName} has been created`);
+                          setShowStackModal(false);
+                          setStackCreationMode(null);
+                          setNewStackName('');
+                          setNewStackGoal('');
+                          setSelectedStackPeptides([]);
+                        } catch (error) {
+                          Alert.alert('Error', 'Failed to save stack');
+                        }
+                      }}
+                    >
+                      <Ionicons name="save" size={20} color="#fff" />
+                      <Text style={styles.stackSaveBtnText}>Save Stack ({selectedStackPeptides.length} peptides)</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
     </GestureHandlerRootView>
