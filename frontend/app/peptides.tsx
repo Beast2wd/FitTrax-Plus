@@ -1399,8 +1399,8 @@ export default function PeptideCalculatorScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 20 }}>
-                {stackCreationMode === 'ai' ? (
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}>
+                {stackCreationMode === 'ai' && (
                   // AI Stack Builder
                   <View style={styles.stackModalContent}>
                     <LinearGradient
