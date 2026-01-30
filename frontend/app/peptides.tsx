@@ -1388,93 +1388,139 @@ export default function PeptideCalculatorScreen() {
           transparent
           onRequestClose={() => { setShowStackModal(false); setStackCreationMode(null); }}
         >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background.primary, minHeight: 400, maxHeight: '90%' }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>
-                  {stackCreationMode === 'ai' ? 'AI-Powered Stack Builder' : 'Manual Stack Builder'}
-                </Text>
-                <TouchableOpacity onPress={() => { setShowStackModal(false); setStackCreationMode(null); }}>
-                  <Ionicons name="close" size={24} color={colors.text.primary} />
-                </TouchableOpacity>
-              </View>
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => { setShowStackModal(false); setStackCreationMode(null); }}
+          >
+            <KeyboardAvoidingView 
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ width: '100%' }}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
+              <TouchableOpacity 
+                activeOpacity={1} 
+                onPress={(e) => e.stopPropagation()}
+                style={[styles.modalContent, { backgroundColor: colors.background.primary, minHeight: 450, maxHeight: '85%' }]}
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: colors.text.primary }]}>
+                    {stackCreationMode === 'ai' ? 'AI-Powered Stack Builder' : 'Manual Stack Builder'}
+                  </Text>
+                  <TouchableOpacity onPress={() => { setShowStackModal(false); setStackCreationMode(null); }}>
+                    <Ionicons name="close" size={24} color={colors.text.primary} />
+                  </TouchableOpacity>
+                </View>
 
-              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}>
-                {stackCreationMode === 'ai' && (
-                  // AI Stack Builder
-                  <View style={styles.stackModalContent}>
-                    <LinearGradient
-                      colors={['#667eea', '#764ba2']}
-                      style={styles.stackAiHeader}
-                    >
-                      <MaterialCommunityIcons name="robot" size={40} color="#fff" />
-                      <Text style={styles.stackAiTitle}>Let AI Build Your Stack</Text>
-                      <Text style={styles.stackAiSubtitle}>Describe your goals and we'll recommend the perfect combination</Text>
-                    </LinearGradient>
+                <ScrollView 
+                  style={{ flex: 1 }} 
+                  showsVerticalScrollIndicator={true} 
+                  contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {stackCreationMode === 'ai' && (
+                    // AI Stack Builder
+                    <View style={styles.stackModalContent}>
+                      <LinearGradient
+                        colors={['#667eea', '#764ba2']}
+                        style={styles.stackAiHeader}
+                      >
+                        <MaterialCommunityIcons name="robot" size={40} color="#fff" />
+                        <Text style={styles.stackAiTitle}>Let AI Build Your Stack</Text>
+                        <Text style={styles.stackAiSubtitle}>Describe your goals and we'll recommend the perfect combination</Text>
+                      </LinearGradient>
 
-                    <View style={styles.stackInputGroup}>
-                      <Text style={[styles.stackInputLabel, { color: colors.text.primary }]}>What's your goal?</Text>
-                      <TextInput
-                        style={[styles.stackGoalInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
-                        value={newStackGoal}
-                        onChangeText={setNewStackGoal}
-                        placeholder="e.g., Muscle recovery after injury, weight loss, anti-aging..."
-                        placeholderTextColor={colors.text.muted}
-                        multiline
-                        numberOfLines={3}
-                      />
-                    </View>
+                      <View style={styles.stackInputGroup}>
+                        <Text style={[styles.stackInputLabel, { color: colors.text.primary }]}>What's your goal?</Text>
+                        <TextInput
+                          style={[styles.stackGoalInput, { backgroundColor: colors.background.card, color: colors.text.primary, minHeight: 100 }]}
+                          value={newStackGoal}
+                          onChangeText={setNewStackGoal}
+                          placeholder="e.g., Muscle recovery after injury, weight loss, anti-aging..."
+                          placeholderTextColor={colors.text.muted}
+                          multiline
+                          numberOfLines={4}
+                          textAlignVertical="top"
+                        />
+                      </View>
 
-                    <TouchableOpacity
-                      style={[styles.stackGenerateBtn, { opacity: newStackGoal.trim() ? 1 : 0.5 }]}
-                      disabled={aiStackLoading || !newStackGoal.trim()}
-                      onPress={async () => {
-                        if (!newStackGoal.trim()) return;
-                        setAiStackLoading(true);
-                        try {
-                          const response = await axios.post(`${API_URL}/api/peptides/stacks/ai-generate`, {
-                            user_id: userId,
-                            goal: newStackGoal
-                          });
-                          if (response.data.success && response.data.stack) {
-                            const stack = response.data.stack;
-                            // Save the stack
-                            await axios.post(`${API_URL}/api/peptides/stacks/save`, {
+                      <TouchableOpacity
+                        style={[styles.stackGenerateBtn, { opacity: newStackGoal.trim() ? 1 : 0.5 }]}
+                        disabled={aiStackLoading || !newStackGoal.trim()}
+                        onPress={async () => {
+                          if (!newStackGoal.trim()) return;
+                          setAiStackLoading(true);
+                          try {
+                            const response = await axios.post(`${API_URL}/api/peptides/stacks/ai-generate`, {
                               user_id: userId,
-                              name: stack.name,
-                              peptides: stack.peptides,
-                              goal: newStackGoal,
-                              created_by: 'ai'
+                              goal: newStackGoal
                             });
-                            // Refresh stacks
-                            const stacksRes = await axios.get(`${API_URL}/api/peptides/stacks/${userId}`);
-                            setStacks(stacksRes.data.stacks || []);
-                            Alert.alert('Stack Created!', `${stack.name}\n\nPeptides: ${stack.peptides.join(', ')}\n\n${stack.reasoning}`);
-                            setShowStackModal(false);
-                            setStackCreationMode(null);
-                            setNewStackGoal('');
-                          } else {
-                            Alert.alert('Error', 'Could not generate stack. Please try again.');
+                            if (response.data.success && response.data.stack) {
+                              const stack = response.data.stack;
+                              // Save the stack
+                              await axios.post(`${API_URL}/api/peptides/stacks/save`, {
+                                user_id: userId,
+                                name: stack.name,
+                                peptides: stack.peptides,
+                                goal: newStackGoal,
+                                created_by: 'ai'
+                              });
+                              
+                              // Create protocols for each peptide in the stack
+                              const today = new Date().toISOString().split('T')[0];
+                              for (const peptideName of stack.peptides) {
+                                try {
+                                  const peptideInfo = peptideDatabase[peptideName];
+                                  await axios.post(`${API_URL}/api/peptides/protocol`, {
+                                    user_id: userId,
+                                    protocol_name: `${stack.name} - ${peptideName}`,
+                                    peptide_id: peptideName,
+                                    peptide_name: peptideInfo?.name || peptideName,
+                                    dose_mcg: peptideInfo?.common_doses?.[0] || 250,
+                                    frequency: peptideInfo?.frequency || 'daily',
+                                    start_date: today,
+                                    notes: `Part of ${stack.name} stack. Goal: ${newStackGoal}`,
+                                    active: true
+                                  });
+                                } catch (protocolError) {
+                                  console.log('Protocol creation error:', protocolError);
+                                }
+                              }
+                              
+                              // Refresh stacks and protocols
+                              const [stacksRes, protocolsRes] = await Promise.all([
+                                axios.get(`${API_URL}/api/peptides/stacks/${userId}`),
+                                axios.get(`${API_URL}/api/peptides/protocols/${userId}`)
+                              ]);
+                              setStacks(stacksRes.data.stacks || []);
+                              setProtocols(protocolsRes.data.protocols || []);
+                              
+                              Alert.alert('Stack Created!', `${stack.name}\n\nPeptides: ${stack.peptides.join(', ')}\n\nProtocols have been added to your Protocols tab.`);
+                              setShowStackModal(false);
+                              setStackCreationMode(null);
+                              setNewStackGoal('');
+                            } else {
+                              Alert.alert('Error', 'Could not generate stack. Please try again.');
+                            }
+                          } catch (error) {
+                            console.error('Error generating stack:', error);
+                            Alert.alert('Error', 'Failed to generate stack');
+                          } finally {
+                            setAiStackLoading(false);
                           }
-                        } catch (error) {
-                          console.error('Error generating stack:', error);
-                          Alert.alert('Error', 'Failed to generate stack');
-                        } finally {
-                          setAiStackLoading(false);
-                        }
-                      }}
-                    >
-                      {aiStackLoading ? (
-                        <ActivityIndicator color="#fff" />
-                      ) : (
-                        <>
-                          <MaterialCommunityIcons name="magic-staff" size={20} color="#fff" />
-                          <Text style={styles.stackGenerateBtnText}>Generate Stack</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                )}
+                        }}
+                      >
+                        {aiStackLoading ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <>
+                            <MaterialCommunityIcons name="magic-staff" size={20} color="#fff" />
+                            <Text style={styles.stackGenerateBtnText}>Generate Stack</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 
                 {stackCreationMode === 'manual' && (
                   // Manual Stack Builder
