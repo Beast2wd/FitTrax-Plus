@@ -657,6 +657,99 @@ export default function PeptideCalculatorScreen() {
             </>
           )}
 
+          {/* Stacks Tab */}
+          {activeTab === 'stacks' && (
+            <View style={styles.section}>
+              {/* Create New Stack Card */}
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                style={styles.createStackCard}
+              >
+                <View style={styles.createStackHeader}>
+                  <Ionicons name="layers" size={32} color="#fff" />
+                  <View style={styles.createStackText}>
+                    <Text style={styles.createStackTitle}>Create New Stack</Text>
+                    <Text style={styles.createStackSubtitle}>Build your perfect peptide combination</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.stackOptions}>
+                  <TouchableOpacity 
+                    style={styles.stackOptionCard}
+                    onPress={() => {
+                      setStackCreationMode('ai');
+                      setShowStackModal(true);
+                    }}
+                  >
+                    <LinearGradient
+                      colors={['#667eea', '#764ba2']}
+                      style={styles.stackOptionGradient}
+                    >
+                      <MaterialCommunityIcons name="robot" size={28} color="#fff" />
+                      <Text style={styles.stackOptionTitle}>AI-Powered Stack</Text>
+                      <Text style={styles.stackOptionDesc}>Let AI build your stack based on your goals</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.stackOptionCard}
+                    onPress={() => {
+                      setStackCreationMode('manual');
+                      setShowStackModal(true);
+                    }}
+                  >
+                    <View style={[styles.stackOptionManual, { backgroundColor: colors.background.card }]}>
+                      <Ionicons name="build" size={28} color={accent.primary} />
+                      <Text style={[styles.stackOptionTitle, { color: colors.text.primary }]}>Manual Selection</Text>
+                      <Text style={[styles.stackOptionDesc, { color: colors.text.secondary }]}>Choose peptides yourself from database</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
+
+              {/* Saved Stacks */}
+              <Text style={[styles.sectionTitle, { color: colors.text.primary, marginTop: 24 }]}>Your Saved Stacks</Text>
+              {stacks.length === 0 ? (
+                <View style={[styles.emptyState, { backgroundColor: colors.background.card }]}>
+                  <Ionicons name="layers-outline" size={48} color={colors.text.muted} />
+                  <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No stacks created yet</Text>
+                  <Text style={[styles.emptySubtext, { color: colors.text.muted }]}>
+                    Create your first stack using AI or manual selection above
+                  </Text>
+                </View>
+              ) : (
+                stacks.map((stack, i) => (
+                  <TouchableOpacity key={stack.id || i} style={[styles.savedStackCard, { backgroundColor: colors.background.card }]}>
+                    <View style={styles.savedStackHeader}>
+                      <View style={styles.savedStackInfo}>
+                        <Text style={[styles.savedStackName, { color: colors.text.primary }]}>{stack.name}</Text>
+                        <View style={[styles.savedStackBadge, { backgroundColor: stack.created_by === 'ai' ? '#667eea20' : '#10B98120' }]}>
+                          {stack.created_by === 'ai' ? (
+                            <MaterialCommunityIcons name="robot" size={12} color="#667eea" />
+                          ) : (
+                            <Ionicons name="build" size={12} color="#10B981" />
+                          )}
+                          <Text style={[styles.savedStackBadgeText, { color: stack.created_by === 'ai' ? '#667eea' : '#10B981' }]}>
+                            {stack.created_by === 'ai' ? 'AI Generated' : 'Manual'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                    </View>
+                    <Text style={[styles.savedStackGoal, { color: colors.text.secondary }]}>{stack.goal}</Text>
+                    <View style={styles.savedStackPeptides}>
+                      {stack.peptides.map((p, j) => (
+                        <View key={j} style={[styles.peptideChip, { backgroundColor: accent.primary + '20' }]}>
+                          <Text style={[styles.peptideChipText, { color: accent.primary }]}>{p}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          )}
+
           {/* Protocols Tab */}
           {activeTab === 'protocols' && (
             <View style={styles.section}>
