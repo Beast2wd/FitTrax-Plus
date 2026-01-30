@@ -1389,17 +1389,17 @@ export default function PeptideCalculatorScreen() {
           onRequestClose={() => { setShowStackModal(false); setStackCreationMode(null); }}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background.primary, maxHeight: '90%' }]}>
+            <View style={[styles.modalContent, { backgroundColor: colors.background.primary, minHeight: 400, maxHeight: '90%' }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text.primary }]}>
-                  {stackCreationMode === 'ai' ? 'AI-Powered Stack' : 'Manual Selection'}
+                  {stackCreationMode === 'ai' ? 'AI-Powered Stack Builder' : 'Manual Stack Builder'}
                 </Text>
                 <TouchableOpacity onPress={() => { setShowStackModal(false); setStackCreationMode(null); }}>
                   <Ionicons name="close" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 20 }}>
                 {stackCreationMode === 'ai' ? (
                   // AI Stack Builder
                   <View style={styles.stackModalContent}>
