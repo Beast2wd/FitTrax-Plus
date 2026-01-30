@@ -1701,6 +1701,173 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.primary,
   },
+  // AI Chat enhanced styles
+  aiFeatures: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 16,
+  },
+  aiFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  aiFeatureText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+  },
+  chatHistoryContainer: {
+    marginBottom: 16,
+  },
+  chatHistoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  chatHistoryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  chatHistory: {
+    maxHeight: 300,
+  },
+  chatMessage: {
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 8,
+    maxWidth: '85%',
+  },
+  chatMessageUser: {
+    alignSelf: 'flex-end',
+    borderBottomRightRadius: 4,
+  },
+  chatMessageAssistant: {
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+  },
+  chatMessageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+    width: '100%',
+  },
+  chatMessageRole: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  chatMessageText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  // Stack builder styles
+  createStackCard: {
+    borderRadius: 16,
+    padding: 20,
+  },
+  createStackHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  createStackText: {
+    marginLeft: 12,
+  },
+  createStackTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  createStackSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+  },
+  stackOptions: {
+    gap: 12,
+  },
+  stackOptionCard: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  stackOptionGradient: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  stackOptionManual: {
+    padding: 16,
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  stackOptionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 8,
+  },
+  stackOptionDesc: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  savedStackCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  savedStackHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  savedStackInfo: {
+    flex: 1,
+  },
+  savedStackName: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  savedStackBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  savedStackBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  savedStackGoal: {
+    fontSize: 14,
+    marginTop: 8,
+  },
+  savedStackPeptides: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 12,
+  },
+  peptideChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  peptideChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
