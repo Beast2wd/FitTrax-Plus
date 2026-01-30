@@ -339,9 +339,10 @@ export default function PeptideCalculatorScreen() {
           {[
             { id: 'calculator', label: 'Calculator', icon: 'calculator' },
             { id: 'log', label: 'Log', icon: 'list' },
+            { id: 'stacks', label: 'Stacks', icon: 'layers' },
             { id: 'protocols', label: 'Protocols', icon: 'calendar' },
             { id: 'progress', label: 'Progress', icon: 'trending-up' },
-            { id: 'ai', label: 'AI Assistant', icon: 'bulb' },
+            { id: 'ai', label: 'AI Research', icon: 'bulb' },
           ].map((tab) => (
             <TouchableOpacity
               key={tab.id}
