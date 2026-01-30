@@ -6566,6 +6566,45 @@ async def get_user_protocols(user_id: str, active_only: bool = True):
         logger.error(f"Error getting protocols: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Delete a single protocol
+@api_router.delete("/peptides/protocol/{user_id}/{protocol_id}")
+async def delete_protocol(user_id: str, protocol_id: str):
+    """Delete a single peptide protocol"""
+    try:
+        from bson import ObjectId
+        result = await db.peptide_protocols.delete_one({
+            "_id": ObjectId(protocol_id),
+            "user_id": user_id
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Protocol not found")
+            
+        return {"success": True, "message": "Protocol deleted successfully"}
+    except Exception as e:
+        logger.error(f"Error deleting protocol: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Delete protocols by stack name (for when a stack is deleted)
+@api_router.delete("/peptides/protocols-by-stack/{user_id}/{stack_name}")
+async def delete_protocols_by_stack(user_id: str, stack_name: str):
+    """Delete all protocols associated with a stack"""
+    try:
+        # Protocols created from stacks have names like "Stack Name - Peptide Name"
+        result = await db.peptide_protocols.delete_many({
+            "user_id": user_id,
+            "protocol_name": {"$regex": f"^{stack_name} - ", "$options": "i"}
+        })
+        
+        return {
+            "success": True, 
+            "deleted_count": result.deleted_count,
+            "message": f"Deleted {result.deleted_count} protocols"
+        }
+    except Exception as e:
+        logger.error(f"Error deleting protocols by stack: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Check for missed doses
 @api_router.get("/peptides/missed-doses/{user_id}")
 async def check_missed_doses(user_id: str):
