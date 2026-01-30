@@ -925,7 +925,7 @@ export default function PeptideCalculatorScreen() {
 
                         <TouchableOpacity 
                           style={styles.deleteStackFullBtn}
-                          onPress={() => deleteStack(viewStackDetails.id)}
+                          onPress={() => deleteStack(viewStackDetails.id, viewStackDetails.name)}
                         >
                           <Ionicons name="trash" size={18} color="#fff" />
                           <Text style={styles.deleteStackFullBtnText}>Delete Stack</Text>
