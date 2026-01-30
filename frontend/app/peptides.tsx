@@ -1404,11 +1404,11 @@ export default function PeptideCalculatorScreen() {
                     <View style={styles.stackInputGroup}>
                       <Text style={[styles.stackInputLabel, { color: colors.text.primary }]}>Select Peptides</Text>
                       <View style={styles.peptideSelectionGrid}>
-                        {peptides.map((peptide) => {
-                          const isSelected = selectedStackPeptides.includes(peptide.name);
+                        {Object.entries(peptideDatabase).map(([peptideName, peptide]) => {
+                          const isSelected = selectedStackPeptides.includes(peptideName);
                           return (
                             <TouchableOpacity
-                              key={peptide.name}
+                              key={peptideName}
                               style={[
                                 styles.peptideSelectCard,
                                 { backgroundColor: colors.background.card },
@@ -1416,9 +1416,9 @@ export default function PeptideCalculatorScreen() {
                               ]}
                               onPress={() => {
                                 if (isSelected) {
-                                  setSelectedStackPeptides(prev => prev.filter(p => p !== peptide.name));
+                                  setSelectedStackPeptides(prev => prev.filter(p => p !== peptideName));
                                 } else {
-                                  setSelectedStackPeptides(prev => [...prev, peptide.name]);
+                                  setSelectedStackPeptides(prev => [...prev, peptideName]);
                                 }
                               }}
                             >
@@ -1427,7 +1427,7 @@ export default function PeptideCalculatorScreen() {
                                   <Ionicons name="checkmark" size={12} color="#fff" />
                                 </View>
                               )}
-                              <Text style={[styles.peptideSelectName, { color: colors.text.primary }]}>{peptide.name}</Text>
+                              <Text style={[styles.peptideSelectName, { color: colors.text.primary }]}>{peptideName}</Text>
                               <Text style={[styles.peptideSelectCategory, { color: colors.text.muted }]}>{peptide.category}</Text>
                             </TouchableOpacity>
                           );
