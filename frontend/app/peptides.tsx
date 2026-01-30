@@ -797,7 +797,11 @@ export default function PeptideCalculatorScreen() {
                 </View>
               ) : (
                 stacks.map((stack, i) => (
-                  <TouchableOpacity key={stack.id || i} style={[styles.savedStackCard, { backgroundColor: colors.background.card }]}>
+                  <TouchableOpacity 
+                    key={stack.id || i} 
+                    style={[styles.savedStackCard, { backgroundColor: colors.background.card }]}
+                    onPress={() => setViewStackDetails(stack)}
+                  >
                     <View style={styles.savedStackHeader}>
                       <View style={styles.savedStackInfo}>
                         <Text style={[styles.savedStackName, { color: colors.text.primary }]}>{stack.name}</Text>
@@ -812,19 +816,87 @@ export default function PeptideCalculatorScreen() {
                           </Text>
                         </View>
                       </View>
-                      <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                      <View style={styles.savedStackActions}>
+                        <TouchableOpacity 
+                          onPress={(e) => { e.stopPropagation(); deleteStack(stack.id); }}
+                          style={styles.deleteStackBtn}
+                        >
+                          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                        </TouchableOpacity>
+                        <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                      </View>
                     </View>
                     <Text style={[styles.savedStackGoal, { color: colors.text.secondary }]}>{stack.goal}</Text>
                     <View style={styles.savedStackPeptides}>
-                      {stack.peptides.map((p, j) => (
+                      {stack.peptides.slice(0, 4).map((p, j) => (
                         <View key={j} style={[styles.peptideChip, { backgroundColor: accent.primary + '20' }]}>
                           <Text style={[styles.peptideChipText, { color: accent.primary }]}>{p}</Text>
                         </View>
                       ))}
+                      {stack.peptides.length > 4 && (
+                        <View style={[styles.peptideChip, { backgroundColor: colors.background.elevated }]}>
+                          <Text style={[styles.peptideChipText, { color: colors.text.muted }]}>+{stack.peptides.length - 4}</Text>
+                        </View>
+                      )}
                     </View>
                   </TouchableOpacity>
                 ))
               )}
+
+              {/* Stack Details Modal */}
+              <Modal
+                visible={viewStackDetails !== null}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setViewStackDetails(null)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
+                    {viewStackDetails && (
+                      <>
+                        <View style={styles.modalHeader}>
+                          <Text style={[styles.modalTitle, { color: colors.text.primary }]}>{viewStackDetails.name}</Text>
+                          <TouchableOpacity onPress={() => setViewStackDetails(null)}>
+                            <Ionicons name="close" size={24} color={colors.text.primary} />
+                          </TouchableOpacity>
+                        </View>
+                        
+                        <View style={[styles.savedStackBadge, { backgroundColor: viewStackDetails.created_by === 'ai' ? '#667eea20' : '#10B98120', marginBottom: 16 }]}>
+                          {viewStackDetails.created_by === 'ai' ? (
+                            <MaterialCommunityIcons name="robot" size={14} color="#667eea" />
+                          ) : (
+                            <Ionicons name="build" size={14} color="#10B981" />
+                          )}
+                          <Text style={[styles.savedStackBadgeText, { color: viewStackDetails.created_by === 'ai' ? '#667eea' : '#10B981' }]}>
+                            {viewStackDetails.created_by === 'ai' ? 'AI Generated' : 'Manual'}
+                          </Text>
+                        </View>
+
+                        <Text style={[styles.stackDetailLabel, { color: colors.text.secondary }]}>Goal / Purpose:</Text>
+                        <Text style={[styles.stackDetailValue, { color: colors.text.primary }]}>{viewStackDetails.goal || 'No goal specified'}</Text>
+
+                        <Text style={[styles.stackDetailLabel, { color: colors.text.secondary, marginTop: 20 }]}>Peptides in this stack:</Text>
+                        <View style={styles.stackDetailPeptides}>
+                          {viewStackDetails.peptides.map((p, j) => (
+                            <View key={j} style={[styles.stackDetailPeptideCard, { backgroundColor: colors.background.card }]}>
+                              <Ionicons name="flask" size={20} color={accent.primary} />
+                              <Text style={[styles.stackDetailPeptideName, { color: colors.text.primary }]}>{p}</Text>
+                            </View>
+                          ))}
+                        </View>
+
+                        <TouchableOpacity 
+                          style={styles.deleteStackFullBtn}
+                          onPress={() => deleteStack(viewStackDetails.id)}
+                        >
+                          <Ionicons name="trash" size={18} color="#fff" />
+                          <Text style={styles.deleteStackFullBtnText}>Delete Stack</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
+                </View>
+              </Modal>
             </View>
           )}
 
