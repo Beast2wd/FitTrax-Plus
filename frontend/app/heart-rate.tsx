@@ -1059,6 +1059,51 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
+  lensSelector: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 12,
+  },
+  lensSelectorLabel: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  lensOptions: {
+    flexDirection: 'row',
+  },
+  lensOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  lensOptionSelected: {
+    backgroundColor: 'rgba(252,211,77,0.3)',
+    borderColor: '#FCD34D',
+  },
+  lensOptionRecommended: {
+    borderColor: '#22C55E',
+  },
+  lensOptionText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  recommendedBadge: {
+    color: '#22C55E',
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+  },
   torchIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
