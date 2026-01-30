@@ -387,6 +387,18 @@ backend:
         agent: "testing"
         comment: "REVIEW REQUEST HEALTH CHECK COMPLETED: Performed quick health check of the 4 specific FitTrax+ backend API endpoints requested in review for user_1769564539081. Results: 4/4 tests passed (100% success rate). ✅ GET /api/health working correctly (returns {status: healthy}), ✅ GET /api/heart-rate/user_1769564539081?days=7 working correctly (returns {heart_rates: []} array), ✅ GET /api/heart-rate/zones/user_1769564539081 working correctly (returns heart rate zones with max_heart_rate, resting, fat_burn, cardio, peak zones), ✅ GET /api/membership/status/user_1769564539081 working correctly (returns complete membership status with user_id, is_premium, is_trial, trial_days_remaining, subscription_status, subscription_ends_at, features). All endpoints return 200 OK status with proper JSON responses. No errors detected. Backend API is healthy and fully operational for all requested endpoints."
 
+  - task: "Peptide Features Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PEPTIDE FEATURES TESTING COMPLETED: Tested all 4 new peptide endpoints as requested in review for user_1769564539081. Results: 4/4 tests passed (100% success rate). ✅ POST /api/peptides/stacks/save working correctly (saved Recovery Stack with BPC-157 and TB-500 peptides for injury recovery goal), ✅ GET /api/peptides/stacks/user_1769564539081 working correctly (retrieved 1 saved stack), ✅ POST /api/peptides/chat/save working correctly (saved chat conversation with title 'Test Conversation' and user question about BPC-157), ✅ GET /api/peptides/chat/history/user_1769564539081 working correctly (retrieved 1 saved conversation). All endpoints return 200 OK status and proper JSON responses. Peptide stacks and chat history features are fully functional and production-ready for the FitTrax+ application."
+
 frontend:
   - task: "Tab Navigation Setup"
     implemented: true
