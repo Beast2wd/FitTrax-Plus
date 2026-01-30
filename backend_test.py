@@ -630,6 +630,88 @@ class FitTraxAPITester:
         except Exception as e:
             self.log_test("Dashboard with Date", False, f"Exception: {str(e)}")
 
+    def test_peptide_endpoints(self):
+        """Test new peptide features as requested in review"""
+        print("\n🧪 Testing Peptide Features (Review Request)...")
+        
+        # Use specific user ID from review request
+        test_user_id = "user_1769564539081"
+        
+        # Test 1: POST /api/peptides/stacks/save - Save a new stack
+        try:
+            stack_data = {
+                "user_id": test_user_id,
+                "name": "Recovery Stack",
+                "peptides": ["BPC-157", "TB-500"],
+                "goal": "Injury recovery",
+                "created_by": "manual"
+            }
+            
+            response = self.make_request("POST", "/peptides/stacks/save", stack_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Save Peptide Stack", True, f"Stack saved successfully for {test_user_id}", data)
+            else:
+                self.log_test("Save Peptide Stack", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Save Peptide Stack", False, f"Exception: {str(e)}")
+
+        # Test 2: GET /api/peptides/stacks/user_1769564539081 - Get user's stacks
+        try:
+            response = self.make_request("GET", f"/peptides/stacks/{test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                stacks = data.get("stacks", [])
+                self.log_test("Get Peptide Stacks", True, f"Retrieved {len(stacks)} stacks for {test_user_id}", data)
+            else:
+                self.log_test("Get Peptide Stacks", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Get Peptide Stacks", False, f"Exception: {str(e)}")
+
+        # Test 3: POST /api/peptides/chat/save - Save a chat conversation
+        try:
+            chat_data = {
+                "user_id": test_user_id,
+                "conversation_id": "conv_test_123",
+                "title": "Test Conversation",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "What is BPC-157?",
+                        "timestamp": "2026-01-30T12:00:00Z"
+                    }
+                ]
+            }
+            
+            response = self.make_request("POST", "/peptides/chat/save", chat_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Save Peptide Chat", True, f"Chat conversation saved for {test_user_id}", data)
+            else:
+                self.log_test("Save Peptide Chat", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Save Peptide Chat", False, f"Exception: {str(e)}")
+
+        # Test 4: GET /api/peptides/chat/history/user_1769564539081 - Get saved conversations
+        try:
+            response = self.make_request("GET", f"/peptides/chat/history/{test_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                conversations = data.get("conversations", [])
+                self.log_test("Get Peptide Chat History", True, f"Retrieved {len(conversations)} conversations for {test_user_id}", data)
+            else:
+                self.log_test("Get Peptide Chat History", False, f"Status code: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Get Peptide Chat History", False, f"Exception: {str(e)}")
+
     def test_security_features(self):
         """Test security features"""
         
