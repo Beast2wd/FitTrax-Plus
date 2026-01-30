@@ -6766,6 +6766,218 @@ Current context about user's peptides:""" + peptide_info
         logger.error(f"Error getting AI insights: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Peptide Chat History - Save Conversation
+class PeptideChatSave(BaseModel):
+    user_id: str
+    conversation_id: str
+    title: str
+    messages: list
+
+@api_router.post("/peptides/chat/save")
+async def save_peptide_chat(data: PeptideChatSave):
+    """Save peptide AI chat conversation (kept for 12 hours)"""
+    try:
+        expires_at = datetime.utcnow() + timedelta(hours=12)
+        
+        await db.peptide_chat_history.update_one(
+            {"user_id": data.user_id, "conversation_id": data.conversation_id},
+            {
+                "$set": {
+                    "user_id": data.user_id,
+                    "conversation_id": data.conversation_id,
+                    "title": data.title,
+                    "messages": data.messages,
+                    "updated_at": datetime.utcnow().isoformat(),
+                    "expires_at": expires_at
+                },
+                "$setOnInsert": {
+                    "created_at": datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {"success": True, "conversation_id": data.conversation_id}
+    except Exception as e:
+        logger.error(f"Error saving peptide chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Peptide Chat History - Get Conversations
+@api_router.get("/peptides/chat/history/{user_id}")
+async def get_peptide_chat_history(user_id: str):
+    """Get saved peptide AI chat conversations (only non-expired)"""
+    try:
+        # Remove expired conversations
+        await db.peptide_chat_history.delete_many({
+            "expires_at": {"$lt": datetime.utcnow()}
+        })
+        
+        # Get remaining conversations
+        conversations = await db.peptide_chat_history.find(
+            {"user_id": user_id}
+        ).sort("updated_at", -1).to_list(20)
+        
+        result = []
+        for conv in conversations:
+            result.append({
+                "id": conv.get("conversation_id"),
+                "title": conv.get("title", "Conversation"),
+                "timestamp": conv.get("updated_at"),
+                "messages": conv.get("messages", []),
+                "message_count": len(conv.get("messages", []))
+            })
+        
+        return {"conversations": result}
+    except Exception as e:
+        logger.error(f"Error getting peptide chat history: {str(e)}")
+        return {"conversations": []}
+
+# Peptide Chat History - Delete Conversation
+@api_router.delete("/peptides/chat/{user_id}/{conversation_id}")
+async def delete_peptide_chat(user_id: str, conversation_id: str):
+    """Delete a specific peptide chat conversation"""
+    try:
+        await db.peptide_chat_history.delete_one({
+            "user_id": user_id,
+            "conversation_id": conversation_id
+        })
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Peptide Stacks - Save Stack
+class PeptideStackSave(BaseModel):
+    user_id: str
+    name: str
+    peptides: list
+    goal: str
+    created_by: str  # 'ai' or 'manual'
+
+@api_router.post("/peptides/stacks/save")
+async def save_peptide_stack(data: PeptideStackSave):
+    """Save a user's peptide stack"""
+    try:
+        stack_id = f"stack_{datetime.now().timestamp()}"
+        
+        await db.peptide_stacks.insert_one({
+            "stack_id": stack_id,
+            "user_id": data.user_id,
+            "name": data.name,
+            "peptides": data.peptides,
+            "goal": data.goal,
+            "created_by": data.created_by,
+            "created_at": datetime.utcnow().isoformat()
+        })
+        
+        return {"success": True, "stack_id": stack_id}
+    except Exception as e:
+        logger.error(f"Error saving peptide stack: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Peptide Stacks - Get User Stacks
+@api_router.get("/peptides/stacks/{user_id}")
+async def get_peptide_stacks(user_id: str):
+    """Get user's saved peptide stacks"""
+    try:
+        stacks = await db.peptide_stacks.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).to_list(50)
+        
+        result = []
+        for stack in stacks:
+            result.append({
+                "id": stack.get("stack_id"),
+                "name": stack.get("name"),
+                "peptides": stack.get("peptides", []),
+                "goal": stack.get("goal", ""),
+                "created_by": stack.get("created_by", "manual"),
+                "created_at": stack.get("created_at")
+            })
+        
+        return {"stacks": result}
+    except Exception as e:
+        logger.error(f"Error getting peptide stacks: {str(e)}")
+        return {"stacks": []}
+
+# Peptide Stacks - Delete Stack
+@api_router.delete("/peptides/stacks/{user_id}/{stack_id}")
+async def delete_peptide_stack(user_id: str, stack_id: str):
+    """Delete a user's peptide stack"""
+    try:
+        await db.peptide_stacks.delete_one({
+            "user_id": user_id,
+            "stack_id": stack_id
+        })
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Peptide Stacks - AI Generate Stack
+class PeptideAIStackRequest(BaseModel):
+    user_id: str
+    goal: str
+
+@api_router.post("/peptides/stacks/ai-generate")
+async def generate_ai_peptide_stack(data: PeptideAIStackRequest):
+    """Use AI to generate a peptide stack based on user's goal"""
+    try:
+        emergent_key = os.getenv("EMERGENT_API_KEY") or os.getenv("EMERGENT_LLM_KEY")
+        if not emergent_key:
+            raise HTTPException(status_code=500, detail="AI service not configured")
+        
+        available_peptides = list(PEPTIDE_DATABASE.keys())
+        
+        system_prompt = f"""You are a peptide research assistant. Based on the user's goal, suggest a peptide stack 
+from the following available peptides: {', '.join(available_peptides)}.
+
+IMPORTANT: 
+1. Only suggest peptides from the provided list
+2. Return ONLY a JSON object in this exact format, nothing else:
+{{"name": "Stack Name", "peptides": ["peptide1", "peptide2"], "reasoning": "Brief explanation"}}
+3. Limit to 2-4 peptides per stack
+4. Always emphasize this is for educational purposes only"""
+
+        chat = LlmChat(
+            api_key=emergent_key,
+            session_id=f"peptide_stack_{datetime.now().timestamp()}",
+            system_message=system_prompt
+        ).with_model("openai", "gpt-4o")
+        
+        response = await chat.send_message(
+            UserMessage(text=f"Create a peptide stack for this goal: {data.goal}")
+        )
+        
+        response_text = response if isinstance(response, str) else str(response)
+        
+        # Try to parse JSON from response
+        import json
+        try:
+            # Find JSON in response
+            start = response_text.find('{')
+            end = response_text.rfind('}') + 1
+            if start >= 0 and end > start:
+                json_str = response_text[start:end]
+                stack_data = json.loads(json_str)
+                return {
+                    "success": True,
+                    "stack": {
+                        "name": stack_data.get("name", "AI Generated Stack"),
+                        "peptides": stack_data.get("peptides", []),
+                        "reasoning": stack_data.get("reasoning", "")
+                    }
+                }
+        except:
+            pass
+        
+        return {
+            "success": False,
+            "error": "Could not generate stack",
+            "raw_response": response_text
+        }
+    except Exception as e:
+        logger.error(f"Error generating AI stack: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Get injection site rotation suggestions
 @api_router.get("/peptides/site-rotation/{user_id}")
 async def get_site_rotation(user_id: str):
