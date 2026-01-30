@@ -941,31 +941,79 @@ export default function PeptideCalculatorScreen() {
           {/* Protocols Tab */}
           {activeTab === 'protocols' && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Active Protocols</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Active Protocols</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.text.muted }]}>
+                Swipe left to delete a protocol
+              </Text>
               {protocols.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Ionicons name="calendar" size={48} color={Colors.text.muted} />
-                  <Text style={styles.emptyText}>No active protocols</Text>
-                  <Text style={styles.emptySubtext}>Create a protocol to track your dosing schedule</Text>
+                <View style={[styles.emptyState, { backgroundColor: colors.background.card }]}>
+                  <Ionicons name="calendar" size={48} color={colors.text.muted} />
+                  <Text style={[styles.emptyText, { color: colors.text.primary }]}>No active protocols</Text>
+                  <Text style={[styles.emptySubtext, { color: colors.text.muted }]}>
+                    Create a stack to automatically add protocols, or they'll be tracked from your injections
+                  </Text>
                 </View>
               ) : (
                 protocols.map((protocol, i) => (
-                  <View key={i} style={styles.protocolCard}>
-                    <View style={styles.protocolHeader}>
-                      <Text style={styles.protocolName}>{protocol.protocol_name}</Text>
-                      <View style={[styles.protocolStatus, protocol.active && styles.protocolStatusActive]}>
-                        <Text style={styles.protocolStatusText}>
-                          {protocol.active ? 'Active' : 'Inactive'}
-                        </Text>
+                  <Swipeable
+                    key={protocol._id || i}
+                    renderRightActions={() => (
+                      <TouchableOpacity
+                        style={styles.deleteAction}
+                        onPress={() => deleteProtocol(protocol._id, protocol.protocol_name)}
+                      >
+                        <Ionicons name="trash" size={24} color="#fff" />
+                        <Text style={styles.deleteActionText}>Delete</Text>
+                      </TouchableOpacity>
+                    )}
+                    overshootRight={false}
+                  >
+                    <View style={[styles.protocolCard, { backgroundColor: colors.background.card }]}>
+                      <View style={styles.protocolHeader}>
+                        <Text style={[styles.protocolName, { color: colors.text.primary }]}>{protocol.protocol_name}</Text>
+                        <View style={[
+                          styles.protocolStatus, 
+                          { backgroundColor: protocol.active ? '#10B98120' : colors.background.elevated },
+                          protocol.active && styles.protocolStatusActive
+                        ]}>
+                          <Text style={[
+                            styles.protocolStatusText, 
+                            { color: protocol.active ? '#10B981' : colors.text.muted }
+                          ]}>
+                            {protocol.active ? 'Active' : 'Inactive'}
+                          </Text>
+                        </View>
                       </View>
+                      <Text style={[styles.protocolPeptide, { color: accent.primary }]}>{protocol.peptide_name}</Text>
+                      <View style={styles.protocolDetails}>
+                        <View style={styles.protocolDetailRow}>
+                          <Ionicons name="medical" size={14} color={colors.text.secondary} />
+                          <Text style={[styles.protocolDetail, { color: colors.text.secondary }]}>
+                            {protocol.dose_mcg} mcg
+                          </Text>
+                        </View>
+                        <View style={styles.protocolDetailRow}>
+                          <Ionicons name="repeat" size={14} color={colors.text.secondary} />
+                          <Text style={[styles.protocolDetail, { color: colors.text.secondary }]}>
+                            {protocol.frequency}
+                          </Text>
+                        </View>
+                        {protocol.start_date && (
+                          <View style={styles.protocolDetailRow}>
+                            <Ionicons name="calendar-outline" size={14} color={colors.text.secondary} />
+                            <Text style={[styles.protocolDetail, { color: colors.text.secondary }]}>
+                              Started {new Date(protocol.start_date).toLocaleDateString()}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      {protocol.notes && (
+                        <Text style={[styles.protocolNotes, { color: colors.text.muted }]} numberOfLines={2}>
+                          {protocol.notes}
+                        </Text>
+                      )}
                     </View>
-                    <Text style={styles.protocolPeptide}>{protocol.peptide_name}</Text>
-                    <View style={styles.protocolDetails}>
-                      <Text style={styles.protocolDetail}>
-                        {protocol.dose_mcg} mcg • {protocol.frequency}
-                      </Text>
-                    </View>
-                  </View>
+                  </Swipeable>
                 ))
               )}
             </View>
