@@ -123,11 +123,11 @@ export default function PeptideCalculatorScreen() {
   const [expandedStackId, setExpandedStackId] = useState<string | null>(null);
   const [viewStackDetails, setViewStackDetails] = useState<PeptideStack | null>(null);
   
-  // Delete stack function
-  const deleteStack = async (stackId: string) => {
+  // Delete stack function - also deletes associated protocols
+  const deleteStack = async (stackId: string, stackName: string) => {
     Alert.alert(
       'Delete Stack',
-      'Are you sure you want to delete this stack? This cannot be undone.',
+      'Are you sure you want to delete this stack and all its associated protocols? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -135,11 +135,49 @@ export default function PeptideCalculatorScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Delete the stack
               await axios.delete(`${API_URL}/api/peptides/stacks/${userId}/${stackId}`);
-              setStacks(prev => prev.filter(s => s.id !== stackId));
+              
+              // Also delete protocols associated with this stack
+              try {
+                await axios.delete(`${API_URL}/api/peptides/protocols-by-stack/${userId}/${encodeURIComponent(stackName)}`);
+              } catch (protocolError) {
+                console.log('No protocols to delete or error:', protocolError);
+              }
+              
+              // Refresh both stacks and protocols
+              const [stacksRes, protocolsRes] = await Promise.all([
+                axios.get(`${API_URL}/api/peptides/stacks/${userId}`),
+                axios.get(`${API_URL}/api/peptides/protocols/${userId}`)
+              ]);
+              setStacks(stacksRes.data.stacks || []);
+              setProtocols(protocolsRes.data.protocols || []);
               setViewStackDetails(null);
             } catch (error) {
               Alert.alert('Error', 'Failed to delete stack');
+            }
+          }
+        }
+      ]
+    );
+  };
+  
+  // Delete individual protocol
+  const deleteProtocol = async (protocolId: string, protocolName: string) => {
+    Alert.alert(
+      'Delete Protocol',
+      `Are you sure you want to delete "${protocolName}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/peptides/protocol/${userId}/${protocolId}`);
+              setProtocols(prev => prev.filter(p => p._id !== protocolId));
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete protocol');
             }
           }
         }
