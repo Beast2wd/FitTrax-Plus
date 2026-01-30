@@ -866,7 +866,8 @@ export default function PeptideCalculatorScreen() {
 
           {/* AI Assistant Tab */}
           {activeTab === 'ai' && (
-            <View style={styles.section}>
+            <View style={styles.aiTabContainer}>
+              {/* Header */}
               <LinearGradient
                 colors={['#667eea', '#764ba2']}
                 style={styles.aiHeader}
@@ -888,16 +889,56 @@ export default function PeptideCalculatorScreen() {
                 </View>
               </LinearGradient>
 
-              {/* Chat History */}
-              {aiChatHistory.length > 0 && (
-                <View style={styles.chatHistoryContainer}>
-                  <View style={styles.chatHistoryHeader}>
-                    <Text style={[styles.chatHistoryTitle, { color: colors.text.primary }]}>Conversation</Text>
-                    <TouchableOpacity onPress={() => setAiChatHistory([])}>
-                      <Text style={{ color: colors.text.muted, fontSize: 13 }}>Clear</Text>
-                    </TouchableOpacity>
+              {/* Conversation Selector */}
+              <View style={styles.conversationBar}>
+                <TouchableOpacity 
+                  style={[styles.conversationButton, { backgroundColor: colors.background.card }]}
+                  onPress={() => setShowConversationPicker(true)}
+                >
+                  <Ionicons name="chatbubbles-outline" size={18} color={colors.text.secondary} />
+                  <Text style={[styles.conversationButtonText, { color: colors.text.secondary }]}>
+                    {savedConversations.length > 0 ? `${savedConversations.length} saved` : 'History'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.newConversationBtn, { backgroundColor: '#667eea' }]}
+                  onPress={startNewConversation}
+                >
+                  <Ionicons name="add" size={18} color="#fff" />
+                  <Text style={styles.newConversationText}>New Chat</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Chat Messages - Scrollable */}
+              <ScrollView 
+                ref={chatScrollRef}
+                style={styles.chatScrollArea}
+                contentContainerStyle={styles.chatScrollContent}
+                showsVerticalScrollIndicator={true}
+                onContentSizeChange={() => chatScrollRef.current?.scrollToEnd({ animated: true })}
+              >
+                {aiChatHistory.length === 0 ? (
+                  <View style={styles.aiSuggestions}>
+                    <Text style={[styles.aiSuggestionsTitle, { color: colors.text.secondary }]}>Common Questions</Text>
+                    {[
+                      "What are the benefits of BPC-157?",
+                      "How should I dose Semaglutide?",
+                      "What's a good recovery stack?",
+                      "Tell me about peptide safety",
+                    ].map((suggestion, i) => (
+                      <TouchableOpacity 
+                        key={i} 
+                        style={[styles.aiSuggestion, { backgroundColor: colors.background.card }]}
+                        onPress={() => { setAiQuestion(suggestion); }}
+                      >
+                        <Ionicons name="bulb-outline" size={18} color="#667eea" />
+                        <Text style={[styles.aiSuggestionText, { color: colors.text.primary }]}>{suggestion}</Text>
+                        <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                  <ScrollView style={styles.chatHistory} nestedScrollEnabled>
+                ) : (
+                  <>
                     {aiChatHistory.map((msg, i) => (
                       <View 
                         key={i} 
@@ -927,47 +968,90 @@ export default function PeptideCalculatorScreen() {
                         <Text style={[styles.chatMessageText, { color: colors.text.muted, marginLeft: 8 }]}>Researching...</Text>
                       </View>
                     )}
-                  </ScrollView>
-                </View>
-              )}
+                  </>
+                )}
+              </ScrollView>
 
-              <View style={[styles.aiInputContainer, { backgroundColor: colors.background.card }]}>
-                <TextInput
-                  style={[styles.aiInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
-                  value={aiQuestion}
-                  onChangeText={setAiQuestion}
-                  placeholder="Ask about peptides, dosing, stacking, safety..."
-                  placeholderTextColor={colors.text.muted}
-                  multiline
-                />
-                <TouchableOpacity 
-                  style={[styles.aiSendButton, { backgroundColor: aiQuestion.trim() ? '#667eea' : colors.background.elevated }]}
-                  onPress={askAI}
-                  disabled={aiLoading || !aiQuestion.trim()}
-                >
-                  {aiLoading ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Ionicons name="send" size={20} color="#fff" />
-                  )}
-                </TouchableOpacity>
+              {/* Fixed Input Bar at Bottom */}
+              <View style={[styles.aiInputFixed, { backgroundColor: colors.background.primary, borderTopColor: colors.border.primary }]}>
+                <View style={[styles.aiInputContainer, { backgroundColor: colors.background.card }]}>
+                  <TextInput
+                    style={[styles.aiInput, { backgroundColor: colors.background.input, color: colors.text.primary }]}
+                    value={aiQuestion}
+                    onChangeText={setAiQuestion}
+                    placeholder="Ask about peptides, dosing, stacking, safety..."
+                    placeholderTextColor={colors.text.muted}
+                    multiline
+                    maxLength={500}
+                  />
+                  <TouchableOpacity 
+                    style={[styles.aiSendButton, { backgroundColor: aiQuestion.trim() ? '#667eea' : colors.background.elevated }]}
+                    onPress={askAI}
+                    disabled={aiLoading || !aiQuestion.trim()}
+                  >
+                    {aiLoading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Ionicons name="send" size={20} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.aiDisclaimer, { color: colors.text.muted }]}>
+                  For educational purposes only. Consult a healthcare provider.
+                </Text>
               </View>
+            </View>
+          )}
 
-              {aiResponse && (
-                <View style={styles.aiResponseCard}>
-                  <Text style={styles.aiResponseText}>{aiResponse}</Text>
-                  <View style={styles.aiDisclaimer}>
-                    <Ionicons name="information-circle" size={16} color={Colors.text.muted} />
-                    <Text style={styles.aiDisclaimerText}>
-                      For educational purposes only. Consult a healthcare provider.
-                    </Text>
-                  </View>
+          {/* Conversation Picker Modal */}
+          <Modal
+            visible={showConversationPicker}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setShowConversationPicker(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Saved Conversations</Text>
+                  <TouchableOpacity onPress={() => setShowConversationPicker(false)}>
+                    <Ionicons name="close" size={24} color={colors.text.primary} />
+                  </TouchableOpacity>
                 </View>
-              )}
+                <Text style={[styles.modalSubtitle, { color: colors.text.muted }]}>
+                  Conversations are saved for 12 hours
+                </Text>
+                <ScrollView style={{ maxHeight: 400 }}>
+                  {savedConversations.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Ionicons name="chatbubbles-outline" size={40} color={colors.text.muted} />
+                      <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No saved conversations</Text>
+                    </View>
+                  ) : (
+                    savedConversations.map((conv, i) => (
+                      <TouchableOpacity 
+                        key={i}
+                        style={[styles.conversationItem, { backgroundColor: colors.background.card }]}
+                        onPress={() => loadConversation(conv)}
+                      >
+                        <View style={styles.conversationItemContent}>
+                          <Text style={[styles.conversationTitle, { color: colors.text.primary }]} numberOfLines={1}>
+                            {conv.title}
+                          </Text>
+                          <Text style={[styles.conversationMeta, { color: colors.text.muted }]}>
+                            {conv.message_count || conv.messages?.length || 0} messages
+                          </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
 
-              <View style={styles.aiSuggestions}>
-                <Text style={styles.aiSuggestionsTitle}>Common Questions</Text>
-                {[
+          {activeTab !== 'ai' && activeTab === 'protocols' && (
                   'What is the best way to stack BPC-157 and TB-500?',
                   'How should I titrate Semaglutide for weight loss?',
                   'What are the benefits of MOTS-c for metabolism?',
