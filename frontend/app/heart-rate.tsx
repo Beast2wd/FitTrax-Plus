@@ -598,11 +598,29 @@ export default function HeartRateScreen() {
         onRequestClose={closeCameraModal}
       >
         <View style={styles.cameraModal}>
-          {/* Camera View */}
+          {/* Camera View - Using Wide Angle Camera (Main lens closest to flashlight) */}
           <CameraView
+            ref={cameraRef}
             style={styles.camera}
             facing="back"
             enableTorch={torchOn}
+            zoom={0}
+            onCameraReady={async () => {
+              // Get available lenses when camera is ready
+              if (cameraRef.current) {
+                try {
+                  const lenses = await cameraRef.current.getAvailableLensesAsync();
+                  setAvailableLenses(lenses || []);
+                  console.log('Available lenses:', lenses);
+                  // Default to wide angle camera (main lens near flashlight)
+                  if (lenses && lenses.includes('builtInWideAngleCamera')) {
+                    setSelectedLens('builtInWideAngleCamera');
+                  }
+                } catch (e) {
+                  console.log('Could not get lenses:', e);
+                }
+              }
+            }}
           />
 
           {/* Overlay */}
@@ -617,6 +635,36 @@ export default function HeartRateScreen() {
               <Text style={styles.cameraTitle}>Heart Rate Measurement</Text>
               <View style={{ width: 50 }} />
             </SafeAreaView>
+
+            {/* Lens Selector for multi-camera devices */}
+            {availableLenses.length > 1 && (
+              <View style={styles.lensSelector}>
+                <Text style={styles.lensSelectorLabel}>Camera Lens:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.lensOptions}>
+                  {availableLenses.map((lens, index) => {
+                    const lensName = lens.replace('builtIn', '').replace('Camera', '');
+                    const isSelected = selectedLens === lens;
+                    const isRecommended = lens === 'builtInWideAngleCamera';
+                    return (
+                      <TouchableOpacity
+                        key={lens}
+                        style={[
+                          styles.lensOption,
+                          isSelected && styles.lensOptionSelected,
+                          isRecommended && styles.lensOptionRecommended
+                        ]}
+                        onPress={() => setSelectedLens(lens)}
+                      >
+                        <Text style={[styles.lensOptionText, isSelected && { color: '#FCD34D' }]}>
+                          {lensName}
+                        </Text>
+                        {isRecommended && <Text style={styles.recommendedBadge}>★ Best</Text>}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Torch Status Indicator - Now a Button */}
             <TouchableOpacity 
@@ -646,7 +694,7 @@ export default function HeartRateScreen() {
                   <View style={styles.cameraAdvice}>
                     <Ionicons name="information-circle" size={20} color="#FCD34D" />
                     <Text style={styles.cameraAdviceText}>
-                      Using BACK camera (main lens) for best accuracy
+                      Select "WideAngle" lens above (closest to flash)
                     </Text>
                   </View>
                   <TouchableOpacity
