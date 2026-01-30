@@ -52,12 +52,19 @@ export default function HeartRateScreen() {
   const [pulseAnimation] = useState(new Animated.Value(1));
   const [signalStrength, setSignalStrength] = useState(0);
   const [torchOn, setTorchOn] = useState(false);
+  const [availableLenses, setAvailableLenses] = useState<string[]>([]);
+  const [selectedLens, setSelectedLens] = useState<string>('builtInWideAngleCamera');
+  const cameraRef = useRef<any>(null);
   
   // Heart rate calculation state
   const redValues = useRef<number[]>([]);
   const timestamps = useRef<number[]>([]);
   const detectionInterval = useRef<any>(null);
   const countdownInterval = useRef<any>(null);
+  
+  // Calibration state for more accurate readings
+  const calibrationOffset = useRef<number>(0);
+  const lastValidBPM = useRef<number>(72); // Default average resting heart rate
 
   useEffect(() => {
     if (userId) {
