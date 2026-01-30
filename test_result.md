@@ -221,6 +221,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Heart rate tracking tested successfully - POST /api/heart-rate with BPM validation (30-250), GET /api/heart-rate/{user_id} retrieves data, GET /api/heart-rate/zones/{user_id} calculates age-based zones correctly (Max HR: 190 for age 30)"
+      - working: true
+        agent: "testing"
+        comment: "REVIEW REQUEST HEART RATE TESTING COMPLETED: Performed quick health check of heart rate endpoints as requested. Results: 2/2 tests passed (100% success rate). ✅ POST /api/heart-rate working correctly (added heart rate reading with 72 BPM for user_1769564539081), ✅ GET /api/heart-rate/user_1769564539081?days=7 working correctly (retrieved 1 heart rate reading). IMPORTANT FINDING: API model mismatch detected - review request specifies 'source': 'camera' and 'activity': 'resting' fields, but backend HeartRateCreate model expects 'activity_type': 'resting' and 'notes' fields instead. No 'source' field exists in the model. Both endpoints are fully functional with 200 OK responses."
 
   - task: "Workout plans initialization and retrieval"
     implemented: true
