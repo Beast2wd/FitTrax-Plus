@@ -2619,4 +2619,52 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+  // Stack delete and details styles
+  savedStackActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  deleteStackBtn: {
+    padding: 6,
+  },
+  stackDetailLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  stackDetailValue: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  stackDetailPeptides: {
+    marginTop: 12,
+    gap: 8,
+  },
+  stackDetailPeptideCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    gap: 12,
+  },
+  stackDetailPeptideName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  deleteStackFullBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 24,
+    gap: 8,
+  },
+  deleteStackFullBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });
