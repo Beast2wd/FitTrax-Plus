@@ -106,6 +106,16 @@ export default function PeptideCalculatorScreen() {
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiChatHistory, setAiChatHistory] = useState<AIChatMessage[]>([]);
+  
+  // Stacks state
+  const [stacks, setStacks] = useState<PeptideStack[]>([]);
+  const [showStackModal, setShowStackModal] = useState(false);
+  const [stackCreationMode, setStackCreationMode] = useState<'ai' | 'manual' | null>(null);
+  const [newStackName, setNewStackName] = useState('');
+  const [newStackGoal, setNewStackGoal] = useState('');
+  const [selectedStackPeptides, setSelectedStackPeptides] = useState<string[]>([]);
+  const [aiStackLoading, setAiStackLoading] = useState(false);
   
   // Peptide info modal
   const [infoModalVisible, setInfoModalVisible] = useState(false);
