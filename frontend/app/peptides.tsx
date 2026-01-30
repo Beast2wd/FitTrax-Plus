@@ -28,7 +28,7 @@ import axios from 'axios';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
-type TabType = 'calculator' | 'log' | 'protocols' | 'progress' | 'ai';
+type TabType = 'calculator' | 'log' | 'stacks' | 'protocols' | 'progress' | 'ai';
 
 interface Peptide {
   name: string;
@@ -49,6 +49,21 @@ interface InjectionSite {
   name: string;
   description: string;
   recent_count: number;
+}
+
+interface PeptideStack {
+  id: string;
+  name: string;
+  peptides: string[];
+  goal: string;
+  created_by: 'ai' | 'manual';
+  created_at: string;
+}
+
+interface AIChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
 }
 
 export default function PeptideCalculatorScreen() {
