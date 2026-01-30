@@ -2125,6 +2125,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.text.primary,
+    flex: 1,
+    marginRight: 8,
   },
   protocolStatus: {
     backgroundColor: '#F3F4F6',
@@ -2143,13 +2145,29 @@ const styles = StyleSheet.create({
   protocolPeptide: {
     fontSize: 14,
     color: Colors.text.secondary,
+    marginBottom: 8,
   },
   protocolDetails: {
     marginTop: 8,
+    gap: 6,
+  },
+  protocolDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   protocolDetail: {
     fontSize: 13,
     color: Colors.text.muted,
+  },
+  protocolNotes: {
+    fontSize: 12,
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    marginBottom: 12,
   },
   usageRow: {
     flexDirection: 'row',
