@@ -394,7 +394,7 @@ export default function PeptideCalculatorScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Peptide Calculator</Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Peptides IQ</Text>
           <TouchableOpacity onPress={() => setLogModalVisible(true)} style={styles.addButton}>
             <Ionicons name="add-circle" size={28} color={accent.primary} />
           </TouchableOpacity>
