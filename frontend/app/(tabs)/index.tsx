@@ -829,7 +829,7 @@ export default function DashboardScreen() {
             { icon: 'footsteps', label: t('dashboard.run'), color: '#EC4899', route: '/running', premium: false },
             { icon: 'walk', label: 'Step Tracker', color: '#14B8A6', route: '/step-tracker', premium: false },
             { icon: 'body', label: t('dashboard.bodyScan'), color: '#10B981', route: '/body-scan', premium: true },
-            { icon: 'flask', label: t('dashboard.peptides'), color: '#6366F1', route: '/peptides', premium: true },
+            { icon: 'flask', label: t('dashboard.peptides'), color: '#6366F1', route: '/peptides', premium: false },
             { icon: 'trophy', label: t('dashboard.rewards'), color: '#EF4444', route: '/badges', premium: true },
             { icon: 'stats-chart', label: t('dashboard.analytics'), color: '#0EA5E9', route: '/analytics', premium: true },
           ].map((action, index) => (
