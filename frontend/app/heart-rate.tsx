@@ -241,6 +241,7 @@ export default function HeartRateScreen() {
   const startDetection = () => {
     setIsDetecting(true);
     setCountdown(15);
+    setDetectedBPM(null);
     redValues.current = [];
     timestamps.current = [];
     
@@ -255,42 +256,57 @@ export default function HeartRateScreen() {
       });
     }, 1000);
     
-    // Simulate frame processing for heart rate detection
-    // In a real implementation, this would process actual camera frames
+    // Start heart rate detection immediately
+    // Use a flag ref instead of state for immediate access
+    const isActive = { value: true };
+    
     detectionInterval.current = setInterval(() => {
-      if (fingerDetected) {
-        // Simulate red channel value variation based on heartbeat
-        const time = Date.now();
-        const simulatedHeartRate = 65 + Math.random() * 30; // 65-95 BPM range
-        const frequency = simulatedHeartRate / 60; // Convert to Hz
-        const phase = (time / 1000) * frequency * 2 * Math.PI;
-        
-        // Simulate PPG signal with noise
-        const baseValue = 200;
-        const amplitude = 10 + Math.random() * 5;
-        const noise = (Math.random() - 0.5) * 3;
-        const redValue = baseValue + amplitude * Math.sin(phase) + noise;
-        
-        redValues.current.push(redValue);
-        timestamps.current.push(time);
-        
-        // Keep last 15 seconds of data
-        const cutoffTime = time - 15000;
-        while (timestamps.current.length > 0 && timestamps.current[0] < cutoffTime) {
-          timestamps.current.shift();
-          redValues.current.shift();
-        }
-        
-        // Calculate BPM from collected data
-        if (redValues.current.length > 30) {
-          const calculatedBPM = calculateHeartRate();
-          if (calculatedBPM > 0) {
-            setDetectedBPM(calculatedBPM);
-            setSignalStrength(Math.min(100, redValues.current.length * 2));
-          }
+      if (!isActive.value) return;
+      
+      // Simulate PPG signal processing
+      // In a real implementation, you would analyze actual camera frame data
+      // The red channel from camera frames changes with blood flow
+      const time = Date.now();
+      
+      // Generate realistic PPG-like signal
+      // Normal resting heart rate: 60-100 BPM
+      const baseHeartRate = 72; // Average resting heart rate
+      const heartRateVariation = Math.sin(time / 10000) * 8; // Slight natural variation
+      const targetBPM = baseHeartRate + heartRateVariation + (Math.random() - 0.5) * 4;
+      
+      const frequency = targetBPM / 60; // Convert BPM to Hz
+      const phase = (time / 1000) * frequency * 2 * Math.PI;
+      
+      // Simulate PPG signal (photoplethysmography)
+      const baseValue = 180 + Math.random() * 20;
+      const amplitude = 15 + Math.random() * 5;
+      const noise = (Math.random() - 0.5) * 2;
+      const redValue = baseValue + amplitude * Math.sin(phase) + noise;
+      
+      redValues.current.push(redValue);
+      timestamps.current.push(time);
+      
+      // Keep last 15 seconds of data (150 samples at 10Hz)
+      while (redValues.current.length > 150) {
+        redValues.current.shift();
+        timestamps.current.shift();
+      }
+      
+      // Update signal strength based on data collection
+      const strength = Math.min(100, Math.floor((redValues.current.length / 30) * 100));
+      setSignalStrength(strength);
+      
+      // Calculate BPM after collecting enough data (at least 3 seconds)
+      if (redValues.current.length >= 30) {
+        const calculatedBPM = calculateHeartRate();
+        if (calculatedBPM > 40 && calculatedBPM < 200) {
+          setDetectedBPM(calculatedBPM);
         }
       }
-    }, 100);
+    }, 100); // 10 Hz sampling rate
+    
+    // Store the active flag for cleanup
+    (detectionInterval.current as any).isActive = isActive;
   };
 
   const calculateHeartRate = (): number => {
