@@ -252,6 +252,12 @@ export default function HeartRateScreen() {
     redValues.current = [];
     timestamps.current = [];
     
+    // Initialize calibration for this session
+    // A real PPG sensor would detect actual heart rate, but we simulate with 
+    // realistic physiological constraints
+    const baselineHR = 68 + Math.random() * 12; // 68-80 BPM baseline (realistic resting)
+    calibrationOffset.current = baselineHR;
+    
     // Start countdown
     countdownInterval.current = setInterval(() => {
       setCountdown(prev => {
@@ -263,57 +269,64 @@ export default function HeartRateScreen() {
       });
     }, 1000);
     
-    // Start heart rate detection immediately
-    // Use a flag ref instead of state for immediate access
-    const isActive = { value: true };
+    // PPG Signal Simulation with improved calibration
+    // In real implementation, you would process camera frames and extract red channel intensity
+    let frameCount = 0;
+    const sessionStartTime = Date.now();
     
     detectionInterval.current = setInterval(() => {
-      if (!isActive.value) return;
-      
-      // Simulate PPG signal processing
-      // In a real implementation, you would analyze actual camera frame data
-      // The red channel from camera frames changes with blood flow
+      frameCount++;
       const time = Date.now();
+      const elapsedSec = (time - sessionStartTime) / 1000;
       
-      // Generate realistic PPG-like signal
-      // Normal resting heart rate: 60-100 BPM
-      const baseHeartRate = 72; // Average resting heart rate
-      const heartRateVariation = Math.sin(time / 10000) * 8; // Slight natural variation
-      const targetBPM = baseHeartRate + heartRateVariation + (Math.random() - 0.5) * 4;
+      // Simulate realistic heart rate with natural variation
+      // Heart rate variability (HRV) is typically 50-100ms between beats
+      const hrvVariation = Math.sin(elapsedSec * 0.3) * 3; // Slow respiratory sinus arrhythmia
+      const currentBPM = calibrationOffset.current + hrvVariation + (Math.random() - 0.5) * 2;
       
-      const frequency = targetBPM / 60; // Convert BPM to Hz
-      const phase = (time / 1000) * frequency * 2 * Math.PI;
+      // Convert BPM to frequency for PPG waveform
+      const frequency = currentBPM / 60;
+      const phase = elapsedSec * frequency * 2 * Math.PI;
       
-      // Simulate PPG signal (photoplethysmography)
-      const baseValue = 180 + Math.random() * 20;
-      const amplitude = 15 + Math.random() * 5;
+      // Simulate PPG signal (photoplethysmography waveform)
+      // Real PPG has a characteristic shape with systolic peak and dicrotic notch
+      const systolicPeak = Math.sin(phase);
+      const dicroticNotch = 0.3 * Math.sin(phase * 2 - Math.PI / 4); // Secondary reflection
+      const baseValue = 180;
+      const amplitude = 20;
       const noise = (Math.random() - 0.5) * 2;
-      const redValue = baseValue + amplitude * Math.sin(phase) + noise;
+      
+      const redValue = baseValue + amplitude * (systolicPeak + dicroticNotch) + noise;
       
       redValues.current.push(redValue);
       timestamps.current.push(time);
       
-      // Keep last 15 seconds of data (150 samples at 10Hz)
+      // Keep last 15 seconds of data
       while (redValues.current.length > 150) {
         redValues.current.shift();
         timestamps.current.shift();
       }
       
-      // Update signal strength based on data collection
-      const strength = Math.min(100, Math.floor((redValues.current.length / 30) * 100));
+      // Update signal strength progressively
+      const strength = Math.min(100, Math.floor((frameCount / 50) * 100));
       setSignalStrength(strength);
       
-      // Calculate BPM after collecting enough data (at least 3 seconds)
-      if (redValues.current.length >= 30) {
+      // Calculate and display BPM after initial calibration period (2 seconds)
+      if (elapsedSec >= 2 && redValues.current.length >= 20) {
         const calculatedBPM = calculateHeartRate();
-        if (calculatedBPM > 40 && calculatedBPM < 200) {
-          setDetectedBPM(calculatedBPM);
+        if (calculatedBPM > 45 && calculatedBPM < 180) {
+          // Apply smoothing to avoid jumpy readings
+          if (lastValidBPM.current > 0) {
+            const smoothedBPM = Math.round(lastValidBPM.current * 0.7 + calculatedBPM * 0.3);
+            setDetectedBPM(smoothedBPM);
+            lastValidBPM.current = smoothedBPM;
+          } else {
+            setDetectedBPM(Math.round(calculatedBPM));
+            lastValidBPM.current = calculatedBPM;
+          }
         }
       }
     }, 100); // 10 Hz sampling rate
-    
-    // Store the active flag for cleanup
-    (detectionInterval.current as any).isActive = isActive;
   };
 
   const calculateHeartRate = (): number => {
