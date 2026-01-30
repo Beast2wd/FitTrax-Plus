@@ -1474,7 +1474,9 @@ export default function PeptideCalculatorScreen() {
                       )}
                     </TouchableOpacity>
                   </View>
-                ) : (
+                )}
+                
+                {stackCreationMode === 'manual' && (
                   // Manual Stack Builder
                   <View style={styles.stackModalContent}>
                     <View style={styles.stackInputGroup}>
