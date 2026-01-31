@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
@@ -13,9 +12,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Video, ResizeMode } from 'expo-av';
+import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { useThemeStore } from '../../stores/themeStore';
 import { useUserStore } from '../../stores/userStore';
 import { plansAPI } from '../../services/api';
@@ -24,122 +23,284 @@ import axios from 'axios';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
-// Exercise data with images and video URLs
-const EXERCISE_DATA: { [key: string]: { image: string; video?: string; instructions: string[] } } = {
-  // Cardio
+// Reliable workout video URLs (MP4 format, publicly accessible)
+const WORKOUT_VIDEOS = {
+  cardio: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  strength: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+  flexibility: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+};
+
+// Exercise database with images and instructions
+const EXERCISE_DATA: { [key: string]: { image: string; category: string; instructions: string[] } } = {
+  // HIIT / Cardio
   'Jumping Jacks': {
-    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80',
-    video: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    instructions: ['Stand with feet together, arms at sides', 'Jump while spreading legs and raising arms overhead', 'Jump back to starting position', 'Repeat for desired reps']
+    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Stand with feet together, arms at sides', 'Jump while spreading legs and raising arms overhead', 'Jump back to starting position', 'Repeat for 30-60 seconds']
   },
   'Burpees': {
-    image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=400&q=80',
-    video: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    instructions: ['Start standing', 'Drop into a squat with hands on floor', 'Kick feet back to plank position', 'Do a push-up, jump feet forward, then jump up with arms overhead']
+    image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Start standing tall', 'Drop into a squat with hands on floor', 'Kick feet back to plank position', 'Do a push-up, jump feet forward, then jump up with arms overhead']
   },
   'Mountain Climbers': {
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',
-    instructions: ['Start in plank position', 'Drive one knee toward chest', 'Quickly switch legs', 'Continue alternating at a fast pace']
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Start in high plank position', 'Drive one knee toward chest', 'Quickly switch legs in a running motion', 'Keep core tight and hips level']
   },
   'High Knees': {
-    image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&q=80',
-    instructions: ['Stand tall with feet hip-width apart', 'Run in place, bringing knees up high', 'Pump arms as you run', 'Keep core engaged throughout']
+    image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Stand tall with feet hip-width apart', 'Run in place, lifting knees to hip height', 'Pump arms in rhythm with legs', 'Maintain quick pace for 30-60 seconds']
   },
   'Box Jumps': {
-    image: 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=400&q=80',
-    instructions: ['Stand facing a sturdy box or platform', 'Bend knees and swing arms back', 'Jump explosively onto the box', 'Step down and repeat']
+    image: 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Stand facing a sturdy box or platform', 'Bend knees and swing arms back for momentum', 'Jump explosively onto the box, landing softly', 'Step down carefully and repeat']
   },
-  // Strength - Upper
+  'Jump Rope': {
+    image: 'https://images.unsplash.com/photo-1515775054473-32ac54f498bc?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Hold rope handles at hip height', 'Swing rope overhead and jump as it passes under feet', 'Land softly on balls of feet', 'Maintain steady rhythm']
+  },
+  'Sprint Intervals': {
+    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Sprint at maximum effort for 20-30 seconds', 'Walk or jog slowly for 60-90 seconds recovery', 'Repeat 6-10 times', 'Focus on explosive power during sprints']
+  },
+  'Jumping Lunges': {
+    image: 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Start in lunge position', 'Jump explosively, switching legs mid-air', 'Land softly in lunge with opposite leg forward', 'Continue alternating']
+  },
+  // Upper Body Strength
   'Push-ups': {
-    image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400&q=80',
-    video: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    instructions: ['Start in plank with hands shoulder-width apart', 'Lower chest toward floor', 'Keep body in straight line', 'Push back up to start']
+    image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=600&q=80',
+    category: 'strength',
+    instructions: ['Start in plank with hands shoulder-width apart', 'Lower chest toward floor with elbows at 45°', 'Keep body in straight line throughout', 'Push back up to starting position']
   },
   'Bench Press': {
-    image: 'https://images.unsplash.com/photo-1534368959876-26bf04f2c947?w=400&q=80',
-    instructions: ['Lie on bench with feet flat on floor', 'Grip barbell slightly wider than shoulders', 'Lower bar to chest with control', 'Press back up to starting position']
+    image: 'https://images.unsplash.com/photo-1534368959876-26bf04f2c947?w=600&q=80',
+    category: 'strength',
+    instructions: ['Lie on bench with feet flat on floor', 'Grip barbell slightly wider than shoulders', 'Lower bar to mid-chest with control', 'Press back up, fully extending arms']
+  },
+  'Incline Press': {
+    image: 'https://images.unsplash.com/photo-1534368959876-26bf04f2c947?w=600&q=80',
+    category: 'strength',
+    instructions: ['Set bench to 30-45 degree incline', 'Press dumbbells up from shoulder level', 'Lower with control to chest', 'Focus on upper chest engagement']
   },
   'Shoulder Press': {
-    image: 'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=400&q=80',
-    instructions: ['Hold dumbbells at shoulder height', 'Press weights overhead until arms are straight', 'Lower with control', 'Keep core engaged throughout']
+    image: 'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=600&q=80',
+    category: 'strength',
+    instructions: ['Hold dumbbells at shoulder height', 'Press weights straight overhead', 'Lower with control back to shoulders', 'Keep core engaged throughout']
   },
-  'Pull-ups': {
-    image: 'https://images.unsplash.com/photo-1598971457999-ca4ef48a9a71?w=400&q=80',
-    instructions: ['Hang from bar with overhand grip', 'Pull yourself up until chin is over bar', 'Lower with control', 'Keep core tight throughout']
-  },
-  'Rows': {
-    image: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400&q=80',
-    instructions: ['Bend at hips with flat back', 'Pull weight toward lower chest', 'Squeeze shoulder blades together', 'Lower with control']
-  },
-  'Bicep Curls': {
-    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400&q=80',
-    instructions: ['Stand with dumbbells at sides', 'Curl weights toward shoulders', 'Keep elbows close to body', 'Lower with control']
+  'Arnold Press': {
+    image: 'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=600&q=80',
+    category: 'strength',
+    instructions: ['Start with dumbbells at chest, palms facing you', 'Rotate palms outward as you press up', 'Reverse the motion on the way down', 'Great for full shoulder development']
   },
   'Tricep Dips': {
-    image: 'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=400&q=80',
-    instructions: ['Place hands on bench behind you', 'Lower body by bending elbows', 'Keep elbows pointing back', 'Push back up to start']
+    image: 'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=600&q=80',
+    category: 'strength',
+    instructions: ['Place hands on bench behind you', 'Lower body by bending elbows to 90°', 'Keep elbows pointing straight back', 'Push back up to starting position']
+  },
+  'Skull Crushers': {
+    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=600&q=80',
+    category: 'strength',
+    instructions: ['Lie on bench holding barbell or dumbbells', 'Lower weight toward forehead by bending elbows', 'Keep upper arms stationary', 'Extend arms back to starting position']
+  },
+  'Pull-ups': {
+    image: 'https://images.unsplash.com/photo-1598971457999-ca4ef48a9a71?w=600&q=80',
+    category: 'strength',
+    instructions: ['Hang from bar with overhand grip, hands wider than shoulders', 'Pull yourself up until chin clears the bar', 'Lower with control', 'Engage lats and back muscles']
+  },
+  'Lat Pulldowns': {
+    image: 'https://images.unsplash.com/photo-1598971457999-ca4ef48a9a71?w=600&q=80',
+    category: 'strength',
+    instructions: ['Grip bar wider than shoulder width', 'Pull bar down to upper chest', 'Squeeze shoulder blades together', 'Control the weight back up']
+  },
+  'Rows': {
+    image: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=600&q=80',
+    category: 'strength',
+    instructions: ['Hinge at hips with flat back', 'Pull weight toward lower ribs', 'Squeeze shoulder blades at top', 'Lower with control']
+  },
+  'Barbell Rows': {
+    image: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=600&q=80',
+    category: 'strength',
+    instructions: ['Bend over with barbell hanging at arms length', 'Row bar to lower chest', 'Keep back flat and core braced', 'Lower with control']
+  },
+  'Bicep Curls': {
+    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=600&q=80',
+    category: 'strength',
+    instructions: ['Stand with dumbbells at sides, palms forward', 'Curl weights toward shoulders', 'Keep elbows pinned to sides', 'Lower with control, full extension']
+  },
+  'Hammer Curls': {
+    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=600&q=80',
+    category: 'strength',
+    instructions: ['Hold dumbbells with palms facing each other', 'Curl weights up keeping neutral grip', 'Targets brachialis and forearms', 'Control the negative portion']
   },
   'Dips': {
-    image: 'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=400&q=80',
-    instructions: ['Support yourself on parallel bars', 'Lower body by bending elbows', 'Keep elbows close to body', 'Push back up to starting position']
+    image: 'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=600&q=80',
+    category: 'strength',
+    instructions: ['Support yourself on parallel bars', 'Lower body until upper arms are parallel to floor', 'Lean forward slightly for chest, upright for triceps', 'Push back to starting position']
   },
-  // Strength - Lower
+  'Chest Flyes': {
+    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80',
+    category: 'strength',
+    instructions: ['Lie on bench with dumbbells extended above chest', 'Lower weights out to sides in arc motion', 'Feel stretch in chest at bottom', 'Bring weights back together at top']
+  },
+  'Cable Flyes': {
+    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80',
+    category: 'strength',
+    instructions: ['Stand between cable machines', 'Bring handles together in front of chest', 'Squeeze chest at the contraction', 'Return with control']
+  },
+  'Lateral Raises': {
+    image: 'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=600&q=80',
+    category: 'strength',
+    instructions: ['Hold dumbbells at sides', 'Raise arms out to sides until shoulder height', 'Keep slight bend in elbows', 'Lower with control']
+  },
+  'Face Pulls': {
+    image: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=600&q=80',
+    category: 'strength',
+    instructions: ['Use rope attachment on cable machine', 'Pull toward face, separating rope ends', 'Squeeze rear delts and upper back', 'Great for shoulder health']
+  },
+  'Shrugs': {
+    image: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=600&q=80',
+    category: 'strength',
+    instructions: ['Hold heavy dumbbells or barbell', 'Shrug shoulders up toward ears', 'Hold at top for 1-2 seconds', 'Lower with control']
+  },
+  // Lower Body
   'Squats': {
-    image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&q=80',
-    video: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    instructions: ['Stand with feet shoulder-width apart', 'Lower hips back and down', 'Keep chest up and knees over toes', 'Push through heels to stand']
+    image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80',
+    category: 'strength',
+    instructions: ['Stand with feet shoulder-width apart', 'Lower hips back and down as if sitting', 'Keep chest up, knees tracking over toes', 'Drive through heels to stand']
   },
   'Lunges': {
-    image: 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400&q=80',
-    instructions: ['Stand tall with feet hip-width apart', 'Step forward and lower back knee toward floor', 'Keep front knee over ankle', 'Push back to starting position']
+    image: 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=600&q=80',
+    category: 'strength',
+    instructions: ['Stand tall, feet hip-width apart', 'Step forward and lower back knee toward floor', 'Keep front knee over ankle, not past toes', 'Push through front heel to return']
   },
   'Deadlifts': {
-    image: 'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=400&q=80',
-    instructions: ['Stand with feet hip-width apart', 'Hinge at hips to lower bar along legs', 'Keep back flat and core engaged', 'Stand by driving through heels']
+    image: 'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=600&q=80',
+    category: 'strength',
+    instructions: ['Stand with feet hip-width, bar over mid-foot', 'Hinge at hips, grip bar outside knees', 'Keep back flat, drive through floor to stand', 'Lower with control, hips back first']
   },
   'Leg Press': {
-    image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=400&q=80',
-    instructions: ['Sit in leg press machine', 'Place feet shoulder-width on platform', 'Lower weight by bending knees', 'Press back up without locking knees']
+    image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=600&q=80',
+    category: 'strength',
+    instructions: ['Sit in leg press with feet shoulder-width on platform', 'Lower weight by bending knees to 90°', 'Press through heels to extend legs', 'Don\'t lock knees at top']
+  },
+  'Leg Curls': {
+    image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=600&q=80',
+    category: 'strength',
+    instructions: ['Lie face down on leg curl machine', 'Curl weight up by bending knees', 'Squeeze hamstrings at top', 'Lower with control']
   },
   'Glute Bridges': {
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',
-    instructions: ['Lie on back with knees bent', 'Push through heels to lift hips', 'Squeeze glutes at the top', 'Lower with control']
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+    category: 'strength',
+    instructions: ['Lie on back, knees bent, feet flat', 'Push through heels to lift hips', 'Squeeze glutes hard at top', 'Lower with control']
+  },
+  'Calf Raises': {
+    image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=600&q=80',
+    category: 'strength',
+    instructions: ['Stand on edge of step, heels hanging off', 'Rise up onto balls of feet', 'Squeeze calves at top', 'Lower heels below step level for stretch']
   },
   // Core
   'Plank': {
-    image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400&q=80',
-    instructions: ['Start on forearms and toes', 'Keep body in straight line', 'Engage core and glutes', 'Hold for desired time']
+    image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=600&q=80',
+    category: 'strength',
+    instructions: ['Start on forearms and toes', 'Keep body in straight line from head to heels', 'Engage core, glutes, and quads', 'Hold for 30-60 seconds']
+  },
+  'Plank Jacks': {
+    image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Start in plank position', 'Jump feet out wide then back together', 'Keep hips stable, core engaged', 'Maintain quick pace']
   },
   'Core Work': {
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',
-    instructions: ['Mix of crunches, leg raises, and planks', 'Focus on controlled movements', 'Breathe steadily throughout', 'Rest between sets']
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+    category: 'strength',
+    instructions: ['Combine crunches, leg raises, and planks', 'Perform each for 30-45 seconds', 'Rest 15 seconds between exercises', 'Complete 2-3 rounds']
   },
-  // Flexibility
+  'Core Circuit': {
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+    category: 'strength',
+    instructions: ['Plank 30s → Crunches 15 reps → Leg Raises 12 reps', 'Russian Twists 20 reps → Mountain Climbers 30s', 'Rest 1 minute between rounds', 'Complete 3 rounds']
+  },
+  'Leg Raises': {
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+    category: 'strength',
+    instructions: ['Lie flat on back, hands under hips', 'Raise straight legs to 90 degrees', 'Lower slowly without touching floor', 'Keep lower back pressed down']
+  },
+  // Flexibility / Recovery
   'Yoga': {
-    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80',
-    instructions: ['Flow through poses mindfully', 'Focus on breath and alignment', 'Hold poses for several breaths', 'Listen to your body']
+    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80',
+    category: 'flexibility',
+    instructions: ['Flow through poses mindfully with breath', 'Hold each pose for 3-5 breaths', 'Focus on alignment over depth', 'Listen to your body\'s limits']
   },
   'Stretching': {
-    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=80',
-    instructions: ['Hold each stretch 20-30 seconds', 'Breathe deeply and relax into stretch', 'Never bounce or force', 'Stretch both sides equally']
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80',
+    category: 'flexibility',
+    instructions: ['Hold each stretch for 20-30 seconds', 'Breathe deeply and relax into stretch', 'Never bounce or force the stretch', 'Stretch both sides equally']
   },
-  'default': {
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80',
-    instructions: ['Follow proper form', 'Control the movement', 'Breathe steadily', 'Rest as needed']
+  'Light Stretching': {
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80',
+    category: 'flexibility',
+    instructions: ['Gentle stretches for all major muscle groups', 'Hold 15-20 seconds each', 'Focus on areas that feel tight', 'Perfect for recovery days']
+  },
+  'Sun Salutations': {
+    image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80',
+    category: 'flexibility',
+    instructions: ['Mountain pose → Forward fold → Halfway lift', 'Plank → Chaturanga → Upward dog → Downward dog', 'Step forward → Rise to mountain pose', 'Flow with breath, one movement per breath']
+  },
+  'Foam rolling': {
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80',
+    category: 'flexibility',
+    instructions: ['Roll slowly over each muscle group', 'Pause on tender spots for 30-60 seconds', 'Avoid rolling directly on joints', 'Great for recovery and mobility']
+  },
+  'Light Jogging': {
+    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Easy conversational pace', 'Focus on relaxed form', 'Great for active recovery', '10-20 minutes duration']
+  },
+  'Rowing': {
+    image: 'https://images.unsplash.com/photo-1519505907962-0a6cb0167c73?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Drive with legs first, then pull with arms', 'Keep back straight throughout', 'Return by extending arms, then bending knees', 'Maintain steady rhythm']
+  },
+  'Swimming': {
+    image: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Full body, low-impact exercise', 'Focus on proper breathing technique', 'Alternate strokes for variety', 'Great for endurance and recovery']
+  },
+  'Cycling': {
+    image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=80',
+    category: 'cardio',
+    instructions: ['Maintain steady cadence (70-90 RPM)', 'Keep core engaged', 'Adjust resistance for desired intensity', 'Great low-impact cardio option']
   },
 };
 
+// Default exercise data for any unlisted exercises
+const DEFAULT_EXERCISE = {
+  image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80',
+  category: 'strength',
+  instructions: ['Maintain proper form throughout', 'Control the movement', 'Breathe steadily - exhale on effort', 'Rest as needed between sets']
+};
+
 const getExerciseData = (exerciseName: string) => {
+  // Direct match
   if (EXERCISE_DATA[exerciseName]) {
     return EXERCISE_DATA[exerciseName];
   }
+  
+  // Partial match
   const lowerName = exerciseName.toLowerCase();
   for (const [key, data] of Object.entries(EXERCISE_DATA)) {
     if (lowerName.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerName)) {
       return data;
     }
   }
-  return EXERCISE_DATA['default'];
+  
+  return DEFAULT_EXERCISE;
 };
 
 export default function PlansScreen() {
@@ -156,12 +317,22 @@ export default function PlansScreen() {
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
-  const [videoStatus, setVideoStatus] = useState<any>({});
+  const [videoLoading, setVideoLoading] = useState(true);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef<Video>(null);
 
   useEffect(() => {
-    loadPlans();
-    loadActivePlan();
+    loadData();
   }, [userId]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([loadPlans(), loadActivePlan()]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadPlans = async () => {
     try {
@@ -169,8 +340,6 @@ export default function PlansScreen() {
       setPlans(data.plans || []);
     } catch (error) {
       console.error('Error loading plans:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -180,7 +349,6 @@ export default function PlansScreen() {
       const response = await axios.get(`${API_URL}/api/user-plans/${userId}?status=active`);
       if (response.data.plans && response.data.plans.length > 0) {
         const userPlan = response.data.plans[0];
-        // Get full plan details
         const planResponse = await plansAPI.getWorkoutPlans();
         const fullPlan = planResponse.plans?.find((p: any) => p.plan_id === userPlan.plan_id);
         if (fullPlan) {
@@ -198,10 +366,36 @@ export default function PlansScreen() {
     setShowPlanDetail(true);
   };
 
+  const handleClosePlanDetail = () => {
+    setShowPlanDetail(false);
+    setSelectedDay(null);
+    // Small delay to prevent state issues
+    setTimeout(() => {
+      setSelectedPlan(null);
+    }, 300);
+  };
+
   const handleExercisePress = (exerciseName: string) => {
     const exerciseData = getExerciseData(exerciseName);
     setSelectedExercise({ name: exerciseName, ...exerciseData });
+    setVideoLoading(true);
+    setVideoError(false);
     setShowExerciseModal(true);
+  };
+
+  const handleCloseExerciseModal = async () => {
+    // Stop video before closing
+    if (videoRef.current) {
+      try {
+        await videoRef.current.stopAsync();
+      } catch (e) {}
+    }
+    setShowExerciseModal(false);
+    setTimeout(() => {
+      setSelectedExercise(null);
+      setVideoLoading(true);
+      setVideoError(false);
+    }, 300);
   };
 
   const handleStartPlan = async () => {
@@ -222,8 +416,8 @@ export default function PlansScreen() {
       };
 
       await plansAPI.startPlan(userPlanData);
-      Alert.alert('Plan Activated!', 'Your progress will be tracked here in the Plans tab. Come back daily to complete your workouts!');
-      setShowPlanDetail(false);
+      Alert.alert('Plan Activated!', 'Your progress will be tracked here. Come back daily to complete your workouts!');
+      handleClosePlanDetail();
       loadActivePlan();
     } catch (error) {
       Alert.alert('Error', 'Failed to start plan');
@@ -262,6 +456,10 @@ export default function PlansScreen() {
     }
   };
 
+  const getVideoForCategory = (category: string) => {
+    return WORKOUT_VIDEOS[category as keyof typeof WORKOUT_VIDEOS] || WORKOUT_VIDEOS.strength;
+  };
+
   const renderActivePlanProgress = () => {
     if (!activePlan) return null;
     
@@ -278,7 +476,7 @@ export default function PlansScreen() {
           end={{ x: 1, y: 0 }}
         >
           <View style={styles.activePlanHeader}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.activePlanLabel}>ACTIVE PLAN</Text>
               <Text style={styles.activePlanName}>{activePlan.name}</Text>
             </View>
@@ -296,10 +494,9 @@ export default function PlansScreen() {
           </Text>
         </LinearGradient>
         
-        {/* Today's Workout */}
         <View style={styles.todayWorkout}>
           <Text style={[styles.todayLabel, { color: colors.text.primary }]}>Today's Workout</Text>
-          {activePlan.days && activePlan.days[activePlan.progress?.current_day - 1] ? (
+          {activePlan.days && activePlan.progress?.current_day <= activePlan.days.length ? (
             <View>
               <TouchableOpacity 
                 style={[styles.todayWorkoutCard, { backgroundColor: colors.background.elevated }]}
@@ -310,10 +507,10 @@ export default function PlansScreen() {
                     Day {activePlan.progress?.current_day || 1}
                   </Text>
                   <Text style={[styles.todayWorkoutName, { color: colors.text.primary }]}>
-                    {activePlan.days[activePlan.progress?.current_day - 1]?.name}
+                    {activePlan.days[(activePlan.progress?.current_day || 1) - 1]?.name}
                   </Text>
                   <Text style={[styles.todayWorkoutMeta, { color: colors.text.secondary }]}>
-                    {activePlan.days[activePlan.progress?.current_day - 1]?.duration_minutes} min • {activePlan.days[activePlan.progress?.current_day - 1]?.exercises?.length} exercises
+                    {activePlan.days[(activePlan.progress?.current_day || 1) - 1]?.duration_minutes} min • {activePlan.days[(activePlan.progress?.current_day || 1) - 1]?.exercises?.length} exercises
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color={colors.text.muted} />
@@ -328,64 +525,24 @@ export default function PlansScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <Text style={[styles.planComplete, { color: colors.text.secondary }]}>
-              🎉 Congratulations! You've completed this plan!
-            </Text>
+            <View style={[styles.completedBanner, { backgroundColor: '#10B98120' }]}>
+              <Ionicons name="trophy" size={32} color="#10B981" />
+              <Text style={[styles.completedText, { color: '#10B981' }]}>
+                🎉 Congratulations! You've completed this plan!
+              </Text>
+            </View>
           )}
         </View>
       </View>
     );
   };
 
-  const renderPlanCard = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={[styles.planCard, { backgroundColor: colors.background.card }]}
-      onPress={() => handlePlanPress(item)}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={getGoalGradient(item.goal)}
-        style={styles.planCardGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <View style={styles.planCardHeader}>
-          <View style={styles.planBadge}>
-            {item.is_ai_generated && (
-              <View style={styles.aiBadge}>
-                <MaterialCommunityIcons name="robot" size={12} color="#fff" />
-                <Text style={styles.aiBadgeText}>AI</Text>
-              </View>
-            )}
-            <View style={[styles.levelBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <Text style={styles.levelText}>{item.level?.toUpperCase()}</Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.8)" />
-        </View>
-        
-        <Text style={styles.planName}>{item.name}</Text>
-        <Text style={styles.planDescription} numberOfLines={2}>{item.description}</Text>
-        
-        <View style={styles.planMeta}>
-          <View style={styles.metaItem}>
-            <Ionicons name="calendar" size={16} color="rgba(255,255,255,0.9)" />
-            <Text style={styles.metaText}>{item.duration_weeks} weeks</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="fitness" size={16} color="rgba(255,255,255,0.9)" />
-            <Text style={styles.metaText}>{item.days?.length || 0} days</Text>
-          </View>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={accent.primary} />
+          <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Loading plans...</Text>
         </View>
       </SafeAreaView>
     );
@@ -393,13 +550,14 @@ export default function PlansScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={[styles.header, { color: colors.text.primary }]}>Workout Plans</Text>
         
-        {/* Active Plan Progress */}
         {renderActivePlanProgress()}
         
-        {/* Available Plans */}
         <Text style={[styles.sectionHeader, { color: colors.text.primary }]}>
           {activePlan ? 'Other Plans' : 'Choose a Plan'}
         </Text>
@@ -414,9 +572,48 @@ export default function PlansScreen() {
           </View>
         ) : (
           plans.map((plan) => (
-            <View key={plan.plan_id}>
-              {renderPlanCard({ item: plan })}
-            </View>
+            <TouchableOpacity 
+              key={plan.plan_id}
+              style={[styles.planCard, { backgroundColor: colors.background.card }]}
+              onPress={() => handlePlanPress(plan)}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={getGoalGradient(plan.goal)}
+                style={styles.planCardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.planCardHeader}>
+                  <View style={styles.planBadge}>
+                    {plan.is_ai_generated && (
+                      <View style={styles.aiBadge}>
+                        <MaterialCommunityIcons name="robot" size={12} color="#fff" />
+                        <Text style={styles.aiBadgeText}>AI</Text>
+                      </View>
+                    )}
+                    <View style={styles.levelBadge}>
+                      <Text style={styles.levelText}>{plan.level?.toUpperCase()}</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.8)" />
+                </View>
+                
+                <Text style={styles.planName}>{plan.name}</Text>
+                <Text style={styles.planDescription} numberOfLines={2}>{plan.description}</Text>
+                
+                <View style={styles.planMeta}>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="calendar" size={16} color="rgba(255,255,255,0.9)" />
+                    <Text style={styles.metaText}>{plan.duration_weeks} weeks</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="fitness" size={16} color="rgba(255,255,255,0.9)" />
+                    <Text style={styles.metaText}>{plan.days?.length || 0} days</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>
@@ -426,14 +623,14 @@ export default function PlansScreen() {
         visible={showPlanDetail}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowPlanDetail(false)}
+        onRequestClose={handleClosePlanDetail}
       >
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background.primary }]}>
           {selectedPlan && (
             <>
               <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
-                <TouchableOpacity onPress={() => setShowPlanDetail(false)} style={styles.closeButton}>
-                  <Ionicons name="close" size={24} color={colors.text.primary} />
+                <TouchableOpacity onPress={handleClosePlanDetail} style={styles.closeButton}>
+                  <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
                 <Text style={[styles.modalTitle, { color: colors.text.primary }]} numberOfLines={1}>
                   {selectedPlan.name}
@@ -446,7 +643,6 @@ export default function PlansScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
               >
-                {/* Plan Overview */}
                 <LinearGradient colors={getGoalGradient(selectedPlan.goal)} style={styles.planOverview}>
                   {selectedPlan.is_ai_generated && (
                     <View style={styles.aiGeneratedBadge}>
@@ -475,7 +671,6 @@ export default function PlansScreen() {
                   </View>
                 </LinearGradient>
 
-                {/* Workout Days */}
                 <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Workout Schedule</Text>
                 
                 {selectedPlan.days?.map((day: any, index: number) => (
@@ -502,7 +697,6 @@ export default function PlansScreen() {
                       />
                     </TouchableOpacity>
                     
-                    {/* Expanded Exercises - Vertical List */}
                     {selectedDay?.day === day.day && (
                       <View style={styles.exercisesContainer}>
                         {day.exercises?.map((exercise: string, i: number) => {
@@ -519,7 +713,7 @@ export default function PlansScreen() {
                               />
                               <View style={styles.exerciseInfo}>
                                 <Text style={[styles.exerciseName, { color: colors.text.primary }]}>{exercise}</Text>
-                                <Text style={[styles.exerciseHint, { color: colors.text.secondary }]}>Tap to view tutorial</Text>
+                                <Text style={[styles.exerciseHint, { color: colors.text.secondary }]}>Tap for video tutorial</Text>
                               </View>
                               <View style={[styles.playIcon, { backgroundColor: accent.primary }]}>
                                 <Ionicons name="play" size={16} color="#fff" />
@@ -532,7 +726,6 @@ export default function PlansScreen() {
                   </View>
                 ))}
 
-                {/* Start Plan Button */}
                 {!activePlan || activePlan.plan_id !== selectedPlan.plan_id ? (
                   <TouchableOpacity
                     style={[styles.startPlanButton, { backgroundColor: accent.primary }]}
@@ -544,7 +737,7 @@ export default function PlansScreen() {
                 ) : (
                   <View style={[styles.activePlanBanner, { backgroundColor: '#10B98120' }]}>
                     <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-                    <Text style={[styles.activePlanBannerText, { color: '#10B981' }]}>This is your active plan</Text>
+                    <Text style={styles.activePlanBannerText}>This is your active plan</Text>
                   </View>
                 )}
               </ScrollView>
@@ -553,48 +746,70 @@ export default function PlansScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* Exercise Detail Modal */}
+      {/* Exercise Tutorial Modal */}
       <Modal
         visible={showExerciseModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowExerciseModal(false)}
+        onRequestClose={handleCloseExerciseModal}
       >
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background.primary }]}>
           {selectedExercise && (
             <>
               <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
-                <TouchableOpacity onPress={() => setShowExerciseModal(false)} style={styles.closeButton}>
-                  <Ionicons name="close" size={24} color={colors.text.primary} />
+                <TouchableOpacity onPress={handleCloseExerciseModal} style={styles.closeButton}>
+                  <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
                 <Text style={[styles.modalTitle, { color: colors.text.primary }]}>{selectedExercise.name}</Text>
                 <View style={{ width: 40 }} />
               </View>
 
               <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 40 }}>
-                {/* Video or Image */}
+                {/* Video Player */}
                 <View style={styles.mediaContainer}>
-                  {selectedExercise.video ? (
+                  {videoLoading && (
+                    <View style={styles.videoLoading}>
+                      <ActivityIndicator size="large" color="#fff" />
+                      <Text style={styles.videoLoadingText}>Loading video...</Text>
+                    </View>
+                  )}
+                  
+                  {videoError ? (
+                    <View style={styles.videoErrorContainer}>
+                      <Image 
+                        source={{ uri: selectedExercise.image }}
+                        style={styles.exerciseFullImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.videoErrorOverlay}>
+                        <Ionicons name="image" size={32} color="#fff" />
+                        <Text style={styles.videoErrorText}>See instructions below</Text>
+                      </View>
+                    </View>
+                  ) : (
                     <Video
-                      source={{ uri: selectedExercise.video }}
+                      ref={videoRef}
+                      source={{ uri: getVideoForCategory(selectedExercise.category) }}
                       style={styles.exerciseVideo}
                       useNativeControls
                       resizeMode={ResizeMode.COVER}
                       isLooping
                       shouldPlay={false}
-                    />
-                  ) : (
-                    <Image 
-                      source={{ uri: selectedExercise.image }}
-                      style={styles.exerciseFullImage}
-                      resizeMode="cover"
+                      onLoadStart={() => setVideoLoading(true)}
+                      onLoad={() => setVideoLoading(false)}
+                      onError={() => {
+                        setVideoLoading(false);
+                        setVideoError(true);
+                      }}
                     />
                   )}
                 </View>
 
                 {/* Instructions */}
                 <View style={styles.instructionsContainer}>
-                  <Text style={[styles.instructionsTitle, { color: colors.text.primary }]}>How to Perform</Text>
+                  <Text style={[styles.instructionsTitle, { color: colors.text.primary }]}>
+                    How to Perform {selectedExercise.name}
+                  </Text>
                   {selectedExercise.instructions?.map((instruction: string, i: number) => (
                     <View key={i} style={styles.instructionRow}>
                       <View style={[styles.instructionNumber, { backgroundColor: accent.primary }]}>
@@ -611,7 +826,7 @@ export default function PlansScreen() {
                   <View style={styles.tipsContent}>
                     <Text style={[styles.tipsTitle, { color: colors.text.primary }]}>Pro Tip</Text>
                     <Text style={[styles.tipsText, { color: colors.text.secondary }]}>
-                      Focus on controlled movements rather than speed. Quality over quantity!
+                      Focus on controlled movements and proper form. Quality over quantity will give you better results and prevent injuries!
                     </Text>
                   </View>
                 </View>
@@ -627,10 +842,11 @@ export default function PlansScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, fontSize: 14 },
   scrollContent: { padding: 16, paddingBottom: 100 },
   header: { fontSize: 28, fontWeight: '800', marginBottom: 20 },
   sectionHeader: { fontSize: 18, fontWeight: '700', marginTop: 24, marginBottom: 16 },
-  // Active Plan Card
+  // Active Plan
   activePlanCard: { borderRadius: 20, overflow: 'hidden', marginBottom: 8 },
   activePlanGradient: { padding: 20 },
   activePlanHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -650,15 +866,16 @@ const styles = StyleSheet.create({
   todayWorkoutMeta: { fontSize: 13, marginTop: 4 },
   completeButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 12, marginTop: 12, gap: 8 },
   completeButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  planComplete: { fontSize: 16, textAlign: 'center', padding: 20 },
+  completedBanner: { padding: 20, borderRadius: 12, alignItems: 'center' },
+  completedText: { fontSize: 16, fontWeight: '600', marginTop: 8, textAlign: 'center' },
   // Plan Card
-  planCard: { borderRadius: 20, marginBottom: 16, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 5 },
+  planCard: { borderRadius: 20, marginBottom: 16, overflow: 'hidden' },
   planCardGradient: { padding: 20 },
   planCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   planBadge: { flexDirection: 'row', gap: 8 },
   aiBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, gap: 4 },
   aiBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  levelBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  levelBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   levelText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   planName: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 8 },
   planDescription: { fontSize: 14, color: 'rgba(255,255,255,0.85)', lineHeight: 20, marginBottom: 16 },
@@ -702,11 +919,16 @@ const styles = StyleSheet.create({
   startPlanButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginHorizontal: 16, marginTop: 24, paddingVertical: 16, borderRadius: 16, gap: 10 },
   startPlanButtonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   activePlanBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginHorizontal: 16, marginTop: 24, paddingVertical: 16, borderRadius: 16, gap: 10 },
-  activePlanBannerText: { fontSize: 16, fontWeight: '600' },
-  // Exercise Modal
-  mediaContainer: { width: '100%', aspectRatio: 16/9, backgroundColor: '#000' },
+  activePlanBannerText: { fontSize: 16, fontWeight: '600', color: '#10B981' },
+  // Exercise Tutorial Modal
+  mediaContainer: { width: '100%', aspectRatio: 16/9, backgroundColor: '#000', position: 'relative' },
   exerciseVideo: { width: '100%', height: '100%' },
   exerciseFullImage: { width: '100%', height: '100%' },
+  videoLoading: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.7)' },
+  videoLoadingText: { color: '#fff', marginTop: 8, fontSize: 14 },
+  videoErrorContainer: { width: '100%', height: '100%', position: 'relative' },
+  videoErrorOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center' },
+  videoErrorText: { color: '#fff', marginTop: 4, fontSize: 14 },
   instructionsContainer: { padding: 20 },
   instructionsTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
   instructionRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
