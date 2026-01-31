@@ -178,24 +178,33 @@ export default function FitnessGoalsScreen() {
   };
 
   const handleGoToPlans = () => {
+    // Close modal first, then navigate after a brief delay to prevent black screen
     setShowTransition(false);
-    router.replace('/(tabs)/plans');
+    setTimeout(() => {
+      router.push('/(tabs)/plans');
+      // Show walkthrough prompt after they've seen their plan
+      setTimeout(() => {
+        setShowWalkthroughPrompt(true);
+      }, 1500);
+    }, 300);
   };
 
   const handleShowWalkthrough = () => {
     setShowTransition(false);
-    setShowWalkthroughPrompt(true);
+    setTimeout(() => {
+      setShowWalkthroughPrompt(true);
+    }, 300);
   };
 
   const handleStartWalkthrough = () => {
     setShowWalkthroughPrompt(false);
-    // Navigate to dashboard with walkthrough flag
-    router.replace('/(tabs)?showWalkthrough=true');
+    router.replace('/(tabs)');
   };
 
   const handleSkipWalkthrough = () => {
     setShowWalkthroughPrompt(false);
-    router.replace('/(tabs)');
+    // If already on tabs, just close the modal
+    // Otherwise navigate to tabs
   };
 
   return (
