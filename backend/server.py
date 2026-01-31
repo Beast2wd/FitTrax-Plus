@@ -2118,6 +2118,22 @@ async def get_workout_plan(plan_id: str):
     plan.pop('_id', None)
     return plan
 
+@api_router.delete("/workout-plans/{plan_id}")
+async def delete_workout_plan(plan_id: str):
+    """Delete a workout plan"""
+    try:
+        result = await db.workout_plans.delete_one({"plan_id": plan_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Workout plan not found")
+        
+        # Also delete any user_plans referencing this plan
+        await db.user_workout_plans.delete_many({"plan_id": plan_id})
+        
+        return {"success": True, "message": "Plan deleted successfully"}
+    except Exception as e:
+        logger.error(f"Error deleting workout plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # USER PLANS ENDPOINTS
 # ============================================================================
