@@ -406,10 +406,10 @@ export default function FitnessGoalsScreen() {
 
                   <TouchableOpacity
                     style={styles.secondaryButton}
-                    onPress={handleGoToProfile}
+                    onPress={handleGoToDashboard}
                   >
                     <Text style={styles.secondaryButtonText}>
-                      No, Continue to Profile Setup
+                      No, Take Me to Dashboard
                     </Text>
                   </TouchableOpacity>
                 </View>
