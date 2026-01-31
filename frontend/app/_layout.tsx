@@ -57,15 +57,21 @@ export default function RootLayout() {
       return;
     }
     
+    // Don't auto-redirect from TOS screen - let TOS screen handle its own navigation
+    // This prevents double redirect when user accepts TOS
+    if (inTosScreen) {
+      return;
+    }
+    
     // User has accepted TOS but hasn't set up profile yet
     // Only redirect to onboarding if not already in onboarding flow or tabs
-    if (hasTosAccepted && !hasProfile && !inOnboardingScreen && !inFitnessGoalsScreen && !inTosScreen && !inTabsScreen) {
+    if (hasTosAccepted && !hasProfile && !inOnboardingScreen && !inFitnessGoalsScreen && !inTabsScreen) {
       router.replace('/onboarding');
       return;
     }
     
     // User has completed both TOS and onboarding, but is still on those screens
-    if (hasTosAccepted && hasProfile && (inTosScreen || inOnboardingScreen || inFitnessGoalsScreen)) {
+    if (hasTosAccepted && hasProfile && (inOnboardingScreen || inFitnessGoalsScreen)) {
       router.replace('/(tabs)');
       return;
     }
