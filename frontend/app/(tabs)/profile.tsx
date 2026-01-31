@@ -186,6 +186,10 @@ export default function ProfileScreen() {
       Alert.alert('Error', 'Please enter your name');
       return;
     }
+    
+    // Check if this is a first-time setup (no existing profile name)
+    const isFirstTimeSetup = !profile?.name;
+    
     try {
       setLoading(true);
       const profileData = {
@@ -197,7 +201,17 @@ export default function ProfileScreen() {
       setProfile(result.profile);
       await storage.saveUserProfile(result.profile);
       await storage.setOnboardingComplete();
-      Alert.alert('Success', 'Profile saved!');
+      
+      // If first-time setup, navigate to fitness goals
+      if (isFirstTimeSetup) {
+        Alert.alert(
+          'Profile Created!', 
+          'Now let\'s set your fitness goals to personalize your workout plan.',
+          [{ text: 'Continue', onPress: () => router.push('/fitness-goals') }]
+        );
+      } else {
+        Alert.alert('Success', 'Profile saved!');
+      }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to save profile');
     } finally {
