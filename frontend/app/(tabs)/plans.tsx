@@ -420,6 +420,116 @@ export default function PlansScreen() {
     }, 300);
   };
 
+  // Remove a single fitness goal
+  const handleRemoveGoal = async (goalId: string) => {
+    Alert.alert(
+      'Remove Goal',
+      `Remove "${GOAL_LABELS[goalId]?.label}" from your fitness goals?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            const newGoals = fitnessGoals.filter(g => g !== goalId);
+            setFitnessGoals(newGoals);
+            if (userId) {
+              try {
+                await axios.post(`${API_URL}/api/profile/fitness-goals`, {
+                  user_id: userId,
+                  fitness_goals: newGoals,
+                });
+              } catch (error) {
+                console.error('Error updating goals:', error);
+              }
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Reset all fitness goals
+  const handleResetAllGoals = () => {
+    Alert.alert(
+      'Reset All Goals',
+      'Remove all your fitness goals? You can set new ones after.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            setFitnessGoals([]);
+            if (userId) {
+              try {
+                await axios.post(`${API_URL}/api/profile/fitness-goals`, {
+                  user_id: userId,
+                  fitness_goals: [],
+                });
+              } catch (error) {
+                console.error('Error resetting goals:', error);
+              }
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Delete a single workout plan
+  const handleDeletePlan = async (planId: string, planName: string) => {
+    Alert.alert(
+      'Delete Plan',
+      `Delete "${planName}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/workout-plans/${planId}`);
+              setPlans(prev => prev.filter(p => p.plan_id !== planId));
+              if (activePlan?.plan_id === planId) {
+                setActivePlan(null);
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete plan');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Clear all workout plans
+  const handleClearAllPlans = () => {
+    Alert.alert(
+      'Clear All Plans',
+      'Delete all your workout plans? You can create new ones from your fitness goals.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Delete all plans for this user
+              for (const plan of plans) {
+                await axios.delete(`${API_URL}/api/workout-plans/${plan.plan_id}`);
+              }
+              setPlans([]);
+              setActivePlan(null);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to clear plans');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleStartPlan = async () => {
     if (!userId || !selectedPlan) {
       Alert.alert('Error', 'Please complete your profile first');
