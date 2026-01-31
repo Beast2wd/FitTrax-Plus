@@ -1973,7 +1973,7 @@ async def get_workout_plans(
     return {"plans": plans}
 
 class AIWorkoutPlanRequest(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     goals: List[str]
     goal_descriptions: str
     workout_types: List[str]
@@ -1982,6 +1982,9 @@ class AIWorkoutPlanRequest(BaseModel):
 async def generate_ai_workout_plan(request: AIWorkoutPlanRequest):
     """Generate a personalized AI workout plan based on fitness goals"""
     try:
+        # Use a default user_id if not provided
+        effective_user_id = request.user_id or f"temp_user_{int(datetime.utcnow().timestamp())}"
+        
         # Map goals to workout plan parameters
         goal_plan_mapping = {
             'weight_loss': {'focus': 'fat burning', 'cardio_ratio': 0.6, 'strength_ratio': 0.4},
