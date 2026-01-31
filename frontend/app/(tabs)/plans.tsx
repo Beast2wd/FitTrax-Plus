@@ -823,7 +823,16 @@ export default function PlansScreen() {
                   </View>
                 </View>
               </LinearGradient>
-            </TouchableOpacity>
+              </TouchableOpacity>
+              
+              {/* Delete Plan Button */}
+              <TouchableOpacity 
+                style={styles.deletePlanBtn}
+                onPress={() => handleDeletePlan(plan.plan_id, plan.name)}
+              >
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
           ))
         )}
       </ScrollView>
