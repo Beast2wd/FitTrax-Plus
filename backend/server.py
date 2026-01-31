@@ -1972,6 +1972,139 @@ async def get_workout_plans(
     
     return {"plans": plans}
 
+class AIWorkoutPlanRequest(BaseModel):
+    user_id: str
+    goals: List[str]
+    goal_descriptions: str
+    workout_types: List[str]
+
+@api_router.post("/ai/generate-workout-plan")
+async def generate_ai_workout_plan(request: AIWorkoutPlanRequest):
+    """Generate a personalized AI workout plan based on fitness goals"""
+    try:
+        # Map goals to workout plan parameters
+        goal_plan_mapping = {
+            'weight_loss': {'focus': 'fat burning', 'cardio_ratio': 0.6, 'strength_ratio': 0.4},
+            'muscle_gain': {'focus': 'hypertrophy', 'cardio_ratio': 0.2, 'strength_ratio': 0.8},
+            'endurance': {'focus': 'cardiovascular', 'cardio_ratio': 0.7, 'strength_ratio': 0.3},
+            'flexibility': {'focus': 'mobility', 'cardio_ratio': 0.3, 'strength_ratio': 0.3, 'flexibility_ratio': 0.4},
+            'tone': {'focus': 'definition', 'cardio_ratio': 0.4, 'strength_ratio': 0.6},
+            'general': {'focus': 'overall fitness', 'cardio_ratio': 0.5, 'strength_ratio': 0.5},
+        }
+        
+        # Determine primary goal
+        primary_goal = request.goals[0] if request.goals else 'general'
+        goal_config = goal_plan_mapping.get(primary_goal, goal_plan_mapping['general'])
+        
+        # Determine workout type
+        workout_type = request.workout_types[0] if request.workout_types else 'mixed'
+        
+        # Generate plan name
+        goal_names = {
+            'weight_loss': 'Fat Burner',
+            'muscle_gain': 'Muscle Builder',
+            'endurance': 'Endurance Builder',
+            'flexibility': 'Flexibility Focus',
+            'tone': 'Total Body Tone',
+            'general': 'Complete Fitness'
+        }
+        plan_name = f"AI {goal_names.get(primary_goal, 'Custom')} Program"
+        
+        # Generate workout days based on goals
+        workout_days = []
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        
+        if primary_goal == 'weight_loss':
+            workout_days = [
+                {'day': 1, 'name': 'HIIT Cardio', 'exercises': ['Jumping Jacks', 'Burpees', 'Mountain Climbers', 'High Knees', 'Box Jumps'], 'duration_minutes': 30},
+                {'day': 2, 'name': 'Strength + Cardio', 'exercises': ['Squats', 'Lunges', 'Push-ups', 'Rowing', 'Plank'], 'duration_minutes': 45},
+                {'day': 3, 'name': 'Active Recovery', 'exercises': ['Light Jogging', 'Stretching', 'Yoga'], 'duration_minutes': 30},
+                {'day': 4, 'name': 'HIIT Cardio', 'exercises': ['Sprint Intervals', 'Jumping Lunges', 'Burpees', 'Jump Rope'], 'duration_minutes': 30},
+                {'day': 5, 'name': 'Full Body Circuit', 'exercises': ['Deadlifts', 'Pull-ups', 'Dips', 'Core Work'], 'duration_minutes': 45},
+            ]
+        elif primary_goal == 'muscle_gain':
+            workout_days = [
+                {'day': 1, 'name': 'Push Day', 'exercises': ['Bench Press', 'Shoulder Press', 'Tricep Dips', 'Chest Flyes', 'Lateral Raises'], 'duration_minutes': 60},
+                {'day': 2, 'name': 'Pull Day', 'exercises': ['Deadlifts', 'Rows', 'Pull-ups', 'Bicep Curls', 'Face Pulls'], 'duration_minutes': 60},
+                {'day': 3, 'name': 'Rest', 'exercises': ['Light Stretching'], 'duration_minutes': 20},
+                {'day': 4, 'name': 'Legs', 'exercises': ['Squats', 'Leg Press', 'Lunges', 'Leg Curls', 'Calf Raises'], 'duration_minutes': 60},
+                {'day': 5, 'name': 'Push Day', 'exercises': ['Incline Press', 'Arnold Press', 'Skull Crushers', 'Cable Flyes'], 'duration_minutes': 60},
+                {'day': 6, 'name': 'Pull Day', 'exercises': ['Barbell Rows', 'Lat Pulldowns', 'Hammer Curls', 'Shrugs'], 'duration_minutes': 60},
+            ]
+        elif primary_goal == 'endurance':
+            workout_days = [
+                {'day': 1, 'name': 'Long Run', 'exercises': ['45-60 min steady-state run'], 'duration_minutes': 60},
+                {'day': 2, 'name': 'Cross Training', 'exercises': ['Cycling', 'Swimming', 'Rowing'], 'duration_minutes': 45},
+                {'day': 3, 'name': 'Tempo Run', 'exercises': ['Warm-up', 'Tempo pace', 'Cool-down'], 'duration_minutes': 40},
+                {'day': 4, 'name': 'Recovery', 'exercises': ['Light jog', 'Stretching', 'Foam rolling'], 'duration_minutes': 30},
+                {'day': 5, 'name': 'Interval Training', 'exercises': ['400m repeats', 'Hill sprints'], 'duration_minutes': 45},
+                {'day': 6, 'name': 'Long Run', 'exercises': ['Progressive long run'], 'duration_minutes': 75},
+            ]
+        elif primary_goal == 'flexibility':
+            workout_days = [
+                {'day': 1, 'name': 'Yoga Flow', 'exercises': ['Sun Salutations', 'Warrior poses', 'Balance poses'], 'duration_minutes': 45},
+                {'day': 2, 'name': 'Deep Stretch', 'exercises': ['Hip openers', 'Hamstring stretches', 'Shoulder stretches'], 'duration_minutes': 30},
+                {'day': 3, 'name': 'Pilates', 'exercises': ['Core work', 'Controlled movements', 'Breath work'], 'duration_minutes': 45},
+                {'day': 4, 'name': 'Active Recovery', 'exercises': ['Light walking', 'Gentle stretching'], 'duration_minutes': 30},
+                {'day': 5, 'name': 'Power Yoga', 'exercises': ['Vinyasa flow', 'Strength poses', 'Inversions'], 'duration_minutes': 60},
+            ]
+        else:  # tone or general
+            workout_days = [
+                {'day': 1, 'name': 'Upper Body', 'exercises': ['Push-ups', 'Rows', 'Shoulder Press', 'Bicep Curls', 'Tricep Extensions'], 'duration_minutes': 45},
+                {'day': 2, 'name': 'Cardio', 'exercises': ['Running', 'Jump Rope', 'Cycling'], 'duration_minutes': 35},
+                {'day': 3, 'name': 'Lower Body', 'exercises': ['Squats', 'Lunges', 'Glute Bridges', 'Leg Raises'], 'duration_minutes': 45},
+                {'day': 4, 'name': 'HIIT', 'exercises': ['Burpees', 'Mountain Climbers', 'Jump Squats', 'Plank Jacks'], 'duration_minutes': 30},
+                {'day': 5, 'name': 'Full Body', 'exercises': ['Deadlifts', 'Pull-ups', 'Dips', 'Core Circuit'], 'duration_minutes': 50},
+            ]
+        
+        # Create the plan
+        plan_id = f"ai_plan_{request.user_id}_{int(datetime.utcnow().timestamp())}"
+        
+        plan = {
+            'plan_id': plan_id,
+            'user_id': request.user_id,
+            'name': plan_name,
+            'description': f"A personalized {goal_config['focus']} program tailored to your goals: {request.goal_descriptions}. This AI-generated plan is designed to maximize results based on your fitness objectives.",
+            'type': workout_type,
+            'level': 'intermediate',
+            'duration_weeks': 4,
+            'goal': primary_goal,
+            'days': workout_days,
+            'created_at': datetime.utcnow().isoformat(),
+            'is_ai_generated': True,
+            'fitness_goals': request.goals,
+        }
+        
+        # Save to database
+        await db.workout_plans.insert_one(plan)
+        
+        # Also save to user's custom plans
+        await db.user_workout_plans.update_one(
+            {'user_id': request.user_id, 'plan_id': plan_id},
+            {'$set': {
+                'user_id': request.user_id,
+                'plan_id': plan_id,
+                'start_date': datetime.utcnow().strftime('%Y-%m-%d'),
+                'current_day': 1,
+                'completed_days': [],
+                'status': 'active',
+            }},
+            upsert=True
+        )
+        
+        # Remove MongoDB _id before returning
+        plan.pop('_id', None)
+        
+        return {
+            'success': True,
+            'plan': plan,
+            'message': 'AI workout plan generated successfully'
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating AI workout plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/workout-plans/{plan_id}")
 async def get_workout_plan(plan_id: str):
     """Get a single workout plan"""
