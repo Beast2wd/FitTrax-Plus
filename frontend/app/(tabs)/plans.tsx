@@ -320,7 +320,18 @@ export default function PlansScreen() {
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [videoLoading, setVideoLoading] = useState(true);
   const [videoError, setVideoError] = useState(false);
+  const [fitnessGoals, setFitnessGoals] = useState<string[]>([]);
   const videoRef = useRef<Video>(null);
+
+  // Fitness goal labels
+  const GOAL_LABELS: { [key: string]: { label: string; icon: string; color: string } } = {
+    weight_loss: { label: 'Lose Weight', icon: 'flame', color: '#EF4444' },
+    muscle_gain: { label: 'Build Muscle', icon: 'barbell', color: '#3B82F6' },
+    endurance: { label: 'Improve Endurance', icon: 'pulse', color: '#10B981' },
+    flexibility: { label: 'Increase Flexibility', icon: 'body', color: '#8B5CF6' },
+    tone: { label: 'Tone & Define', icon: 'fitness', color: '#F59E0B' },
+    general: { label: 'General Fitness', icon: 'heart', color: '#EC4899' },
+  };
 
   useEffect(() => {
     loadData();
@@ -329,7 +340,7 @@ export default function PlansScreen() {
   const loadData = async () => {
     setLoading(true);
     try {
-      await Promise.all([loadPlans(), loadActivePlan()]);
+      await Promise.all([loadPlans(), loadActivePlan(), loadFitnessGoals()]);
     } finally {
       setLoading(false);
     }
@@ -341,6 +352,16 @@ export default function PlansScreen() {
       setPlans(data.plans || []);
     } catch (error) {
       console.error('Error loading plans:', error);
+    }
+  };
+
+  const loadFitnessGoals = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`${API_URL}/api/profile/fitness-goals/${userId}`);
+      setFitnessGoals(response.data.fitness_goals || []);
+    } catch (error) {
+      console.error('Error loading fitness goals:', error);
     }
   };
 
