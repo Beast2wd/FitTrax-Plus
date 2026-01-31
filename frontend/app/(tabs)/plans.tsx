@@ -915,6 +915,18 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16, paddingBottom: 100 },
   header: { fontSize: 28, fontWeight: '800', marginBottom: 20 },
   sectionHeader: { fontSize: 18, fontWeight: '700', marginTop: 24, marginBottom: 16 },
+  // Fitness Goals Section
+  goalsSection: { borderRadius: 16, padding: 16, marginBottom: 16 },
+  goalsSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
+  goalsSectionTitle: { fontSize: 16, fontWeight: '700' },
+  goalsSectionSubtitle: { fontSize: 13, marginTop: 2 },
+  adjustGoalsBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, gap: 6 },
+  adjustGoalsBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  goalsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  goalTag: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, gap: 6 },
+  goalTagText: { fontSize: 13, fontWeight: '600' },
+  setGoalsPrompt: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', gap: 12 },
+  setGoalsPromptText: { flex: 1, fontSize: 14, lineHeight: 20 },
   // Active Plan
   activePlanCard: { borderRadius: 20, overflow: 'hidden', marginBottom: 8 },
   activePlanGradient: { padding: 20 },
