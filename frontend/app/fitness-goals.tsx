@@ -187,9 +187,9 @@ export default function FitnessGoalsScreen() {
     router.replace('/(tabs)/plans');
   };
 
-  const handleGoToProfile = () => {
+  const handleGoToDashboard = () => {
     setShowTransition(false);
-    router.replace('/(tabs)/profile');
+    router.replace('/(tabs)');
   };
 
   const getRecommendedWorkouts = () => {
