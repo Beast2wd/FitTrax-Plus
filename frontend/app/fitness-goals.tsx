@@ -307,7 +307,7 @@ export default function FitnessGoalsScreen() {
 
         <TouchableOpacity 
           style={styles.skipButton}
-          onPress={() => router.replace('/(tabs)/profile')}
+          onPress={() => router.replace('/(tabs)')}
         >
           <Text style={[styles.skipButtonText, { color: colors.text.muted }]}>
             Skip for now
