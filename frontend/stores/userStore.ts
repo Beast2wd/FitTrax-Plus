@@ -33,13 +33,13 @@ interface UserStore {
   tosAccepted: TosAcceptance | null;
   membershipStatus: MembershipStatus | null;
   isLoading: boolean;
-  lastMealLoggedAt: number | null; // Timestamp to trigger dashboard refresh
+  lastMealLoggedAt: number | null;
   setUserId: (userId: string) => void;
   setProfile: (profile: UserProfile) => void;
   setTosAccepted: (tos: TosAcceptance) => void;
   setMembershipStatus: (status: MembershipStatus) => void;
   setLoading: (loading: boolean) => void;
-  triggerMealRefresh: () => void; // Call this after logging a meal
+  triggerMealRefresh: () => void;
   clearUser: () => void;
 }
 
@@ -56,5 +56,11 @@ export const useUserStore = create<UserStore>((set) => ({
   setMembershipStatus: (membershipStatus) => set({ membershipStatus }),
   setLoading: (isLoading) => set({ isLoading }),
   triggerMealRefresh: () => set({ lastMealLoggedAt: Date.now() }),
-  clearUser: () => set({ userId: null, profile: null, tosAccepted: null, membershipStatus: null, lastMealLoggedAt: null }),
+  clearUser: () => set({ 
+    userId: null, 
+    profile: null, 
+    tosAccepted: null, 
+    membershipStatus: null, 
+    lastMealLoggedAt: null 
+  }),
 }));
