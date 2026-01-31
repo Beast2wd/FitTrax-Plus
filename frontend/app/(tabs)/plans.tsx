@@ -578,6 +578,53 @@ export default function PlansScreen() {
       >
         <Text style={[styles.header, { color: colors.text.primary }]}>Workout Plans</Text>
         
+        {/* My Fitness Goals Section */}
+        <View style={[styles.goalsSection, { backgroundColor: colors.background.card }]}>
+          <View style={styles.goalsSectionHeader}>
+            <View>
+              <Text style={[styles.goalsSectionTitle, { color: colors.text.primary }]}>My Fitness Goals</Text>
+              <Text style={[styles.goalsSectionSubtitle, { color: colors.text.secondary }]}>
+                {fitnessGoals.length > 0 ? 'Your personalized plan is based on these goals' : 'Set your goals to get a personalized plan'}
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={[styles.adjustGoalsBtn, { backgroundColor: accent.primary }]}
+              onPress={() => router.push('/fitness-goals')}
+            >
+              <Ionicons name="settings-outline" size={16} color="#fff" />
+              <Text style={styles.adjustGoalsBtnText}>
+                {fitnessGoals.length > 0 ? 'Adjust' : 'Set Goals'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {fitnessGoals.length > 0 ? (
+            <View style={styles.goalsGrid}>
+              {fitnessGoals.map((goalId) => {
+                const goal = GOAL_LABELS[goalId];
+                if (!goal) return null;
+                return (
+                  <View key={goalId} style={[styles.goalTag, { backgroundColor: `${goal.color}15` }]}>
+                    <Ionicons name={goal.icon as any} size={16} color={goal.color} />
+                    <Text style={[styles.goalTagText, { color: goal.color }]}>{goal.label}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.setGoalsPrompt, { borderColor: colors.border.primary }]}
+              onPress={() => router.push('/fitness-goals')}
+            >
+              <MaterialCommunityIcons name="target" size={24} color={accent.primary} />
+              <Text style={[styles.setGoalsPromptText, { color: colors.text.secondary }]}>
+                Tap to set your fitness goals and get an AI-powered workout plan
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+            </TouchableOpacity>
+          )}
+        </View>
+        
         {renderActivePlanProgress()}
         
         <Text style={[styles.sectionHeader, { color: colors.text.primary }]}>
