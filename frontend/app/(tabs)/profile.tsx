@@ -187,9 +187,6 @@ export default function ProfileScreen() {
       return;
     }
     
-    // Check if this is a first-time setup (no existing profile name)
-    const isFirstTimeSetup = !profile?.name;
-    
     try {
       setLoading(true);
       const profileData = {
@@ -198,19 +195,23 @@ export default function ProfileScreen() {
         custom_calorie_goal: isCustomCalorieGoal && customCalorieGoal ? parseInt(customCalorieGoal) : null,
       };
       const result = await userAPI.createOrUpdateProfile(profileData);
+      
+      // Check if user has fitness goals set
+      const hasExistingFitnessGoals = result.profile?.fitness_goals && result.profile.fitness_goals.length > 0;
+      
       setProfile(result.profile);
       await storage.saveUserProfile(result.profile);
       await storage.setOnboardingComplete();
       
-      // If first-time setup, navigate to fitness goals
-      if (isFirstTimeSetup) {
+      // If no fitness goals, navigate to fitness goals screen
+      if (!hasExistingFitnessGoals) {
         Alert.alert(
-          'Profile Created!', 
-          'Now let\'s set your fitness goals to personalize your workout plan.',
-          [{ text: 'Continue', onPress: () => router.push('/fitness-goals') }]
+          'Profile Saved!', 
+          'Now let\'s set your fitness goals to create a personalized workout plan.',
+          [{ text: 'Set My Goals', onPress: () => router.push('/fitness-goals') }]
         );
       } else {
-        Alert.alert('Success', 'Profile saved!');
+        Alert.alert('Success', 'Profile updated!');
       }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to save profile');
