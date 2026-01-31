@@ -21,8 +21,8 @@ export default function OnboardingScreen() {
       router.replace('/terms-of-service');
       return;
     }
-    // Navigate to fitness goals selection first
-    router.replace('/fitness-goals');
+    // Navigate to profile tab for setup first
+    router.replace('/(tabs)/profile');
   };
 
   return (
