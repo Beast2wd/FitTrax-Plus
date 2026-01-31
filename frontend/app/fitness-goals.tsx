@@ -6,6 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
+  Image,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,6 +20,10 @@ import { useUserStore } from '../stores/userStore';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const { width, height } = Dimensions.get('window');
+
+// Motivational workout image
+const MOTIVATION_IMAGE = 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?w=800&q=80';
 
 interface FitnessGoal {
   id: string;
@@ -85,6 +93,9 @@ export default function FitnessGoalsScreen() {
   
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const [planGenerating, setPlanGenerating] = useState(false);
 
   const toggleGoal = (goalId: string) => {
     setSelectedGoals(prev => {
@@ -98,6 +109,43 @@ export default function FitnessGoalsScreen() {
       }
       return [...prev, goalId];
     });
+  };
+
+  const generateAIPlan = async (goals: string[]) => {
+    setPlanGenerating(true);
+    try {
+      const selectedGoalDetails = FITNESS_GOALS.filter(g => goals.includes(g.id));
+      const goalDescriptions = selectedGoalDetails.map(g => g.title).join(', ');
+      
+      // Generate AI workout plan based on goals
+      const response = await axios.post(`${API_URL}/api/ai/generate-workout-plan`, {
+        user_id: userId,
+        goals: goals,
+        goal_descriptions: goalDescriptions,
+        workout_types: selectedGoalDetails.map(g => g.workoutType),
+      });
+      
+      if (response.data.success && response.data.plan) {
+        setGeneratedPlan(response.data.plan);
+        return response.data.plan;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error generating AI plan:', error);
+      // Create a fallback plan locally if API fails
+      const selectedGoalDetails = FITNESS_GOALS.filter(g => goals.includes(g.id));
+      const fallbackPlan = {
+        name: `My ${selectedGoalDetails[0]?.title || 'Fitness'} Plan`,
+        description: `A personalized plan focused on ${selectedGoalDetails.map(g => g.title.toLowerCase()).join(', ')}`,
+        duration_weeks: 4,
+        type: selectedGoalDetails[0]?.workoutType || 'mixed',
+        goal: goals[0] || 'general',
+      };
+      setGeneratedPlan(fallbackPlan);
+      return fallbackPlan;
+    } finally {
+      setPlanGenerating(false);
+    }
   };
 
   const handleContinue = async () => {
@@ -116,15 +164,29 @@ export default function FitnessGoalsScreen() {
         });
       }
       
-      // Navigate to profile setup
-      router.replace('/(tabs)/profile');
+      // Generate AI workout plan
+      await generateAIPlan(selectedGoals);
+      
+      // Show transition modal
+      setShowTransition(true);
+      
     } catch (error) {
       console.error('Error saving fitness goals:', error);
-      // Continue anyway - goals can be set later
-      router.replace('/(tabs)/profile');
+      // Continue anyway with transition
+      setShowTransition(true);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoToPlans = () => {
+    setShowTransition(false);
+    router.replace('/(tabs)/plans');
+  };
+
+  const handleGoToProfile = () => {
+    setShowTransition(false);
+    router.replace('/(tabs)/profile');
   };
 
   const getRecommendedWorkouts = () => {
@@ -207,7 +269,7 @@ export default function FitnessGoalsScreen() {
               })}
             </View>
             <Text style={[styles.summaryNote, { color: colors.text.muted }]}>
-              We'll recommend {getRecommendedWorkouts().join(', ')} workouts for you
+              We'll create a personalized AI workout plan for you
             </Text>
           </View>
         )}
@@ -221,17 +283,23 @@ export default function FitnessGoalsScreen() {
           onPress={handleContinue}
           disabled={loading}
         >
-          <Text style={[
-            styles.continueButtonText,
-            { color: selectedGoals.length > 0 ? '#fff' : colors.text.muted }
-          ]}>
-            {loading ? 'Saving...' : 'Continue to Profile Setup'}
-          </Text>
-          <Ionicons 
-            name="arrow-forward" 
-            size={20} 
-            color={selectedGoals.length > 0 ? '#fff' : colors.text.muted} 
-          />
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Text style={[
+                styles.continueButtonText,
+                { color: selectedGoals.length > 0 ? '#fff' : colors.text.muted }
+              ]}>
+                Create My Personalized Plan
+              </Text>
+              <Ionicons 
+                name="sparkles" 
+                size={20} 
+                color={selectedGoals.length > 0 ? '#fff' : colors.text.muted} 
+              />
+            </>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -243,6 +311,115 @@ export default function FitnessGoalsScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Transition Modal */}
+      <Modal
+        visible={showTransition}
+        animationType="fade"
+        transparent={false}
+      >
+        <View style={styles.transitionContainer}>
+          {/* Background Image */}
+          <Image
+            source={{ uri: MOTIVATION_IMAGE }}
+            style={styles.transitionImage}
+            resizeMode="cover"
+          />
+          
+          {/* Overlay Gradient */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
+            style={styles.transitionOverlay}
+          >
+            {planGenerating ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#fff" />
+                <Text style={styles.loadingText}>Creating your personalized plan...</Text>
+              </View>
+            ) : (
+              <View style={styles.transitionContent}>
+                {/* Success Icon */}
+                <View style={styles.successIcon}>
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.successIconGradient}
+                  >
+                    <Ionicons name="checkmark" size={40} color="#fff" />
+                  </LinearGradient>
+                </View>
+                
+                <Text style={styles.transitionTitle}>Your Plan is Ready!</Text>
+                
+                <Text style={styles.transitionSubtitle}>
+                  We've created a personalized workout plan based on your goals
+                </Text>
+
+                {generatedPlan && (
+                  <View style={styles.planPreview}>
+                    <Text style={styles.planPreviewName}>{generatedPlan.name}</Text>
+                    <Text style={styles.planPreviewDesc}>{generatedPlan.description}</Text>
+                    <View style={styles.planPreviewMeta}>
+                      <View style={styles.planPreviewMetaItem}>
+                        <Ionicons name="calendar" size={16} color="#10B981" />
+                        <Text style={styles.planPreviewMetaText}>
+                          {generatedPlan.duration_weeks || 4} weeks
+                        </Text>
+                      </View>
+                      <View style={styles.planPreviewMetaItem}>
+                        <Ionicons name="fitness" size={16} color="#10B981" />
+                        <Text style={styles.planPreviewMetaText}>
+                          {generatedPlan.type || 'Mixed'} training
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.locationInfo}>
+                  <Ionicons name="information-circle" size={20} color="#60A5FA" />
+                  <Text style={styles.locationInfoText}>
+                    Your plan has been saved to the <Text style={styles.locationHighlight}>Plans</Text> tab at the bottom of your screen
+                  </Text>
+                </View>
+
+                <Text style={styles.transitionQuestion}>
+                  Would you like to view your plan now?
+                </Text>
+
+                {/* Action Buttons */}
+                <View style={styles.transitionButtons}>
+                  <TouchableOpacity
+                    style={styles.primaryButton}
+                    onPress={handleGoToPlans}
+                  >
+                    <LinearGradient
+                      colors={['#10B981', '#059669']}
+                      style={styles.primaryButtonGradient}
+                    >
+                      <Ionicons name="arrow-forward" size={20} color="#fff" />
+                      <Text style={styles.primaryButtonText}>Yes, Take Me There</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.secondaryButton}
+                    onPress={handleGoToProfile}
+                  >
+                    <Text style={styles.secondaryButtonText}>
+                      No, Continue to Profile Setup
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Motivational Quote */}
+                <Text style={styles.motivationalQuote}>
+                  "The journey of a thousand miles begins with a single step"
+                </Text>
+              </View>
+            )}
+          </LinearGradient>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -369,5 +546,161 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
+  },
+  // Transition Modal Styles
+  transitionContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  transitionImage: {
+    position: 'absolute',
+    width: width,
+    height: height,
+    opacity: 0.6,
+  },
+  transitionOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: 50,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 18,
+    marginTop: 16,
+    fontWeight: '600',
+  },
+  transitionContent: {
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  successIcon: {
+    marginBottom: 20,
+  },
+  successIconGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  transitionTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  transitionSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  planPreview: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    padding: 16,
+    width: '100%',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  planPreviewName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  planPreviewDesc: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  planPreviewMeta: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  planPreviewMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  planPreviewMetaText: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    gap: 10,
+  },
+  locationInfoText: {
+    flex: 1,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 20,
+  },
+  locationHighlight: {
+    color: '#60A5FA',
+    fontWeight: '700',
+  },
+  transitionQuestion: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  transitionButtons: {
+    width: '100%',
+    gap: 12,
+  },
+  primaryButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  primaryButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 10,
+  },
+  primaryButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  secondaryButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  secondaryButtonText: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600',
+  },
+  motivationalQuote: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
+    marginTop: 24,
   },
 });
