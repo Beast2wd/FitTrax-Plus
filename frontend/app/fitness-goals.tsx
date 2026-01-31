@@ -117,9 +117,12 @@ export default function FitnessGoalsScreen() {
       const selectedGoalDetails = FITNESS_GOALS.filter(g => goals.includes(g.id));
       const goalDescriptions = selectedGoalDetails.map(g => g.title).join(', ');
       
+      // Generate a temporary user ID if not logged in yet
+      const effectiveUserId = userId || `temp_user_${Date.now()}`;
+      
       // Generate AI workout plan based on goals
       const response = await axios.post(`${API_URL}/api/ai/generate-workout-plan`, {
-        user_id: userId,
+        user_id: effectiveUserId,
         goals: goals,
         goal_descriptions: goalDescriptions,
         workout_types: selectedGoalDetails.map(g => g.workoutType),
