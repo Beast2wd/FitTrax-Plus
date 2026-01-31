@@ -2061,11 +2061,11 @@ async def generate_ai_workout_plan(request: AIWorkoutPlanRequest):
             ]
         
         # Create the plan
-        plan_id = f"ai_plan_{request.user_id}_{int(datetime.utcnow().timestamp())}"
+        plan_id = f"ai_plan_{effective_user_id}_{int(datetime.utcnow().timestamp())}"
         
         plan = {
             'plan_id': plan_id,
-            'user_id': request.user_id,
+            'user_id': effective_user_id,
             'name': plan_name,
             'description': f"A personalized {goal_config['focus']} program tailored to your goals: {request.goal_descriptions}. This AI-generated plan is designed to maximize results based on your fitness objectives.",
             'type': workout_type,
@@ -2083,9 +2083,9 @@ async def generate_ai_workout_plan(request: AIWorkoutPlanRequest):
         
         # Also save to user's custom plans
         await db.user_workout_plans.update_one(
-            {'user_id': request.user_id, 'plan_id': plan_id},
+            {'user_id': effective_user_id, 'plan_id': plan_id},
             {'$set': {
-                'user_id': request.user_id,
+                'user_id': effective_user_id,
                 'plan_id': plan_id,
                 'start_date': datetime.utcnow().strftime('%Y-%m-%d'),
                 'current_day': 1,
