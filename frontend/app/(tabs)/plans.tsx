@@ -581,19 +581,19 @@ export default function PlansScreen() {
         {/* My Fitness Goals Section */}
         <View style={[styles.goalsSection, { backgroundColor: colors.background.card }]}>
           <View style={styles.goalsSectionHeader}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[styles.goalsSectionTitle, { color: colors.text.primary }]}>My Fitness Goals</Text>
               <Text style={[styles.goalsSectionSubtitle, { color: colors.text.secondary }]}>
-                {fitnessGoals.length > 0 ? 'Your personalized plan is based on these goals' : 'Set your goals to get a personalized plan'}
+                {fitnessGoals.length > 0 ? 'Tap a goal to remove it' : 'Set your goals to get a personalized plan'}
               </Text>
             </View>
             <TouchableOpacity 
               style={[styles.adjustGoalsBtn, { backgroundColor: accent.primary }]}
               onPress={() => router.push('/fitness-goals')}
             >
-              <Ionicons name="settings-outline" size={16} color="#fff" />
+              <Ionicons name={fitnessGoals.length > 0 ? "add" : "fitness"} size={16} color="#fff" />
               <Text style={styles.adjustGoalsBtnText}>
-                {fitnessGoals.length > 0 ? 'Adjust' : 'Set Goals'}
+                {fitnessGoals.length > 0 ? 'Add Goals' : 'Set Goals'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -604,10 +604,16 @@ export default function PlansScreen() {
                 const goal = GOAL_LABELS[goalId];
                 if (!goal) return null;
                 return (
-                  <View key={goalId} style={[styles.goalTag, { backgroundColor: `${goal.color}15` }]}>
+                  <TouchableOpacity 
+                    key={goalId} 
+                    style={[styles.goalTag, { backgroundColor: `${goal.color}15` }]}
+                    onPress={() => handleRemoveGoal(goalId)}
+                    activeOpacity={0.7}
+                  >
                     <Ionicons name={goal.icon as any} size={16} color={goal.color} />
                     <Text style={[styles.goalTagText, { color: goal.color }]}>{goal.label}</Text>
-                  </View>
+                    <Ionicons name="close-circle" size={16} color={goal.color} style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
                 );
               })}
             </View>
@@ -623,31 +629,56 @@ export default function PlansScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
             </TouchableOpacity>
           )}
+          
+          {/* Reset All Goals Button */}
+          {fitnessGoals.length > 0 && (
+            <TouchableOpacity 
+              style={styles.resetGoalsBtn}
+              onPress={handleResetAllGoals}
+            >
+              <Ionicons name="refresh" size={14} color={colors.text.muted} />
+              <Text style={[styles.resetGoalsBtnText, { color: colors.text.muted }]}>Reset all goals</Text>
+            </TouchableOpacity>
+          )}
         </View>
         
         {renderActivePlanProgress()}
         
-        <Text style={[styles.sectionHeader, { color: colors.text.primary }]}>
-          {activePlan ? 'Other Plans' : 'Choose a Plan'}
-        </Text>
+        <View style={styles.plansHeaderRow}>
+          <Text style={[styles.sectionHeader, { color: colors.text.primary, marginTop: 0, marginBottom: 0 }]}>
+            {activePlan ? 'Other Plans' : 'Your Plans'}
+          </Text>
+          {plans.length > 0 && (
+            <TouchableOpacity onPress={handleClearAllPlans}>
+              <Text style={[styles.clearPlansText, { color: colors.text.muted }]}>Clear All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         
         {plans.length === 0 ? (
           <View style={[styles.emptyState, { backgroundColor: colors.background.card }]}>
             <MaterialCommunityIcons name="dumbbell" size={48} color={colors.text.muted} />
             <Text style={[styles.emptyText, { color: colors.text.primary }]}>No Plans Yet</Text>
             <Text style={[styles.emptySubtext, { color: colors.text.secondary }]}>
-              Complete your fitness goals to get a personalized AI workout plan
+              Set your fitness goals above to get a personalized AI workout plan
             </Text>
+            <TouchableOpacity 
+              style={[styles.createPlanBtn, { backgroundColor: accent.primary }]}
+              onPress={() => router.push('/fitness-goals')}
+            >
+              <Ionicons name="sparkles" size={18} color="#fff" />
+              <Text style={styles.createPlanBtnText}>Create AI Plan</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           plans.map((plan) => (
-            <TouchableOpacity 
-              key={plan.plan_id}
-              style={[styles.planCard, { backgroundColor: colors.background.card }]}
-              onPress={() => handlePlanPress(plan)}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
+            <View key={plan.plan_id} style={styles.planCardWrapper}>
+              <TouchableOpacity 
+                style={[styles.planCard, { backgroundColor: colors.background.card }]}
+                onPress={() => handlePlanPress(plan)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
                 colors={getGoalGradient(plan.goal)}
                 style={styles.planCardGradient}
                 start={{ x: 0, y: 0 }}
