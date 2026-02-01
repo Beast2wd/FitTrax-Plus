@@ -137,25 +137,33 @@ export default function FitnessGoalsScreen() {
     setCurrentStep('walkthrough');
   };
 
-  // Start walkthrough - go to dashboard with tour
+  // Start walkthrough - show app tour dialog then go to plans
   const handleStartTour = () => {
-    // Navigate to main dashboard - tour will start there
-    router.replace('/(tabs)');
-    // In a real app, you'd trigger the tour here via global state
     Alert.alert(
-      'App Tour',
-      'Welcome to FitTrax+! Here\'s a quick overview:\n\n' +
-      '📊 Dashboard - Your daily overview and quick actions\n\n' +
-      '📋 Plans - Your AI workout plans and progress\n\n' +
-      '🍽️ Scan - Log meals by scanning food\n\n' +
-      '👤 Profile - Update your settings and goals\n\n' +
-      'Your new workout plan is ready in the Plans tab!',
-      [{ text: 'Got it!', onPress: () => router.push('/(tabs)/plans') }]
+      '🎉 Welcome to FitTrax+!',
+      'Here\'s a quick overview of your app:\n\n' +
+      '📊 Dashboard - Your daily overview, calories, and quick actions\n\n' +
+      '📋 Plans - Your AI workout plans and progress tracking\n\n' +
+      '🍽️ Scan - Log meals by scanning food with AI\n\n' +
+      '👤 Settings - Update your profile and goals\n\n' +
+      'Your personalized workout plan is ready!',
+      [
+        { 
+          text: 'View My Plan', 
+          onPress: () => {
+            // Use setTimeout to ensure the alert is dismissed before navigation
+            setTimeout(() => {
+              router.replace('/(tabs)/plans');
+            }, 100);
+          }
+        }
+      ]
     );
   };
 
   // Skip tour - go directly to plans
   const handleSkipTour = () => {
+    // Navigate to plans tab
     router.replace('/(tabs)/plans');
   };
 
