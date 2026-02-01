@@ -12,7 +12,7 @@ from datetime import datetime
 import uuid
 
 # Configuration from frontend .env
-BASE_URL = "https://premium-fittrax.preview.emergentagent.com/api"
+BASE_URL = "https://fitness-journey-294.preview.emergentagent.com/api"
 TEST_USER_EMAIL = f"prod_test_{int(time.time())}@fittrax.com"
 TEST_USER_PASSWORD = "SecurePass123!"
 
