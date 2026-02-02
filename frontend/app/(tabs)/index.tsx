@@ -36,8 +36,6 @@ const { width } = Dimensions.get('window');
 export default function DashboardScreen() {
   const { userId, profile, lastMealLoggedAt, triggerMealRefresh, membershipStatus, setMembershipStatus } = useUserStore();
   const { theme, accent: accentKey } = useThemeStore();
-  const [showWalkthrough, setShowWalkthrough] = useState(false);
-  const [walkthroughChecked, setWalkthroughChecked] = useState(false);
   const { 
     isRunning, 
     runTime, 
