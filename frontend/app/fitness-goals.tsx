@@ -254,11 +254,9 @@ export default function FitnessGoalsScreen() {
               <View style={styles.infoBox}>
                 <Ionicons name="information-circle" size={20} color="#60A5FA" />
                 <Text style={styles.infoBoxText}>
-                  Your plan is saved in the <Text style={styles.infoBoxHighlight}>Plans</Text> tab at the bottom
+                  Your plan is saved in the <Text style={styles.infoBoxHighlight}>Plans</Text> tab
                 </Text>
               </View>
-
-              <Text style={styles.questionText}>What would you like to do next?</Text>
 
               <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.primaryActionButton} onPress={handleViewPlan}>
