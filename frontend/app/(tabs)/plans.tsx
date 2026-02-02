@@ -1013,7 +1013,8 @@ export default function PlansScreen() {
                       useNativeControls
                       resizeMode={ResizeMode.COVER}
                       isLooping
-                      shouldPlay={false}
+                      shouldPlay={true}
+                      isMuted={false}
                       onLoadStart={() => setVideoLoading(true)}
                       onLoad={() => setVideoLoading(false)}
                       onError={() => {
