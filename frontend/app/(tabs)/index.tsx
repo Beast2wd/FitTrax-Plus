@@ -23,7 +23,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import FitTraxLogo from '../../components/FitTraxLogo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AchievementModal } from '../../components/AchievementModal';
-import OnboardingWalkthrough from '../../components/OnboardingWalkthrough';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as Location from 'expo-location';
