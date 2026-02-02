@@ -267,65 +267,10 @@ export default function FitnessGoalsScreen() {
                     <Text style={styles.primaryButtonText}>View My Plan</Text>
                   </LinearGradient>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={styles.secondaryActionButton} onPress={handleTakeTour}>
-                  <Ionicons name="map" size={20} color="rgba(255,255,255,0.8)" />
-                  <Text style={styles.secondaryButtonText}>Take App Tour First</Text>
-                </TouchableOpacity>
               </View>
             </View>
           )}
         </LinearGradient>
-      </View>
-    );
-  }
-
-  // RENDER: Walkthrough Prompt Screen
-  if (currentStep === 'walkthrough') {
-    return (
-      <View style={[styles.walkthroughContainer, { backgroundColor: colors.background.primary }]}>
-        <View style={[styles.walkthroughCard, { backgroundColor: colors.background.card }]}>
-          <View style={styles.walkthroughIconContainer}>
-            <LinearGradient colors={accent.gradient as [string, string]} style={styles.walkthroughIcon}>
-              <Ionicons name="map" size={32} color="#fff" />
-            </LinearGradient>
-          </View>
-          
-          <Text style={[styles.walkthroughTitle, { color: colors.text.primary }]}>App Walkthrough</Text>
-          <Text style={[styles.walkthroughDesc, { color: colors.text.secondary }]}>
-            Would you like a quick tour of FitTrax+ before viewing your plan?
-          </Text>
-          
-          <View style={styles.walkthroughFeatures}>
-            <View style={styles.walkthroughFeature}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={[styles.walkthroughFeatureText, { color: colors.text.primary }]}>Dashboard & Quick Actions</Text>
-            </View>
-            <View style={styles.walkthroughFeature}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={[styles.walkthroughFeatureText, { color: colors.text.primary }]}>Workout Plans & Progress</Text>
-            </View>
-            <View style={styles.walkthroughFeature}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={[styles.walkthroughFeatureText, { color: colors.text.primary }]}>Nutrition & Meal Logging</Text>
-            </View>
-            <View style={styles.walkthroughFeature}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={[styles.walkthroughFeatureText, { color: colors.text.primary }]}>Premium Features</Text>
-            </View>
-          </View>
-          
-          <View style={styles.walkthroughButtons}>
-            <TouchableOpacity style={[styles.walkthroughStartBtn, { backgroundColor: accent.primary }]} onPress={handleStartTour}>
-              <Ionicons name="play" size={18} color="#fff" />
-              <Text style={styles.walkthroughStartBtnText}>Start Tour</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.walkthroughSkipBtn} onPress={handleSkipTour}>
-              <Text style={[styles.walkthroughSkipBtnText, { color: colors.text.muted }]}>Skip - Go to My Plan</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </View>
     );
   }
