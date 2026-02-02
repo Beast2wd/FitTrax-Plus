@@ -127,43 +127,8 @@ export default function FitnessGoalsScreen() {
     }
   };
 
-  // View Plan button - shows walkthrough prompt first
+  // View Plan button - go directly to plans
   const handleViewPlan = () => {
-    setCurrentStep('walkthrough');
-  };
-
-  // Take Tour button from success screen
-  const handleTakeTour = () => {
-    setCurrentStep('walkthrough');
-  };
-
-  // Start walkthrough - show app tour dialog then go to plans
-  const handleStartTour = () => {
-    Alert.alert(
-      '🎉 Welcome to FitTrax+!',
-      'Here\'s a quick overview of your app:\n\n' +
-      '📊 Dashboard - Your daily overview, calories, and quick actions\n\n' +
-      '📋 Plans - Your AI workout plans and progress tracking\n\n' +
-      '🍽️ Scan - Log meals by scanning food with AI\n\n' +
-      '👤 Settings - Update your profile and goals\n\n' +
-      'Your personalized workout plan is ready!',
-      [
-        { 
-          text: 'View My Plan', 
-          onPress: () => {
-            // Use setTimeout to ensure the alert is dismissed before navigation
-            setTimeout(() => {
-              router.replace('/(tabs)/plans');
-            }, 100);
-          }
-        }
-      ]
-    );
-  };
-
-  // Skip tour - go directly to plans
-  const handleSkipTour = () => {
-    // Navigate to plans tab
     router.replace('/(tabs)/plans');
   };
 
