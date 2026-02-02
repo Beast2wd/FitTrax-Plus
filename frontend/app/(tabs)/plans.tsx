@@ -24,11 +24,11 @@ import axios from 'axios';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
-// Reliable workout video URLs (MP4 format, publicly accessible)
+// Real workout video URLs (MP4 format, publicly accessible from Pexels)
 const WORKOUT_VIDEOS = {
-  cardio: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  strength: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-  flexibility: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+  cardio: 'https://videos.pexels.com/video-files/3228511/3228511-hd_1920_1080_30fps.mp4',
+  strength: 'https://videos.pexels.com/video-files/942744/942744-uhd_3840_2160_25fps.mp4',
+  flexibility: 'https://videos.pexels.com/video-files/854175/854175-hd_1920_1080_30fps.mp4',
 };
 
 // Exercise database with images and instructions
