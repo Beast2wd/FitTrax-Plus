@@ -50,7 +50,7 @@ export default function FitnessGoalsScreen() {
   
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'goals' | 'success' | 'walkthrough'>('goals');
+  const [currentStep, setCurrentStep] = useState<'goals' | 'success'>('goals');
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [planGenerating, setPlanGenerating] = useState(false);
 
