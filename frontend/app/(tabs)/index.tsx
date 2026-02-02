@@ -187,39 +187,6 @@ export default function DashboardScreen() {
     }
   }, [userId]);
 
-  // Check if we should show the walkthrough on first open
-  useEffect(() => {
-    const checkWalkthrough = async () => {
-      try {
-        setWalkthroughChecked(true);
-        
-        const completed = await AsyncStorage.getItem('onboarding_completed');
-        
-        // Show walkthrough if not completed
-        if (completed !== 'true') {
-          setShowWalkthrough(true);
-        }
-      } catch (error) {
-        console.error('Error checking walkthrough status:', error);
-        setWalkthroughChecked(true);
-      }
-    };
-    
-    if (userId && profile && !walkthroughChecked) {
-      checkWalkthrough();
-    }
-  }, [userId, profile, walkthroughChecked]);
-
-  const handleWalkthroughComplete = async () => {
-    await AsyncStorage.setItem('onboarding_completed', 'true');
-    setShowWalkthrough(false);
-  };
-
-  // Function to manually show walkthrough (for settings or help)
-  const showWalkthroughManually = async () => {
-    setShowWalkthrough(true);
-  };
-
   // Refresh dashboard when a meal is logged from scan screen
   useEffect(() => {
     if (lastMealLoggedAt && userId) {
