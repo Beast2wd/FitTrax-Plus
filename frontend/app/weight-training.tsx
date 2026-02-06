@@ -898,9 +898,11 @@ export default function WeightTrainingScreen() {
                 onPress={() => viewExerciseDetail(item)}
               >
                 <View style={styles.exerciseItemLeft}>
-                  <View style={styles.exerciseIconContainer}>
-                    <MaterialCommunityIcons name="dumbbell" size={24} color="#7C3AED" />
-                  </View>
+                  <Image 
+                    source={{ uri: getExerciseImage(item.name, selectedMuscleGroup || undefined) }}
+                    style={styles.exerciseItemImage}
+                    resizeMode="cover"
+                  />
                   <View style={styles.exerciseItemInfo}>
                     <Text style={styles.exerciseItemName}>{item.name}</Text>
                     <Text style={styles.exerciseItemEquipment}>
