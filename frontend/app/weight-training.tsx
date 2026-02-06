@@ -664,9 +664,15 @@ export default function WeightTrainingScreen() {
                 style={styles.muscleCard}
                 onPress={() => openExerciseLibrary(muscle)}
               >
-                <Text style={styles.muscleIcon}>{getMuscleIcon(muscle)}</Text>
-                <Text style={styles.muscleName}>{muscle.charAt(0).toUpperCase() + muscle.slice(1)}</Text>
-                <Text style={styles.muscleCount}>{exList.length} exercises</Text>
+                <Image 
+                  source={{ uri: MUSCLE_GROUP_IMAGES[muscle] || MUSCLE_GROUP_IMAGES.chest }}
+                  style={styles.muscleImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.muscleOverlay}>
+                  <Text style={styles.muscleName}>{muscle.charAt(0).toUpperCase() + muscle.slice(1)}</Text>
+                  <Text style={styles.muscleCount}>{exList.length} exercises</Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
