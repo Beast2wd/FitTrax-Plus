@@ -2434,6 +2434,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
+  exerciseItemImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    marginRight: 12,
+  },
   exerciseItemInfo: {
     flex: 1,
   },
