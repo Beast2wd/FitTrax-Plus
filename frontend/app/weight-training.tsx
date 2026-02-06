@@ -37,6 +37,61 @@ const MUSCLE_GROUP_IMAGES: { [key: string]: string } = {
   core: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80', // Core/abs workout
 };
 
+// Professional exercise images by exercise type/name
+const EXERCISE_IMAGES: { [key: string]: string } = {
+  // Chest exercises
+  'bench press': 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=200&q=80',
+  'incline bench press': 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=200&q=80',
+  'decline bench press': 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=200&q=80',
+  'dumbbell press': 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=200&q=80',
+  'push-ups': 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=200&q=80',
+  'chest fly': 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=200&q=80',
+  // Back exercises
+  'pull-ups': 'https://images.unsplash.com/photo-1627197843575-00cc3965c2d5?w=200&q=80',
+  'lat pulldown': 'https://images.unsplash.com/photo-1627197843575-00cc3965c2d5?w=200&q=80',
+  'barbell row': 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=200&q=80',
+  'dumbbell row': 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=200&q=80',
+  'deadlift': 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&q=80',
+  // Shoulder exercises
+  'overhead press': 'https://images.unsplash.com/photo-1554344728-7560c38c1720?w=200&q=80',
+  'lateral raise': 'https://images.unsplash.com/photo-1554344728-7560c38c1720?w=200&q=80',
+  'front raise': 'https://images.unsplash.com/photo-1554344728-7560c38c1720?w=200&q=80',
+  'face pull': 'https://images.unsplash.com/photo-1554344728-7560c38c1720?w=200&q=80',
+  // Leg exercises
+  'squat': 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=200&q=80',
+  'leg press': 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=200&q=80',
+  'lunges': 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=200&q=80',
+  'leg curl': 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=200&q=80',
+  'calf raise': 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=200&q=80',
+  // Arm exercises
+  'bicep curl': 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=200&q=80',
+  'tricep extension': 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=200&q=80',
+  'hammer curl': 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=200&q=80',
+  'tricep dips': 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=200&q=80',
+  // Core exercises
+  'plank': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=200&q=80',
+  'crunches': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=200&q=80',
+  'russian twist': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=200&q=80',
+  'leg raise': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=200&q=80',
+};
+
+// Helper function to get exercise image
+const getExerciseImage = (exerciseName: string, muscleGroup?: string): string => {
+  const lowerName = exerciseName.toLowerCase();
+  // Check for exact or partial match in exercise images
+  for (const [key, url] of Object.entries(EXERCISE_IMAGES)) {
+    if (lowerName.includes(key) || key.includes(lowerName)) {
+      return url;
+    }
+  }
+  // Fallback to muscle group image
+  if (muscleGroup && MUSCLE_GROUP_IMAGES[muscleGroup]) {
+    return MUSCLE_GROUP_IMAGES[muscleGroup];
+  }
+  // Default fallback
+  return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&q=80';
+};
+
 export default function WeightTrainingScreen() {
   const { theme } = useThemeStore();
   const { userId } = useUserStore();
