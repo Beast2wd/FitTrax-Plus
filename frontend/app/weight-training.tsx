@@ -27,6 +27,16 @@ import axios from 'axios';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Professional AI fitness images for muscle groups
+const MUSCLE_GROUP_IMAGES: { [key: string]: string } = {
+  chest: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80', // Man doing bench press
+  back: 'https://images.unsplash.com/photo-1627197843575-00cc3965c2d5?w=400&q=80', // Man doing pull-ups
+  shoulders: 'https://images.unsplash.com/photo-1554344728-7560c38c1720?w=400&q=80', // Man with dumbbells
+  legs: 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400&q=80', // Leg workout
+  arms: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400&q=80', // Bicep curl
+  core: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80', // Core/abs workout
+};
+
 export default function WeightTrainingScreen() {
   const { theme } = useThemeStore();
   const { userId } = useUserStore();
