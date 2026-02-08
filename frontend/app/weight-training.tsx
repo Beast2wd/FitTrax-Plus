@@ -183,11 +183,77 @@ export default function WeightTrainingScreen() {
       if (statsRes) setStats(statsRes.data);
       if (prsRes) setPrs(prsRes.data.personal_records || []);
       if (historyRes) setHistory(historyRes.data.workouts || []);
+      
+      // Load fitness goals
+      await loadFitnessGoals();
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadFitnessGoals = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`${API_URL}/api/profile/fitness-goals/${userId}`);
+      setFitnessGoals(response.data.fitness_goals || []);
+    } catch (error) {
+      console.error('Error loading fitness goals:', error);
+    }
+  };
+
+  // Remove a single fitness goal
+  const handleRemoveGoal = async (goalId: string) => {
+    Alert.alert(
+      'Remove Goal',
+      `Remove "${GOAL_LABELS[goalId]?.label}" from your fitness goals?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Remove', 
+          style: 'destructive',
+          onPress: async () => {
+            const newGoals = fitnessGoals.filter(g => g !== goalId);
+            setFitnessGoals(newGoals);
+            try {
+              await axios.post(`${API_URL}/api/profile/fitness-goals`, {
+                user_id: userId,
+                fitness_goals: newGoals,
+              });
+            } catch (error) {
+              console.error('Error updating goals:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Reset all fitness goals
+  const handleResetAllGoals = () => {
+    Alert.alert(
+      'Reset All Goals',
+      'Remove all your fitness goals? You can set new ones after.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Reset All', 
+          style: 'destructive',
+          onPress: async () => {
+            setFitnessGoals([]);
+            try {
+              await axios.post(`${API_URL}/api/profile/fitness-goals`, {
+                user_id: userId,
+                fitness_goals: [],
+              });
+            } catch (error) {
+              console.error('Error resetting goals:', error);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const onRefresh = async () => {
