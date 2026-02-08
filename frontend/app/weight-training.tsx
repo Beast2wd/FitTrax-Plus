@@ -148,6 +148,19 @@ export default function WeightTrainingScreen() {
   const [loadingPhaseImages, setLoadingPhaseImages] = useState(false);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
+  // Fitness goals state
+  const [fitnessGoals, setFitnessGoals] = useState<string[]>([]);
+
+  // Fitness goal labels
+  const GOAL_LABELS: { [key: string]: { label: string; icon: string; color: string } } = {
+    weight_loss: { label: 'Lose Weight', icon: 'flame', color: '#EF4444' },
+    muscle_gain: { label: 'Build Muscle', icon: 'barbell', color: '#3B82F6' },
+    endurance: { label: 'Improve Endurance', icon: 'pulse', color: '#10B981' },
+    flexibility: { label: 'Increase Flexibility', icon: 'body', color: '#8B5CF6' },
+    tone: { label: 'Tone & Define', icon: 'fitness', color: '#F59E0B' },
+    general: { label: 'General Fitness', icon: 'heart', color: '#EC4899' },
+  };
+
   useEffect(() => {
     loadData();
   }, [userId]);
