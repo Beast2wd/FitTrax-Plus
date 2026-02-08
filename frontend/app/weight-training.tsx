@@ -1799,6 +1799,68 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255,255,255,0.9)',
   },
+  // Fitness Goals Styles
+  goalsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  adjustGoalsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  adjustGoalsBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  goalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  goalTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  goalTagText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  setGoalsPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    gap: 12,
+  },
+  setGoalsPromptText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  resetGoalsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 4,
+  },
+  resetGoalsBtnText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
   statsGrid: {
     flexDirection: 'row',
     gap: 12,
