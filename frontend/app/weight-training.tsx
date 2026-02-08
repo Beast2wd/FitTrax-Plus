@@ -649,6 +649,65 @@ export default function WeightTrainingScreen() {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* My Fitness Goals Section */}
+        <View style={styles.section}>
+          <View style={styles.goalsHeader}>
+            <Text style={styles.sectionTitle}>🎯 My Fitness Goals</Text>
+            <TouchableOpacity 
+              style={[styles.adjustGoalsBtn, { backgroundColor: theme.accentColors.primary }]}
+              onPress={() => router.push('/fitness-goals')}
+            >
+              <Ionicons name={fitnessGoals.length > 0 ? "add" : "fitness"} size={16} color="#fff" />
+              <Text style={styles.adjustGoalsBtnText}>
+                {fitnessGoals.length > 0 ? 'Add Goals' : 'Set Goals'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {fitnessGoals.length > 0 ? (
+            <View style={styles.goalsGrid}>
+              {fitnessGoals.map((goalId) => {
+                const goal = GOAL_LABELS[goalId];
+                if (!goal) return null;
+                return (
+                  <TouchableOpacity 
+                    key={goalId} 
+                    style={[styles.goalTag, { backgroundColor: `${goal.color}15` }]}
+                    onPress={() => handleRemoveGoal(goalId)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name={goal.icon as any} size={16} color={goal.color} />
+                    <Text style={[styles.goalTagText, { color: goal.color }]}>{goal.label}</Text>
+                    <Ionicons name="close-circle" size={16} color={goal.color} style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.setGoalsPrompt, { borderColor: theme.colors.border.primary }]}
+              onPress={() => router.push('/fitness-goals')}
+            >
+              <MaterialCommunityIcons name="target" size={24} color={theme.accentColors.primary} />
+              <Text style={[styles.setGoalsPromptText, { color: theme.colors.text.secondary }]}>
+                Tap to set your fitness goals and get an AI-powered workout plan
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.text.muted} />
+            </TouchableOpacity>
+          )}
+          
+          {/* Reset All Goals Button */}
+          {fitnessGoals.length > 0 && (
+            <TouchableOpacity 
+              style={styles.resetGoalsBtn}
+              onPress={handleResetAllGoals}
+            >
+              <Ionicons name="refresh" size={14} color={theme.colors.text.muted} />
+              <Text style={[styles.resetGoalsBtnText, { color: theme.colors.text.muted }]}>Reset all goals</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Stats Overview */}
         {stats && stats.total_workouts > 0 && (
           <View style={styles.statsGrid}>
