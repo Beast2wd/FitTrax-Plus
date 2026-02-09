@@ -4736,6 +4736,49 @@ async def get_weight_history(user_id: str, days: int = 30):
         logger.error(f"Error getting weight history: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.delete("/weight-training/log/{log_id}")
+async def delete_weight_training_log(log_id: str, user_id: str):
+    """Delete a weight training log and associated scheduled workouts"""
+    try:
+        # Delete from weight training logs
+        result = await db.weight_training_logs.delete_one({"log_id": log_id, "user_id": user_id})
+        
+        # Also delete any associated scheduled workouts
+        await db.scheduled_workouts.delete_many({"workout_id": log_id, "user_id": user_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Workout log not found")
+        
+        return {"message": "Workout deleted successfully", "deleted_count": result.deleted_count}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting weight training log: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/weight-training/reset/{user_id}")
+async def reset_all_weight_training(user_id: str):
+    """Reset all weight training data for a user (logs, PRs, scheduled workouts)"""
+    try:
+        # Delete all weight training logs
+        logs_result = await db.weight_training_logs.delete_many({"user_id": user_id})
+        
+        # Delete all personal records
+        prs_result = await db.personal_records.delete_many({"user_id": user_id})
+        
+        # Delete all scheduled workouts
+        scheduled_result = await db.scheduled_workouts.delete_many({"user_id": user_id})
+        
+        return {
+            "message": "All workout data reset successfully",
+            "deleted_logs": logs_result.deleted_count,
+            "deleted_prs": prs_result.deleted_count,
+            "deleted_scheduled": scheduled_result.deleted_count
+        }
+    except Exception as e:
+        logger.error(f"Error resetting weight training data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/weight-training/prs/{user_id}")
 async def get_personal_records(user_id: str):
     """Get user's personal records"""
