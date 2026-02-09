@@ -239,6 +239,38 @@ export default function PeptideCalculatorScreen() {
     setShowConversationPicker(false);
   };
 
+  const deleteConversation = async (conversationId: string) => {
+    if (!userId) return;
+    try {
+      await axios.delete(`${API_URL}/api/peptides/chat/${userId}/${conversationId}`);
+      // Remove from local state
+      setSavedConversations(prev => prev.filter(c => c.id !== conversationId));
+      // If we deleted the current conversation, clear it
+      if (currentConversationId === conversationId) {
+        setAiChatHistory([]);
+        setCurrentConversationId(null);
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      Alert.alert('Error', 'Failed to delete conversation');
+    }
+  };
+
+  const confirmDeleteConversation = (conv: any) => {
+    Alert.alert(
+      'Delete Conversation',
+      `Delete "${conv.title?.substring(0, 30)}..."?\n\nThis cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: () => deleteConversation(conv.id)
+        }
+      ]
+    );
+  };
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
