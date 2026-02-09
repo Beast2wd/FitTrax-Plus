@@ -128,7 +128,7 @@ export default function FunctionalWorkoutTimerScreen() {
         oscillator.frequency.value = frequency;
         oscillator.type = 'sine';
         
-        // Set initial volume and fade out
+        // Set initial volume and fade out - LOUDER
         gainNode.gain.setValueAtTime(volume, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
         
@@ -140,16 +140,125 @@ export default function FunctionalWorkoutTimerScreen() {
     }
   };
 
-  // Initialize audio
+  // Play native sound using expo-av for iOS/Android
+  const playNativeSound = async (type: 'start' | 'rest' | 'end' | 'countdown' | 'final') => {
+    try {
+      // Create and play a sound
+      let soundConfig: any = {
+        shouldPlay: true,
+        volume: 1.0, // Maximum volume
+      };
+
+      // Use different built-in sounds based on type
+      // We'll generate tones programmatically using expo-av
+      const { sound } = await Audio.Sound.createAsync(
+        // Use a data URI for a simple beep sound
+        { uri: generateBeepDataUri(type) },
+        { shouldPlay: true, volume: 1.0 }
+      );
+      
+      soundRef.current = sound;
+      
+      // Play multiple times for louder effect on certain types
+      if (type === 'end') {
+        // Play completion sound sequence
+        await sound.setVolumeAsync(1.0);
+        await sound.playAsync();
+      } else {
+        await sound.setVolumeAsync(1.0);
+        await sound.playAsync();
+      }
+      
+      // Unload after playing
+      sound.setOnPlaybackStatusUpdate((status: any) => {
+        if (status.didJustFinish) {
+          sound.unloadAsync();
+        }
+      });
+    } catch (error) {
+      console.log('Native sound error:', error);
+      // Fallback to vibration only
+    }
+  };
+
+  // Generate a base64 encoded WAV beep data URI
+  const generateBeepDataUri = (type: 'start' | 'rest' | 'end' | 'countdown' | 'final'): string => {
+    // Different frequencies for different sound types
+    const configs: { [key: string]: { freq: number; duration: number } } = {
+      countdown: { freq: 880, duration: 0.15 },
+      final: { freq: 1100, duration: 0.25 },
+      start: { freq: 750, duration: 0.2 },
+      rest: { freq: 500, duration: 0.3 },
+      end: { freq: 800, duration: 0.4 },
+    };
+    
+    const config = configs[type] || configs.start;
+    const sampleRate = 44100;
+    const numSamples = Math.floor(sampleRate * config.duration);
+    const numChannels = 1;
+    const bitsPerSample = 16;
+    
+    // Create WAV file data
+    const buffer = new ArrayBuffer(44 + numSamples * 2);
+    const view = new DataView(buffer);
+    
+    // WAV header
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + numSamples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true);
+    view.setUint16(32, numChannels * bitsPerSample / 8, true);
+    view.setUint16(34, bitsPerSample, true);
+    writeString(36, 'data');
+    view.setUint32(40, numSamples * 2, true);
+    
+    // Generate sine wave samples at FULL VOLUME
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / sampleRate;
+      // Full amplitude sine wave (32767 is max for 16-bit)
+      const amplitude = 32767;
+      // Apply envelope for cleaner sound
+      const envelope = Math.min(1, Math.min(i / (sampleRate * 0.01), (numSamples - i) / (sampleRate * 0.02)));
+      const sample = Math.sin(2 * Math.PI * config.freq * t) * amplitude * envelope;
+      view.setInt16(44 + i * 2, sample, true);
+    }
+    
+    // Convert to base64
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    
+    return 'data:audio/wav;base64,' + btoa(binary);
+  };
+
+  // Initialize audio with proper iOS settings
   useEffect(() => {
     const setupAudio = async () => {
       try {
+        // Configure audio for iOS to play even in silent mode
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
-          shouldDuckAndroid: true,
+          shouldDuckAndroid: false,
           playThroughEarpieceAndroid: false,
+          allowsRecordingIOS: false,
+          interruptionModeIOS: 1, // DoNotMix
+          interruptionModeAndroid: 1, // DoNotMix
         });
+        console.log('Audio mode configured for iOS/Android');
       } catch (error) {
         console.log('Audio setup error:', error);
       }
@@ -170,41 +279,46 @@ export default function FunctionalWorkoutTimerScreen() {
     };
   }, []);
 
-  // Play sound effect
+  // Play sound effect - now works on both web and native
   const playSound = async (type: 'start' | 'rest' | 'end' | 'countdown' | 'final') => {
-    // Always vibrate for haptic feedback
-    Vibration.vibrate(type === 'end' ? [0, 500, 200, 500] : type === 'countdown' ? 50 : 100);
+    // Always vibrate for haptic feedback - stronger patterns
+    const vibrationPatterns: { [key: string]: number | number[] } = {
+      countdown: 100,
+      final: 200,
+      start: [0, 150, 100, 150],
+      rest: 150,
+      end: [0, 300, 150, 300, 150, 500],
+    };
+    Vibration.vibrate(vibrationPatterns[type] || 100);
     
     if (!soundEnabled) {
       return;
     }
 
     try {
-      // Use Web Audio API for beeps
+      // Try native sound first (for iOS/Android), then fall back to web audio
+      await playNativeSound(type);
+      
+      // Also play web beep for web platform - LOUDER volumes
       switch (type) {
         case 'countdown':
-          // Short high beep for countdown (5, 4, 3, 2 seconds)
-          playWebBeep(880, 0.1, 0.6);
+          playWebBeep(880, 0.15, 1.0);
           break;
         case 'final':
-          // Longer higher beep for final second (1 second)
-          playWebBeep(1100, 0.2, 0.8);
+          playWebBeep(1100, 0.25, 1.0);
           break;
         case 'start':
-          // Two quick beeps for WORK start
-          playWebBeep(660, 0.15, 0.7);
-          setTimeout(() => playWebBeep(880, 0.15, 0.7), 180);
+          playWebBeep(660, 0.2, 1.0);
+          setTimeout(() => playWebBeep(880, 0.2, 1.0), 200);
           break;
         case 'rest':
-          // Lower tone for REST start  
-          playWebBeep(440, 0.3, 0.6);
+          playWebBeep(440, 0.35, 1.0);
           break;
         case 'end':
-          // Celebratory ascending tones for workout complete
-          playWebBeep(523, 0.2, 0.7); // C
-          setTimeout(() => playWebBeep(659, 0.2, 0.7), 200); // E
-          setTimeout(() => playWebBeep(784, 0.2, 0.7), 400); // G
-          setTimeout(() => playWebBeep(1047, 0.4, 0.8), 600); // High C
+          playWebBeep(523, 0.25, 1.0);
+          setTimeout(() => playWebBeep(659, 0.25, 1.0), 250);
+          setTimeout(() => playWebBeep(784, 0.25, 1.0), 500);
+          setTimeout(() => playWebBeep(1047, 0.5, 1.0), 750);
           break;
       }
     } catch (error) {
