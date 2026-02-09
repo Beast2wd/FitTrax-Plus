@@ -1766,6 +1766,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Ask FitTrax Peptide AI Button Styles
+  askAiButton: {
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  askAiGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  askAiTextContainer: {
+    flex: 1,
+  },
+  askAiTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  askAiSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
