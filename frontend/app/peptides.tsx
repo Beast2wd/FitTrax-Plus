@@ -1256,32 +1256,51 @@ export default function PeptideCalculatorScreen() {
                     <Ionicons name="close" size={24} color={colors.text.primary} />
                   </TouchableOpacity>
                 </View>
-                <Text style={[styles.modalSubtitle, { color: colors.text.muted }]}>
-                  Conversations are saved for 12 hours
-                </Text>
+                <View style={styles.conversationInfoBanner}>
+                  <Ionicons name="time-outline" size={16} color="#667eea" />
+                  <Text style={styles.conversationInfoText}>
+                    Conversations auto-delete after 12 hours
+                  </Text>
+                </View>
                 <ScrollView style={{ maxHeight: 400 }}>
                   {savedConversations.length === 0 ? (
                     <View style={styles.emptyState}>
                       <Ionicons name="chatbubbles-outline" size={40} color={colors.text.muted} />
                       <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No saved conversations</Text>
+                      <Text style={[styles.emptySubtext, { color: colors.text.muted }]}>
+                        Start a chat and it will be saved here for 12 hours
+                      </Text>
                     </View>
                   ) : (
                     savedConversations.map((conv, i) => (
-                      <TouchableOpacity 
+                      <View 
                         key={i}
                         style={[styles.conversationItem, { backgroundColor: colors.background.card }]}
-                        onPress={() => loadConversation(conv)}
                       >
-                        <View style={styles.conversationItemContent}>
-                          <Text style={[styles.conversationTitle, { color: colors.text.primary }]} numberOfLines={1}>
-                            {conv.title}
-                          </Text>
-                          <Text style={[styles.conversationMeta, { color: colors.text.muted }]}>
-                            {conv.message_count || conv.messages?.length || 0} messages
-                          </Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
-                      </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.conversationItemContent}
+                          onPress={() => loadConversation(conv)}
+                        >
+                          <View style={styles.conversationItemIcon}>
+                            <Ionicons name="chatbubble" size={20} color="#667eea" />
+                          </View>
+                          <View style={styles.conversationItemText}>
+                            <Text style={[styles.conversationTitle, { color: colors.text.primary }]} numberOfLines={1}>
+                              {conv.title}
+                            </Text>
+                            <Text style={[styles.conversationMeta, { color: colors.text.muted }]}>
+                              {conv.message_count || conv.messages?.length || 0} messages
+                            </Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.conversationDeleteBtn}
+                          onPress={() => confirmDeleteConversation(conv)}
+                        >
+                          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
                     ))
                   )}
                 </ScrollView>
