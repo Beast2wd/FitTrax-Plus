@@ -280,15 +280,21 @@ export default function WeightTrainingScreen() {
     setSelectedDay(day);
     setWorkoutName(day.name);
     // Pre-populate exercises from the day's workout plan
-    const prefilledExercises = day.exercises?.map((ex: any) => ({
-      exercise_name: ex.name,
-      sets: Array.from({ length: parseInt(ex.sets) || 3 }, (_, i) => ({
-        set_number: i + 1,
-        weight: '',
-        reps: ex.reps?.split('-')[0] || '10',
-        rpe: ''
-      }))
-    })) || [];
+    const prefilledExercises = day.exercises?.map((ex: any) => {
+      const numSets = parseInt(ex.sets) || 3;
+      const repsStr = ex.reps?.toString() || '10';
+      const repsValue = repsStr.includes('-') ? repsStr.split('-')[0] : repsStr;
+      
+      return {
+        exercise_name: ex.name,
+        sets: Array.from({ length: numSets }, (_, i) => ({
+          set_number: i + 1,
+          weight: '',
+          reps: repsValue,
+          rpe: ''
+        }))
+      };
+    }) || [];
     setWorkoutExercises(prefilledExercises);
     setCurrentSets([]);
     setCurrentExercise('');
