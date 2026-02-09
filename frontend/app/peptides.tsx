@@ -198,6 +198,18 @@ export default function PeptideCalculatorScreen() {
     loadSavedConversations();
   }, [userId]);
 
+  // Load most recent conversation when entering AI tab (if no current conversation)
+  useEffect(() => {
+    if (activeTab === 'ai' && aiChatHistory.length === 0 && savedConversations.length > 0 && !currentConversationId) {
+      // Auto-load the most recent conversation
+      const mostRecent = savedConversations[0];
+      if (mostRecent && mostRecent.messages) {
+        setAiChatHistory(mostRecent.messages);
+        setCurrentConversationId(mostRecent.id);
+      }
+    }
+  }, [activeTab, savedConversations]);
+
   // Auto-save conversation when it changes (after AI responses)
   useEffect(() => {
     if (aiChatHistory.length > 0 && userId) {
@@ -208,16 +220,6 @@ export default function PeptideCalculatorScreen() {
       return () => clearTimeout(saveTimer);
     }
   }, [aiChatHistory, userId]);
-
-  // Save conversation when leaving the screen
-  useEffect(() => {
-    return () => {
-      // Save on unmount if there's a conversation
-      if (aiChatHistory.length > 0 && userId) {
-        saveConversationSilent();
-      }
-    };
-  }, []);
 
   // Save conversation when switching away from AI tab
   useEffect(() => {
