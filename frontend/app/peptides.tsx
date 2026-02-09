@@ -198,6 +198,34 @@ export default function PeptideCalculatorScreen() {
     loadSavedConversations();
   }, [userId]);
 
+  // Auto-save conversation when it changes (after AI responses)
+  useEffect(() => {
+    if (aiChatHistory.length > 0 && userId) {
+      // Debounce save to avoid too many API calls
+      const saveTimer = setTimeout(() => {
+        saveConversationSilent();
+      }, 1000);
+      return () => clearTimeout(saveTimer);
+    }
+  }, [aiChatHistory, userId]);
+
+  // Save conversation when leaving the screen
+  useEffect(() => {
+    return () => {
+      // Save on unmount if there's a conversation
+      if (aiChatHistory.length > 0 && userId) {
+        saveConversationSilent();
+      }
+    };
+  }, []);
+
+  // Save conversation when switching away from AI tab
+  useEffect(() => {
+    if (activeTab !== 'ai' && aiChatHistory.length > 0 && userId) {
+      saveConversationSilent();
+    }
+  }, [activeTab]);
+
   const loadSavedConversations = async () => {
     if (!userId) return;
     try {
@@ -208,16 +236,46 @@ export default function PeptideCalculatorScreen() {
     }
   };
 
+  // Silent save - doesn't reload list (for auto-save)
+  const saveConversationSilent = async () => {
+    if (!userId || aiChatHistory.length === 0) return;
+    try {
+      const title = aiChatHistory[0]?.content?.substring(0, 50) + '...' || 'New Conversation';
+      const convId = currentConversationId || `conv_${Date.now()}`;
+      
+      await axios.post(`${API_URL}/api/peptides/chat/save`, {
+        user_id: userId,
+        conversation_id: convId,
+        title,
+        messages: aiChatHistory,
+      });
+      
+      // Update currentConversationId if it was new
+      if (!currentConversationId) {
+        setCurrentConversationId(convId);
+      }
+    } catch (error) {
+      console.error('Error auto-saving conversation:', error);
+    }
+  };
+
   const saveConversation = async () => {
     if (!userId || aiChatHistory.length === 0) return;
     try {
       const title = aiChatHistory[0]?.content?.substring(0, 50) + '...' || 'New Conversation';
+      const convId = currentConversationId || `conv_${Date.now()}`;
+      
       await axios.post(`${API_URL}/api/peptides/chat/save`, {
         user_id: userId,
-        conversation_id: currentConversationId || `conv_${Date.now()}`,
+        conversation_id: convId,
         title,
         messages: aiChatHistory,
       });
+      
+      if (!currentConversationId) {
+        setCurrentConversationId(convId);
+      }
+      
       loadSavedConversations();
     } catch (error) {
       console.error('Error saving conversation:', error);
