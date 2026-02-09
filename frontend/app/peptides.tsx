@@ -513,6 +513,26 @@ export default function PeptideCalculatorScreen() {
           {/* Calculator Tab */}
           {activeTab === 'calculator' && (
             <>
+              {/* Ask FitTrax Peptide AI Button - Above Stats */}
+              <TouchableOpacity 
+                style={styles.askAiButton}
+                onPress={() => setActiveTab('ai')}
+              >
+                <LinearGradient
+                  colors={['#667eea', '#764ba2']}
+                  style={styles.askAiGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <MaterialCommunityIcons name="robot" size={28} color="#fff" />
+                  <View style={styles.askAiTextContainer}>
+                    <Text style={styles.askAiTitle}>Ask FitTrax Peptide AI</Text>
+                    <Text style={styles.askAiSubtitle}>Get research-backed insights instantly</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color="#fff" />
+                </LinearGradient>
+              </TouchableOpacity>
+
               {/* Stats Summary */}
               {stats && (
                 <View style={styles.statsRow}>
