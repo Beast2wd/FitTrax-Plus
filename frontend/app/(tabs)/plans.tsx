@@ -6,7 +6,9 @@ import {
   ScrollView, 
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert,
+  Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../stores/themeStore';
@@ -17,6 +19,22 @@ import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+
+// AI fitness images for stats and workouts
+const STAT_IMAGES = {
+  workouts: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80', // Gym equipment
+  volume: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400&q=80', // Weights/dumbbells  
+  prs: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&q=80', // Trophy/achievement
+};
+
+const WORKOUT_IMAGES = [
+  'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=300&q=80', // Bench press
+  'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=300&q=80', // Bicep curl
+  'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&q=80', // Squat
+  'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=300&q=80', // Push ups
+  'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&q=80', // Deadlift
+  'https://images.unsplash.com/photo-1627197843575-00cc3965c2d5?w=300&q=80', // Pull ups
+];
 
 export default function PlansScreen() {
   const { theme } = useThemeStore();
@@ -81,6 +99,64 @@ export default function PlansScreen() {
     });
   };
 
+  // Delete a single workout
+  const handleDeleteWorkout = (workout: any) => {
+    Alert.alert(
+      'Delete Workout',
+      `Delete "${workout.workout_name}" from ${formatDate(workout.timestamp)}?\n\nThis will also remove it from your calendar.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/weight-training/log/${workout.log_id}?user_id=${userId}`);
+              Alert.alert('Deleted', 'Workout removed successfully');
+              loadData();
+            } catch (error) {
+              console.error('Error deleting workout:', error);
+              Alert.alert('Error', 'Failed to delete workout');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Reset all workout data
+  const handleResetAll = () => {
+    Alert.alert(
+      '⚠️ Reset All Workout Data',
+      'This will permanently delete:\n\n• All workout history\n• All personal records\n• All scheduled workouts\n\nThis action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Reset Everything', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await axios.delete(`${API_URL}/api/weight-training/reset/${userId}`);
+              Alert.alert(
+                'Data Reset', 
+                `Deleted:\n• ${response.data.deleted_logs} workouts\n• ${response.data.deleted_prs} personal records\n• ${response.data.deleted_scheduled} scheduled workouts`
+              );
+              loadData();
+            } catch (error) {
+              console.error('Error resetting data:', error);
+              Alert.alert('Error', 'Failed to reset workout data');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Get a consistent image for a workout based on its index
+  const getWorkoutImage = (index: number) => {
+    return WORKOUT_IMAGES[index % WORKOUT_IMAGES.length];
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
@@ -102,29 +178,62 @@ export default function PlansScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text.primary }]}>My Plans</Text>
-          <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
-            Track your workout progress
-          </Text>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.title, { color: colors.text.primary }]}>My Plans</Text>
+            <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
+              Track your workout progress
+            </Text>
+          </View>
+          {(workoutHistory.length > 0 || prs.length > 0) && (
+            <TouchableOpacity 
+              style={styles.resetButton}
+              onPress={handleResetAll}
+            >
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Quick Stats */}
+        {/* Quick Stats with AI Images */}
         {stats && stats.total_workouts > 0 && (
           <View style={styles.statsGrid}>
+            {/* Workouts Card */}
             <View style={[styles.statCard, { backgroundColor: colors.background.card }]}>
-              <Ionicons name="fitness" size={24} color="#7C3AED" />
-              <Text style={[styles.statValue, { color: colors.text.primary }]}>{stats.total_workouts}</Text>
-              <Text style={[styles.statLabel, { color: colors.text.muted }]}>Workouts</Text>
+              <Image 
+                source={{ uri: STAT_IMAGES.workouts }} 
+                style={styles.statImage}
+                resizeMode="cover"
+              />
+              <View style={styles.statOverlay}>
+                <Text style={styles.statValue}>{stats.total_workouts}</Text>
+                <Text style={styles.statLabel}>Workouts</Text>
+              </View>
             </View>
+
+            {/* Volume Card */}
             <View style={[styles.statCard, { backgroundColor: colors.background.card }]}>
-              <Ionicons name="barbell" size={24} color="#10B981" />
-              <Text style={[styles.statValue, { color: colors.text.primary }]}>{(stats.total_volume / 1000).toFixed(1)}k</Text>
-              <Text style={[styles.statLabel, { color: colors.text.muted }]}>Total lbs</Text>
+              <Image 
+                source={{ uri: STAT_IMAGES.volume }} 
+                style={styles.statImage}
+                resizeMode="cover"
+              />
+              <View style={styles.statOverlay}>
+                <Text style={styles.statValue}>{(stats.total_volume / 1000).toFixed(1)}k</Text>
+                <Text style={styles.statLabel}>Total lbs</Text>
+              </View>
             </View>
+
+            {/* PRs Card */}
             <View style={[styles.statCard, { backgroundColor: colors.background.card }]}>
-              <Ionicons name="trophy" size={24} color="#F59E0B" />
-              <Text style={[styles.statValue, { color: colors.text.primary }]}>{stats.total_prs}</Text>
-              <Text style={[styles.statLabel, { color: colors.text.muted }]}>PRs</Text>
+              <Image 
+                source={{ uri: STAT_IMAGES.prs }} 
+                style={styles.statImage}
+                resizeMode="cover"
+              />
+              <View style={styles.statOverlay}>
+                <Text style={styles.statValue}>{stats.total_prs}</Text>
+                <Text style={styles.statLabel}>PRs</Text>
+              </View>
             </View>
           </View>
         )}
@@ -154,15 +263,22 @@ export default function PlansScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={styles.prsRow}>
                 {prs.slice(0, 5).map((pr, index) => (
-                  <View key={index} style={[styles.prCard, { backgroundColor: colors.background.card }]}>
-                    <Text style={[styles.prExercise, { color: colors.text.primary }]} numberOfLines={1}>
-                      {pr.exercise_name}
-                    </Text>
-                    <Text style={styles.prWeight}>{pr.weight} lbs</Text>
-                    <Text style={[styles.prReps, { color: colors.text.secondary }]}>x {pr.reps} reps</Text>
-                    <Text style={[styles.pr1rm, { color: colors.text.muted }]}>
-                      Est 1RM: {pr.estimated_1rm?.toFixed(0)} lbs
-                    </Text>
+                  <View key={index} style={styles.prCard}>
+                    <Image 
+                      source={{ uri: STAT_IMAGES.prs }}
+                      style={styles.prImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.prOverlay}>
+                      <Text style={styles.prExercise} numberOfLines={1}>
+                        {pr.exercise_name}
+                      </Text>
+                      <Text style={styles.prWeight}>{pr.weight} lbs</Text>
+                      <Text style={styles.prReps}>x {pr.reps} reps</Text>
+                      <Text style={styles.pr1rm}>
+                        Est 1RM: {pr.estimated_1rm?.toFixed(0)} lbs
+                      </Text>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -176,7 +292,11 @@ export default function PlansScreen() {
           
           {workoutHistory.length === 0 ? (
             <View style={[styles.emptyState, { backgroundColor: colors.background.card }]}>
-              <MaterialCommunityIcons name="weight-lifter" size={48} color={colors.text.muted} />
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&q=80' }}
+                style={styles.emptyImage}
+                resizeMode="cover"
+              />
               <Text style={[styles.emptyTitle, { color: colors.text.primary }]}>No workouts yet</Text>
               <Text style={[styles.emptySubtitle, { color: colors.text.secondary }]}>
                 Complete your first workout to see it here
@@ -191,58 +311,70 @@ export default function PlansScreen() {
           ) : (
             workoutHistory.map((workout, index) => (
               <View key={index} style={[styles.workoutCard, { backgroundColor: colors.background.card }]}>
-                <View style={styles.workoutHeader}>
-                  <View style={styles.workoutIcon}>
-                    <MaterialCommunityIcons name="dumbbell" size={20} color="#7C3AED" />
-                  </View>
-                  <View style={styles.workoutInfo}>
-                    <Text style={[styles.workoutName, { color: colors.text.primary }]}>
-                      {workout.workout_name}
-                    </Text>
-                    <Text style={[styles.workoutDate, { color: colors.text.muted }]}>
-                      {formatDate(workout.timestamp)} • {formatTime(workout.timestamp)}
-                    </Text>
-                  </View>
-                </View>
+                {/* Workout Image */}
+                <Image 
+                  source={{ uri: getWorkoutImage(index) }}
+                  style={styles.workoutImage}
+                  resizeMode="cover"
+                />
                 
-                <View style={styles.workoutStats}>
-                  <View style={styles.workoutStat}>
-                    <Text style={[styles.workoutStatValue, { color: colors.text.primary }]}>
-                      {workout.exercises?.length || 0}
-                    </Text>
-                    <Text style={[styles.workoutStatLabel, { color: colors.text.muted }]}>Exercises</Text>
-                  </View>
-                  <View style={styles.workoutStat}>
-                    <Text style={[styles.workoutStatValue, { color: colors.text.primary }]}>
-                      {workout.exercises?.reduce((acc: number, ex: any) => acc + (ex.sets?.length || 0), 0) || 0}
-                    </Text>
-                    <Text style={[styles.workoutStatLabel, { color: colors.text.muted }]}>Sets</Text>
-                  </View>
-                  <View style={styles.workoutStat}>
-                    <Text style={[styles.workoutStatValue, { color: colors.text.primary }]}>
-                      {Math.round(workout.exercises?.reduce((acc: number, ex: any) => 
-                        acc + ex.sets?.reduce((sAcc: number, s: any) => sAcc + (s.weight * s.reps), 0) || 0, 0) / 1000 * 10) / 10}k
-                    </Text>
-                    <Text style={[styles.workoutStatLabel, { color: colors.text.muted }]}>lbs</Text>
-                  </View>
-                </View>
-
-                {/* Exercise List */}
-                <View style={styles.exerciseList}>
-                  {workout.exercises?.slice(0, 3).map((ex: any, exIndex: number) => (
-                    <Text 
-                      key={exIndex} 
-                      style={[styles.exerciseItem, { color: colors.text.secondary }]}
-                      numberOfLines={1}
+                <View style={styles.workoutContent}>
+                  <View style={styles.workoutHeader}>
+                    <View style={styles.workoutInfo}>
+                      <Text style={[styles.workoutName, { color: colors.text.primary }]}>
+                        {workout.workout_name}
+                      </Text>
+                      <Text style={[styles.workoutDate, { color: colors.text.muted }]}>
+                        {formatDate(workout.timestamp)} • {formatTime(workout.timestamp)}
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.deleteBtn}
+                      onPress={() => handleDeleteWorkout(workout)}
                     >
-                      • {ex.exercise_name} ({ex.sets?.length || 0} sets)
-                    </Text>
-                  ))}
-                  {(workout.exercises?.length || 0) > 3 && (
-                    <Text style={[styles.moreExercises, { color: colors.text.muted }]}>
-                      +{workout.exercises.length - 3} more exercises
-                    </Text>
-                  )}
+                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View style={styles.workoutStats}>
+                    <View style={styles.workoutStat}>
+                      <Text style={[styles.workoutStatValue, { color: colors.text.primary }]}>
+                        {workout.exercises?.length || 0}
+                      </Text>
+                      <Text style={[styles.workoutStatLabel, { color: colors.text.muted }]}>Exercises</Text>
+                    </View>
+                    <View style={styles.workoutStat}>
+                      <Text style={[styles.workoutStatValue, { color: colors.text.primary }]}>
+                        {workout.exercises?.reduce((acc: number, ex: any) => acc + (ex.sets?.length || 0), 0) || 0}
+                      </Text>
+                      <Text style={[styles.workoutStatLabel, { color: colors.text.muted }]}>Sets</Text>
+                    </View>
+                    <View style={styles.workoutStat}>
+                      <Text style={[styles.workoutStatValue, { color: colors.text.primary }]}>
+                        {Math.round(workout.exercises?.reduce((acc: number, ex: any) => 
+                          acc + ex.sets?.reduce((sAcc: number, s: any) => sAcc + (s.weight * s.reps), 0) || 0, 0) / 1000 * 10) / 10}k
+                      </Text>
+                      <Text style={[styles.workoutStatLabel, { color: colors.text.muted }]}>lbs</Text>
+                    </View>
+                  </View>
+
+                  {/* Exercise List */}
+                  <View style={styles.exerciseList}>
+                    {workout.exercises?.slice(0, 3).map((ex: any, exIndex: number) => (
+                      <Text 
+                        key={exIndex} 
+                        style={[styles.exerciseItem, { color: colors.text.secondary }]}
+                        numberOfLines={1}
+                      >
+                        • {ex.exercise_name} ({ex.sets?.length || 0} sets)
+                      </Text>
+                    ))}
+                    {(workout.exercises?.length || 0) > 3 && (
+                      <Text style={[styles.moreExercises, { color: colors.text.muted }]}>
+                        +{workout.exercises.length - 3} more exercises
+                      </Text>
+                    )}
+                  </View>
                 </View>
               </View>
             ))
@@ -270,7 +402,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 20,
+  },
+  headerLeft: {
+    flex: 1,
   },
   title: {
     fontSize: 28,
@@ -280,6 +418,14 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
   },
+  resetButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   statsGrid: {
     flexDirection: 'row',
     gap: 12,
@@ -288,17 +434,31 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     borderRadius: 12,
-    padding: 16,
+    overflow: 'hidden',
+    height: 120,
+  },
+  statImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  statOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: 12,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginTop: 8,
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
   },
   statLabel: {
     fontSize: 12,
+    color: 'rgba(255,255,255,0.9)',
     marginTop: 4,
+    fontWeight: '600',
   },
   ctaCard: {
     marginBottom: 24,
@@ -337,32 +497,51 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   prCard: {
-    width: 140,
+    width: 150,
+    height: 160,
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  prImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  prOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     padding: 12,
+    justifyContent: 'flex-end',
   },
   prExercise: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 8,
+    color: '#fff',
+    marginBottom: 6,
   },
   prWeight: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#7C3AED',
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#fff',
   },
   prReps: {
     fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
     marginTop: 2,
   },
   pr1rm: {
-    fontSize: 12,
-    marginTop: 8,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 6,
   },
   emptyState: {
-    padding: 32,
     borderRadius: 16,
+    overflow: 'hidden',
     alignItems: 'center',
+  },
+  emptyImage: {
+    width: '100%',
+    height: 150,
   },
   emptyTitle: {
     fontSize: 18,
@@ -374,11 +553,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   emptyButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 24,
+    marginBottom: 20,
   },
   emptyButtonText: {
     color: '#fff',
@@ -387,22 +568,20 @@ const styles = StyleSheet.create({
   },
   workoutCard: {
     borderRadius: 12,
-    padding: 16,
+    overflow: 'hidden',
     marginBottom: 12,
+  },
+  workoutImage: {
+    width: '100%',
+    height: 100,
+  },
+  workoutContent: {
+    padding: 16,
   },
   workoutHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 12,
-  },
-  workoutIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#7C3AED20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
   },
   workoutInfo: {
     flex: 1,
@@ -414,6 +593,14 @@ const styles = StyleSheet.create({
   },
   workoutDate: {
     fontSize: 13,
+  },
+  deleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   workoutStats: {
     flexDirection: 'row',
