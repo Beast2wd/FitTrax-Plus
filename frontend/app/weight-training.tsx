@@ -521,11 +521,18 @@ export default function WeightTrainingScreen() {
   };
 
   const saveWorkout = async () => {
-    // Filter exercises that have at least one completed set
+    // Filter exercises that have at least one completed set and convert to proper types
     const completedExercises = workoutExercises
       .map(ex => ({
         ...ex,
-        sets: ex.sets.filter((s: any) => s.weight && s.reps)
+        sets: ex.sets
+          .filter((s: any) => s.weight && s.reps)
+          .map((s: any, idx: number) => ({
+            set_number: idx + 1,
+            weight: parseFloat(s.weight) || 0,
+            reps: parseInt(s.reps) || 0,
+            rpe: s.rpe ? parseInt(s.rpe) : null
+          }))
       }))
       .filter(ex => ex.sets.length > 0);
 
@@ -552,10 +559,22 @@ export default function WeightTrainingScreen() {
         message += `\n\n🏆 NEW PRs:\n${new_prs.map((pr: any) => `${pr.exercise}: ${pr.weight}lbs x ${pr.reps}`).join('\n')}`;
       }
 
-      Alert.alert('💪 Workout Complete!', message);
+      // Show success and offer to view in Plans
+      Alert.alert(
+        '💪 Workout Complete!', 
+        message,
+        [
+          { text: 'OK', style: 'cancel' },
+          { 
+            text: 'View in Plans', 
+            onPress: () => router.push('/(tabs)/plans')
+          }
+        ]
+      );
       setShowWorkoutModal(false);
       loadData();
     } catch (error: any) {
+      console.error('Save workout error:', error);
       Alert.alert('Error', error.response?.data?.detail || 'Failed to save workout');
     } finally {
       setSavingWorkout(false);
