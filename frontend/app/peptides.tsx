@@ -2778,14 +2778,43 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   // Conversation picker
+  conversationInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  conversationInfoText: {
+    fontSize: 13,
+    color: '#667eea',
+    fontWeight: '500',
+  },
   conversationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     marginBottom: 8,
   },
   conversationItemContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  conversationItemIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(102, 126, 234, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  conversationItemText: {
     flex: 1,
   },
   conversationTitle: {
@@ -2795,6 +2824,20 @@ const styles = StyleSheet.create({
   conversationMeta: {
     fontSize: 12,
     marginTop: 2,
+  },
+  conversationDeleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 4,
   },
   // Stack modal styles
   stackModalContent: {
