@@ -588,17 +588,18 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Quick Stats Grid */}
+        {/* Stats Grid with AI Images */}
         <View style={styles.statsGrid}>
+          {/* Meals Card */}
           <TouchableOpacity 
-            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            style={[styles.statCardWithImage, { backgroundColor: colors.background.card }]}
             onPress={() => {
               if (isPremium) {
-                router.push('/meals-history');
+                router.push('/(tabs)/scan');
               } else {
                 Alert.alert(
                   'Premium Feature',
-                  'Meal Tracking & Nutrition is a premium feature. Upgrade to FitTrax+ Premium to access meal planning and nutrition tracking.',
+                  'AI Food Scanning is a premium feature. Upgrade to FitTrax+ Premium to scan and track your meals.',
                   [
                     { text: 'Maybe Later', style: 'cancel' },
                     { text: 'Upgrade Now', onPress: () => router.push('/membership') }
@@ -607,58 +608,53 @@ export default function DashboardScreen() {
               }
             }}
           >
-            {!isPremium && (
-              <View style={styles.premiumBadge}>
-                <Ionicons name="diamond" size={10} color="#fff" />
-              </View>
-            )}
-            <View style={[styles.statIcon, { backgroundColor: `${accent.primary}20` }]}>
-              <Ionicons name="restaurant" size={22} color={accent.primary} />
+            <Image source={{ uri: STAT_CARD_IMAGES.meals }} style={styles.statCardImage} resizeMode="cover" />
+            <View style={styles.statCardOverlay}>
+              {!isPremium && (
+                <View style={styles.premiumBadgeImage}>
+                  <Ionicons name="diamond" size={10} color="#fff" />
+                </View>
+              )}
+              <Text style={styles.statValueImage}>{today.meals_count || 0}</Text>
+              <Text style={styles.statLabelImage}>{t('dashboard.meals')}</Text>
             </View>
-            <Text style={[styles.statValue, { color: colors.text.primary }]}>
-              {today.meals_count || 0}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>{t('dashboard.meals')}</Text>
           </TouchableOpacity>
 
+          {/* Training Card */}
           <TouchableOpacity 
-            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            style={[styles.statCardWithImage, { backgroundColor: colors.background.card }]}
             onPress={() => router.push('/weight-training')}
           >
-            <View style={[styles.statIcon, { backgroundColor: '#22C55E20' }]}>
-              <MaterialIcons name="fitness-center" size={22} color="#22C55E" />
+            <Image source={{ uri: STAT_CARD_IMAGES.training }} style={styles.statCardImage} resizeMode="cover" />
+            <View style={styles.statCardOverlay}>
+              <Text style={styles.statValueImage}>{today.workouts_count || 0}</Text>
+              <Text style={styles.statLabelImage}>Training</Text>
             </View>
-            <Text style={[styles.statValue, { color: colors.text.primary }]}>
-              {today.workouts_count || 0}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Training</Text>
           </TouchableOpacity>
 
+          {/* Hydration Card */}
           <TouchableOpacity 
-            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            style={[styles.statCardWithImage, { backgroundColor: colors.background.card }]}
             onPress={() => router.push('/hydration')}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIcon, { backgroundColor: '#06B6D420' }]}>
-              <Ionicons name="water" size={22} color="#06B6D4" />
+            <Image source={{ uri: STAT_CARD_IMAGES.hydration }} style={styles.statCardImage} resizeMode="cover" />
+            <View style={styles.statCardOverlay}>
+              <Text style={styles.statValueImage}>{Math.round(today.water_intake || 0)}</Text>
+              <Text style={styles.statLabelImage}>Hydration</Text>
             </View>
-            <Text style={[styles.statValue, { color: colors.text.primary }]}>
-              {Math.round(today.water_intake || 0)}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Hydration</Text>
           </TouchableOpacity>
 
+          {/* Heart Rate Card */}
           <TouchableOpacity 
-            style={[styles.statCard, { backgroundColor: colors.background.card }]}
+            style={[styles.statCardWithImage, { backgroundColor: colors.background.card }]}
             onPress={() => router.push('/heart-rate')}
           >
-            <View style={[styles.statIcon, { backgroundColor: '#EF444420' }]}>
-              <MaterialIcons name="favorite" size={22} color="#EF4444" />
+            <Image source={{ uri: STAT_CARD_IMAGES.heartRate }} style={styles.statCardImage} resizeMode="cover" />
+            <View style={styles.statCardOverlay}>
+              <Text style={styles.statValueImage}>{Math.round(today.avg_heart_rate || 0)}</Text>
+              <Text style={styles.statLabelImage}>Heart Rate</Text>
             </View>
-            <Text style={[styles.statValue, { color: colors.text.primary }]}>
-              {Math.round(today.avg_heart_rate || 0)}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.text.muted }]}>Heart Rate</Text>
           </TouchableOpacity>
         </View>
 
