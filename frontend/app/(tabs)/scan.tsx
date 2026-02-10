@@ -1864,6 +1864,7 @@ const styles = StyleSheet.create({
   recipesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   recipeCard: { width: (SCREEN_WIDTH - 44) / 2, borderRadius: 12, overflow: 'hidden' },
   recipeImage: { width: '100%', height: 120 },
+  recipeDeleteHint: { position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   recipeInfo: { padding: 12 },
   recipeName: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
   recipeCalories: { fontSize: 12 },
