@@ -51,7 +51,7 @@ const QUICK_ACTION_IMAGES = {
   run: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=200&q=80', // Running outdoors
   steps: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=200&q=80', // Walking/steps
   bodyScan: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200&q=80', // Body fitness
-  peptides: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&q=80', // Medical vial/syringe
+  peptides: 'https://customer-assets.emergentagent.com/job_fitness-journey-294/artifacts/r1mqcelc_peptide%20vial.jpg', // Custom peptide vial image
   rewards: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200&q=80', // Trophy/medal
   analytics: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&q=80', // Data analytics charts
 };
