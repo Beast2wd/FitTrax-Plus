@@ -1660,6 +1660,9 @@ const styles = StyleSheet.create({
   groceryItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
   checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#7C3AED', marginRight: 12, justifyContent: 'center', alignItems: 'center' },
   checkboxChecked: { backgroundColor: '#7C3AED' },
+  groceryItemContent: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  groceryItemQty: { fontSize: 15, fontWeight: '700', minWidth: 50 },
+  groceryItemDash: { fontSize: 15, marginHorizontal: 8 },
   groceryItemText: { fontSize: 15, flex: 1 },
   groceryItemChecked: { textDecorationLine: 'line-through', opacity: 0.5 },
   
