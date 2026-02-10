@@ -1223,7 +1223,6 @@ export default function ScanScreen() {
             ))}
           </>
         )}
-        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
