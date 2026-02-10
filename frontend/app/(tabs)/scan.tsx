@@ -1788,7 +1788,7 @@ const styles = StyleSheet.create({
   // Recipe Modal
   recipeModalContainer: { flex: 1 },
   recipeDetailImage: { width: '100%', height: 250 },
-  closeRecipeBtn: { position: 'absolute', top: 16, right: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  closeRecipeBtn: { position: 'absolute', top: 50, right: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
   recipeDetailContent: { padding: 20 },
   recipeDetailName: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
   recipeNutritionRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16, paddingVertical: 16, backgroundColor: 'rgba(124,58,237,0.1)', borderRadius: 12 },
