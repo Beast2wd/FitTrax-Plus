@@ -1012,8 +1012,16 @@ export default function ScanScreen() {
             </TouchableOpacity>
             {checkedCount > 0 && (
               <TouchableOpacity 
-                style={[styles.groceryActionBtn, { backgroundColor: '#EF444420' }]}
+                style={[styles.groceryActionBtn, { backgroundColor: '#10B98120' }]}
                 onPress={clearCheckedGroceries}
+              >
+                <Ionicons name="checkmark-done" size={20} color="#10B981" />
+              </TouchableOpacity>
+            )}
+            {groceryList.length > 0 && (
+              <TouchableOpacity 
+                style={[styles.groceryActionBtn, { backgroundColor: '#EF444420' }]}
+                onPress={clearAllGroceries}
               >
                 <Ionicons name="trash" size={20} color="#EF4444" />
               </TouchableOpacity>
@@ -1045,39 +1053,53 @@ export default function ScanScreen() {
             </Text>
           </View>
         ) : (
-          Object.entries(groupedGroceries).map(([category, items]) => (
-            <View key={category} style={styles.groceryCategory}>
-              <Text style={[styles.groceryCategoryTitle, { color: colors.text.primary }]}>{category}</Text>
-              {items.map(item => (
-                <TouchableOpacity 
-                  key={item.id}
-                  style={[styles.groceryItem, { backgroundColor: colors.background.card }]}
-                  onPress={() => toggleGroceryItem(item.id)}
-                >
-                  <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
-                    {item.checked && <Ionicons name="checkmark" size={16} color="#fff" />}
-                  </View>
-                  <View style={styles.groceryItemContent}>
-                    <Text style={[
-                      styles.groceryItemQty, 
-                      { color: accent.primary },
-                      item.checked && styles.groceryItemChecked
-                    ]}>
-                      {item.quantity}
-                    </Text>
-                    <Text style={[styles.groceryItemDash, { color: colors.text.muted }]}>—</Text>
-                    <Text style={[
-                      styles.groceryItemText, 
-                      { color: colors.text.primary },
-                      item.checked && styles.groceryItemChecked
-                    ]}>
-                      {item.name}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ))
+          <>
+            <Text style={[styles.groceryHint, { color: colors.text.muted }]}>
+              💡 Tap to check off • Long press to delete
+            </Text>
+            {Object.entries(groupedGroceries).map(([category, items]) => (
+              <View key={category} style={styles.groceryCategory}>
+                <Text style={[styles.groceryCategoryTitle, { color: colors.text.primary }]}>{category}</Text>
+                {items.map(item => (
+                  <Pressable 
+                    key={item.id}
+                    style={[styles.groceryItem, { backgroundColor: colors.background.card }]}
+                    onPress={() => toggleGroceryItem(item.id)}
+                    onLongPress={() => handleDeleteGroceryItem(item)}
+                    delayLongPress={400}
+                  >
+                    <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
+                      {item.checked && <Ionicons name="checkmark" size={16} color="#fff" />}
+                    </View>
+                    <View style={styles.groceryItemContent}>
+                      <Text style={[
+                        styles.groceryItemQty, 
+                        { color: accent.primary },
+                        item.checked && styles.groceryItemChecked
+                      ]}>
+                        {item.quantity}
+                      </Text>
+                      <Text style={[styles.groceryItemDash, { color: colors.text.muted }]}>—</Text>
+                      <Text style={[
+                        styles.groceryItemText, 
+                        { color: colors.text.primary },
+                        item.checked && styles.groceryItemChecked
+                      ]}>
+                        {item.name}
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.groceryDeleteBtn}
+                      onPress={() => handleDeleteGroceryItem(item)}
+                    >
+                      <Ionicons name="close-circle" size={22} color={colors.text.muted} />
+                    </TouchableOpacity>
+                  </Pressable>
+                ))}
+              </View>
+            ))}
+          </>
+        )}
         )}
 
         <View style={{ height: 100 }} />
