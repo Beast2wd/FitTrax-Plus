@@ -42,6 +42,20 @@ const STAT_CARD_IMAGES = {
   heartRate: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80', // Heart rate monitor/medical device
 };
 
+// Professional AI images for quick action buttons
+const QUICK_ACTION_IMAGES = {
+  aiCoach: 'https://images.unsplash.com/photo-1535914254981-b5012eebbd15?w=200&q=80', // AI/Robot coach
+  scanFood: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80', // Food photography
+  schedule: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=200&q=80', // Calendar planning
+  workoutLog: 'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=200&q=80', // Workout/gym
+  run: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=200&q=80', // Running outdoors
+  steps: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=200&q=80', // Walking/steps
+  bodyScan: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200&q=80', // Body fitness
+  peptides: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&q=80', // Medical vial/syringe
+  rewards: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200&q=80', // Trophy/medal
+  analytics: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&q=80', // Data analytics charts
+};
+
 export default function DashboardScreen() {
   const { userId, profile, lastMealLoggedAt, triggerMealRefresh, membershipStatus, setMembershipStatus } = useUserStore();
   const { theme, accent: accentKey } = useThemeStore();
