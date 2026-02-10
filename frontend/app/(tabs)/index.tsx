@@ -785,20 +785,20 @@ export default function DashboardScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
           {[
-            { icon: 'chatbubbles', label: 'AI Workout Coach', color: '#8B5CF6', route: '/ai-workout-chat', premium: true },
-            { icon: 'camera', label: t('dashboard.scanFood'), color: accent.primary, route: '/scan', premium: true },
-            { icon: 'calendar', label: t('dashboard.schedule'), color: '#F59E0B', route: '/schedule', premium: false },
-            { icon: 'clipboard', label: 'Workout Log', color: '#7C3AED', route: '/manual-workout-log', premium: false },
-            { icon: 'footsteps', label: t('dashboard.run'), color: '#EC4899', route: '/running', premium: false },
-            { icon: 'walk', label: 'Step Tracker', color: '#14B8A6', route: '/step-tracker', premium: false },
-            { icon: 'body', label: t('dashboard.bodyScan'), color: '#10B981', route: '/body-scan', premium: true },
-            { icon: 'flask', label: t('dashboard.peptides'), color: '#6366F1', route: '/peptides', premium: false },
-            { icon: 'trophy', label: t('dashboard.rewards'), color: '#EF4444', route: '/badges', premium: true },
-            { icon: 'stats-chart', label: t('dashboard.analytics'), color: '#0EA5E9', route: '/analytics', premium: true },
+            { image: QUICK_ACTION_IMAGES.aiCoach, label: 'AI Workout Coach', route: '/ai-workout-chat', premium: true },
+            { image: QUICK_ACTION_IMAGES.scanFood, label: t('dashboard.scanFood'), route: '/scan', premium: true },
+            { image: QUICK_ACTION_IMAGES.schedule, label: t('dashboard.schedule'), route: '/schedule', premium: false },
+            { image: QUICK_ACTION_IMAGES.workoutLog, label: 'Workout Log', route: '/manual-workout-log', premium: false },
+            { image: QUICK_ACTION_IMAGES.run, label: t('dashboard.run'), route: '/running', premium: false },
+            { image: QUICK_ACTION_IMAGES.steps, label: 'Step Tracker', route: '/step-tracker', premium: false },
+            { image: QUICK_ACTION_IMAGES.bodyScan, label: t('dashboard.bodyScan'), route: '/body-scan', premium: true },
+            { image: QUICK_ACTION_IMAGES.peptides, label: t('dashboard.peptides'), route: '/peptides', premium: false },
+            { image: QUICK_ACTION_IMAGES.rewards, label: t('dashboard.rewards'), route: '/badges', premium: true },
+            { image: QUICK_ACTION_IMAGES.analytics, label: t('dashboard.analytics'), route: '/analytics', premium: true },
           ].map((action, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.actionCard, { backgroundColor: colors.background.card }]}
+              style={[styles.actionCardWithImage, { backgroundColor: colors.background.card }]}
               onPress={() => {
                 if (action.premium && !isPremium) {
                   Alert.alert(
@@ -814,17 +814,17 @@ export default function DashboardScreen() {
                 }
               }}
             >
-              {action.premium && !isPremium && (
-                <View style={styles.premiumBadge}>
-                  <Ionicons name="diamond" size={10} color="#fff" />
-                </View>
-              )}
-              <View style={[styles.actionIcon, { backgroundColor: `${action.color}20` }]}>
-                <Ionicons name={action.icon as any} size={24} color={action.color} />
+              <Image source={{ uri: action.image }} style={styles.actionCardImage} resizeMode="cover" />
+              <View style={styles.actionCardOverlay}>
+                {action.premium && !isPremium && (
+                  <View style={styles.premiumBadgeAction}>
+                    <Ionicons name="diamond" size={10} color="#fff" />
+                  </View>
+                )}
+                <Text style={styles.actionLabelImage} numberOfLines={2}>
+                  {action.label}
+                </Text>
               </View>
-              <Text style={[styles.actionLabel, { color: colors.text.primary }]}>
-                {action.label}
-              </Text>
             </TouchableOpacity>
           ))}
         </View>
