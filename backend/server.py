@@ -9095,7 +9095,11 @@ Return a JSON array of grocery items. Each item should have:
 
 Return ONLY the JSON array, no other text."""
 
-        chat = LlmChat(api_key=api_key).with_model("openai", "gpt-4o")
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"grocery_gen_{datetime.utcnow().timestamp()}",
+            system_message="You are a helpful meal planning assistant. Generate grocery lists based on meal plans."
+        ).with_model("openai", "gpt-4o")
         response = await chat.send_message(UserMessage(text=prompt))
         
         # Parse JSON from response
