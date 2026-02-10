@@ -403,9 +403,7 @@ export default function DashboardScreen() {
     }
 
     // Reset state
-    setRunTime(0);
-    setRunDistance(0);
-    setRunCoordinates([]);
+    resetRun();
     setLastPosition(null);
   };
 
