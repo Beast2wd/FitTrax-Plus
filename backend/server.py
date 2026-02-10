@@ -9252,6 +9252,16 @@ IMPORTANT: Return ONLY the raw JSON object. No markdown, no code blocks, no extr
         logger.error(f"Error generating recipe: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.delete("/meals/recipes/{recipe_id}")
+async def delete_recipe(recipe_id: str, user_id: str):
+    """Delete a saved recipe"""
+    try:
+        result = await db.user_recipes.delete_one({"id": recipe_id, "user_id": user_id})
+        return {"message": "Recipe deleted", "deleted_count": result.deleted_count}
+    except Exception as e:
+        logger.error(f"Error deleting recipe: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ============================================================================
 # MIDDLEWARE AND APP SETUP
