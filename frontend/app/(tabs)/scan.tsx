@@ -478,14 +478,48 @@ export default function ScanScreen() {
     );
   };
 
-  // Delete planned meal
-  const handleDeleteMeal = async (mealId: string) => {
+  // Delete planned meal (also removes from nutrition if logged)
+  const handleDeleteMeal = async (mealId: string, wasCooked: boolean, mealName: string) => {
     try {
+      // Delete from planned meals
       await axios.delete(`${API_URL}/api/meals/planned/${mealId}?user_id=${userId}`);
       setPlannedMeals(prev => prev.filter(m => m.id !== mealId));
+      
+      // If meal was logged to nutrition tracker, remove it
+      if (wasCooked) {
+        try {
+          await axios.delete(`${API_URL}/api/meals/nutrition-log/${mealId}?user_id=${userId}`);
+          loadDailyNutrition(); // Refresh nutrition data
+        } catch (e) {
+          console.log('Note: Could not remove from nutrition log');
+        }
+      }
+      
+      Alert.alert('Deleted', `${mealName} has been removed${wasCooked ? ' from both meal plan and nutrition tracker' : ''}.`);
     } catch (error) {
       console.error('Error deleting meal:', error);
+      Alert.alert('Error', 'Failed to delete meal');
     }
+  };
+
+  // Confirm delete meal with alert
+  const confirmDeleteMeal = (meal: CustomMeal) => {
+    const message = meal.cooked 
+      ? `This will remove "${meal.name}" from both your meal plan AND your nutrition tracker for today.`
+      : `Delete "${meal.name}" from your meal plan?`;
+      
+    Alert.alert(
+      'Delete Meal',
+      message,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => handleDeleteMeal(meal.id, meal.cooked, meal.name)
+        },
+      ]
+    );
   };
 
   // Generate AI grocery list from meals
