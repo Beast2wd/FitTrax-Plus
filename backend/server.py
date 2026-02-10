@@ -9210,6 +9210,9 @@ IMPORTANT: Return ONLY the raw JSON object. No markdown, no code blocks, no extr
         
         await db.user_recipes.insert_one(recipe)
         
+        # Remove MongoDB _id before returning (it's not JSON serializable)
+        recipe.pop("_id", None)
+        
         return {"recipe": recipe}
     except Exception as e:
         logger.error(f"Error generating recipe: {str(e)}")
