@@ -9034,6 +9034,19 @@ async def log_custom_meal(request: CustomMealLog):
         logger.error(f"Error logging custom meal: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.delete("/meals/nutrition-log/{meal_id}")
+async def delete_nutrition_log(meal_id: str, user_id: str):
+    """Delete a logged meal from nutrition tracker"""
+    try:
+        result = await db.meals.delete_one({"meal_id": meal_id, "user_id": user_id})
+        if result.deleted_count == 0:
+            # Also try to find by custom meal pattern
+            result = await db.meals.delete_one({"meal_id": {"$regex": f"^custom_"}, "food_name": {"$exists": True}, "user_id": user_id})
+        return {"message": "Nutrition log deleted", "deleted_count": result.deleted_count}
+    except Exception as e:
+        logger.error(f"Error deleting nutrition log: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Grocery List endpoints
 class GroceryItemRequest(BaseModel):
     user_id: str
