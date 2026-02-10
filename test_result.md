@@ -399,6 +399,18 @@ backend:
         agent: "testing"
         comment: "PEPTIDE FEATURES TESTING COMPLETED: Tested all 4 new peptide endpoints as requested in review for user_1769564539081. Results: 4/4 tests passed (100% success rate). ✅ POST /api/peptides/stacks/save working correctly (saved Recovery Stack with BPC-157 and TB-500 peptides for injury recovery goal), ✅ GET /api/peptides/stacks/user_1769564539081 working correctly (retrieved 1 saved stack), ✅ POST /api/peptides/chat/save working correctly (saved chat conversation with title 'Test Conversation' and user question about BPC-157), ✅ GET /api/peptides/chat/history/user_1769564539081 working correctly (retrieved 1 saved conversation). All endpoints return 200 OK status and proper JSON responses. Peptide stacks and chat history features are fully functional and production-ready for the FitTrax+ application."
 
+  - task: "Meal Planner Backend Endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "MEAL PLANNER ENDPOINTS TESTING COMPLETED: Comprehensive testing of all 10 new meal planner backend endpoints as requested in review for test user 'test_meal_user_123' and date '2026-02-10'. Results: 12/12 tests passed (100% success rate). ✅ POST /api/meals/planned working correctly (created planned meal with Test Breakfast, 450 calories), ✅ GET /api/meals/planned/{user_id}?date=2026-02-10 working correctly (retrieved 1 planned meal), ✅ PUT /api/meals/planned/{meal_id} working correctly (updated meal to 500 calories, modified count: 1), ✅ PUT /api/meals/planned/{meal_id}/cook working correctly (marked meal as cooked, modified count: 1), ✅ DELETE /api/meals/planned/{meal_id}?user_id={user_id} working correctly (deleted meal, deleted count: 1), ✅ POST /api/food/log-custom working correctly (logged Grilled Chicken with 350 calories, returned meal_id), ✅ Custom meal storage verification passed (meal stored with flat fields, not nested in analysis object), ✅ POST /api/meals/groceries working correctly (added Chicken Breast grocery item), ✅ GET /api/meals/groceries/{user_id} working correctly (retrieved 1 grocery item), ✅ PUT /api/meals/groceries/{item_id}/toggle working correctly (toggled grocery item checked status), ✅ GET /api/meals/recipes/{user_id} working correctly (returned empty recipes array). All endpoints return proper 200 OK responses with expected JSON structure. Meal planner backend is fully functional and production-ready for FitTrax+ application."
+
 frontend:
   - task: "Tab Navigation Setup"
     implemented: true
