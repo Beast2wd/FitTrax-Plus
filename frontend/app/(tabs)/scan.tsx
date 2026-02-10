@@ -809,6 +809,34 @@ export default function ScanScreen() {
     );
   };
 
+  // Confirm delete recipe
+  const confirmDeleteRecipe = (recipe: Recipe) => {
+    Alert.alert(
+      'Delete Recipe',
+      `Are you sure you want to delete "${recipe.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => handleDeleteRecipe(recipe.id)
+        },
+      ]
+    );
+  };
+
+  // Delete recipe
+  const handleDeleteRecipe = async (recipeId: string) => {
+    try {
+      await axios.delete(`${API_URL}/api/meals/recipes/${recipeId}?user_id=${userId}`);
+      setRecipes(prev => prev.filter(r => r.id !== recipeId));
+      Alert.alert('Deleted', 'Recipe has been removed.');
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      Alert.alert('Error', 'Failed to delete recipe');
+    }
+  };
+
   const getFormattedDate = () => {
     const date = new Date(selectedDate);
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
