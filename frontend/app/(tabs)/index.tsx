@@ -11,6 +11,7 @@ import {
   Dimensions,
   Platform,
   Modal,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -32,6 +33,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
+
+// Professional AI images for dashboard stat cards
+const STAT_CARD_IMAGES = {
+  meals: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80', // Healthy food bowl
+  training: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80', // Gym weights
+  hydration: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&q=80', // Water glass
+  heartRate: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=400&q=80', // Heart health
+};
 
 export default function DashboardScreen() {
   const { userId, profile, lastMealLoggedAt, triggerMealRefresh, membershipStatus, setMembershipStatus } = useUserStore();
