@@ -8933,6 +8933,306 @@ app.add_middleware(RequestSizeLimitMiddleware, max_size=10 * 1024 * 1024)
 # Add HTTPS redirect middleware (only enforces if ENFORCE_HTTPS=true)
 app.add_middleware(HTTPSRedirectMiddleware)
 
+
+# ============================================================
+# MEAL PLANNER, GROCERY LIST & RECIPE ENDPOINTS
+# ============================================================
+
+class PlannedMealRequest(BaseModel):
+    user_id: str
+    meal: dict
+
+@api_router.post("/meals/planned")
+async def create_planned_meal(request: PlannedMealRequest):
+    """Create a planned meal"""
+    try:
+        meal_data = request.meal
+        meal_data["user_id"] = request.user_id
+        meal_data["created_at"] = datetime.utcnow().isoformat()
+        
+        await db.planned_meals.insert_one(meal_data)
+        return {"message": "Meal planned successfully", "meal_id": meal_data.get("id")}
+    except Exception as e:
+        logger.error(f"Error creating planned meal: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/meals/planned/{user_id}")
+async def get_planned_meals(user_id: str, date: str = None):
+    """Get planned meals for a user, optionally filtered by date"""
+    try:
+        query = {"user_id": user_id}
+        if date:
+            query["date"] = date
+        
+        meals = await db.planned_meals.find(query).sort("created_at", -1).to_list(100)
+        for meal in meals:
+            meal["_id"] = str(meal["_id"])
+        
+        return {"meals": meals}
+    except Exception as e:
+        logger.error(f"Error getting planned meals: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/meals/planned/{meal_id}/cook")
+async def mark_meal_cooked(meal_id: str, user_id: str = Body(..., embed=True)):
+    """Mark a planned meal as cooked"""
+    try:
+        result = await db.planned_meals.update_one(
+            {"id": meal_id, "user_id": user_id},
+            {"$set": {"cooked": True, "cooked_at": datetime.utcnow().isoformat()}}
+        )
+        return {"message": "Meal marked as cooked", "modified": result.modified_count}
+    except Exception as e:
+        logger.error(f"Error marking meal as cooked: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/meals/planned/{meal_id}")
+async def delete_planned_meal(meal_id: str, user_id: str):
+    """Delete a planned meal"""
+    try:
+        result = await db.planned_meals.delete_one({"id": meal_id, "user_id": user_id})
+        return {"message": "Meal deleted", "deleted": result.deleted_count}
+    except Exception as e:
+        logger.error(f"Error deleting planned meal: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Custom meal logging
+class CustomMealLog(BaseModel):
+    user_id: str
+    meal_name: str
+    meal_category: str
+    calories: int
+    protein: int
+    carbs: int
+    fat: int
+    sugar: int = 0
+    fiber: int = 0
+    sodium: int = 0
+
+@api_router.post("/food/log-custom")
+async def log_custom_meal(request: CustomMealLog):
+    """Log a custom meal to nutrition tracker"""
+    try:
+        meal_data = {
+            "meal_id": f"custom_{int(datetime.utcnow().timestamp() * 1000)}",
+            "user_id": request.user_id,
+            "meal_category": request.meal_category,
+            "analysis": {
+                "food_name": request.meal_name,
+                "calories": request.calories,
+                "protein": request.protein,
+                "carbs": request.carbs,
+                "fat": request.fat,
+                "sugar": request.sugar,
+                "fiber": request.fiber,
+                "sodium": request.sodium,
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+            "source": "custom_meal"
+        }
+        
+        await db.meals.insert_one(meal_data)
+        return {"message": "Meal logged successfully", "meal_id": meal_data["meal_id"]}
+    except Exception as e:
+        logger.error(f"Error logging custom meal: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Grocery List endpoints
+class GroceryItemRequest(BaseModel):
+    user_id: str
+    item: dict
+
+@api_router.get("/meals/groceries/{user_id}")
+async def get_grocery_list(user_id: str):
+    """Get grocery list for a user"""
+    try:
+        items = await db.grocery_items.find({"user_id": user_id}).to_list(200)
+        for item in items:
+            item["_id"] = str(item["_id"])
+        return {"items": items}
+    except Exception as e:
+        logger.error(f"Error getting grocery list: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/meals/groceries")
+async def add_grocery_item(request: GroceryItemRequest):
+    """Add a grocery item"""
+    try:
+        item = request.item
+        item["user_id"] = request.user_id
+        await db.grocery_items.insert_one(item)
+        return {"message": "Item added", "item_id": item.get("id")}
+    except Exception as e:
+        logger.error(f"Error adding grocery item: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/meals/groceries/{item_id}/toggle")
+async def toggle_grocery_item(item_id: str, user_id: str = Body(..., embed=True)):
+    """Toggle grocery item checked status"""
+    try:
+        item = await db.grocery_items.find_one({"id": item_id, "user_id": user_id})
+        if item:
+            new_checked = not item.get("checked", False)
+            await db.grocery_items.update_one(
+                {"id": item_id, "user_id": user_id},
+                {"$set": {"checked": new_checked}}
+            )
+        return {"message": "Item toggled"}
+    except Exception as e:
+        logger.error(f"Error toggling grocery item: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/meals/groceries/clear-checked")
+async def clear_checked_groceries(user_id: str = Body(...), item_ids: List[str] = Body(...)):
+    """Clear checked grocery items"""
+    try:
+        result = await db.grocery_items.delete_many({"user_id": user_id, "id": {"$in": item_ids}})
+        return {"message": "Items cleared", "deleted": result.deleted_count}
+    except Exception as e:
+        logger.error(f"Error clearing groceries: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# AI Grocery List Generator
+class GroceryGenerateRequest(BaseModel):
+    user_id: str
+    meals: List[str]
+
+@api_router.post("/meals/generate-groceries")
+async def generate_grocery_list(request: GroceryGenerateRequest):
+    """Generate AI grocery list from meal plan"""
+    try:
+        api_key = os.getenv("EMERGENT_LLM_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="AI service not configured")
+        
+        meals_text = "\n".join([f"- {meal}" for meal in request.meals])
+        
+        prompt = f"""Generate a grocery shopping list for these meals:
+{meals_text}
+
+Return a JSON array of grocery items. Each item should have:
+- id: unique string like "grocery_1", "grocery_2" etc
+- name: item name
+- quantity: amount needed (e.g. "2 lbs", "1 dozen", "3 cups")
+- category: one of "Produce", "Meat & Seafood", "Dairy", "Grains", "Canned Goods", "Spices", "Other"
+- checked: false
+
+Return ONLY the JSON array, no other text."""
+
+        chat = LlmChat(api_key=api_key).with_model("openai", "gpt-4o")
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        # Parse JSON from response
+        items = []
+        try:
+            # Clean up response
+            clean_response = response.strip()
+            if clean_response.startswith("```"):
+                clean_response = clean_response.split("```")[1]
+                if clean_response.startswith("json"):
+                    clean_response = clean_response[4:]
+            items = json.loads(clean_response)
+        except:
+            # Fallback parsing
+            import re
+            json_match = re.search(r'\[[\s\S]*\]', response)
+            if json_match:
+                items = json.loads(json_match.group())
+        
+        # Save to database
+        for item in items:
+            item["user_id"] = request.user_id
+            await db.grocery_items.update_one(
+                {"user_id": request.user_id, "name": item["name"]},
+                {"$set": item},
+                upsert=True
+            )
+        
+        return {"items": items}
+    except Exception as e:
+        logger.error(f"Error generating groceries: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Recipe endpoints
+@api_router.get("/meals/recipes/{user_id}")
+async def get_recipes(user_id: str):
+    """Get saved recipes for a user"""
+    try:
+        recipes = await db.user_recipes.find({"user_id": user_id}).sort("created_at", -1).to_list(50)
+        for recipe in recipes:
+            recipe["_id"] = str(recipe["_id"])
+        return {"recipes": recipes}
+    except Exception as e:
+        logger.error(f"Error getting recipes: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RecipeGenerateRequest(BaseModel):
+    user_id: str
+    prompt: str
+
+@api_router.post("/meals/generate-recipe")
+async def generate_recipe(request: RecipeGenerateRequest):
+    """Generate an AI recipe based on user prompt"""
+    try:
+        api_key = os.getenv("EMERGENT_LLM_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="AI service not configured")
+        
+        prompt = f"""Create a healthy recipe based on this request: {request.prompt}
+
+Return a JSON object with:
+- id: unique string like "recipe_{timestamp}"
+- name: recipe name
+- image: a URL to a relevant food image from unsplash (format: https://images.unsplash.com/photo-XXXXX?w=600)
+- calories: total calories (number)
+- protein: grams of protein (number)
+- carbs: grams of carbs (number)
+- fat: grams of fat (number)
+- prepTime: preparation time like "25 mins"
+- ingredients: array of ingredient strings with amounts
+- instructions: array of step-by-step instructions
+- category: one of "breakfast", "lunch", "dinner", "snack"
+
+Return ONLY the JSON object, no other text."""
+
+        chat = LlmChat(api_key=api_key).with_model("openai", "gpt-4o")
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        # Parse JSON from response
+        recipe = None
+        try:
+            clean_response = response.strip()
+            if clean_response.startswith("```"):
+                clean_response = clean_response.split("```")[1]
+                if clean_response.startswith("json"):
+                    clean_response = clean_response[4:]
+            recipe = json.loads(clean_response)
+        except:
+            import re
+            json_match = re.search(r'\{[\s\S]*\}', response)
+            if json_match:
+                recipe = json.loads(json_match.group())
+        
+        if not recipe:
+            raise HTTPException(status_code=500, detail="Failed to generate recipe")
+        
+        # Add metadata and save
+        recipe["id"] = f"recipe_{int(datetime.utcnow().timestamp() * 1000)}"
+        recipe["user_id"] = request.user_id
+        recipe["created_at"] = datetime.utcnow().isoformat()
+        
+        # Ensure image URL is valid
+        if not recipe.get("image") or "unsplash" not in recipe.get("image", ""):
+            recipe["image"] = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600"
+        
+        await db.user_recipes.insert_one(recipe)
+        
+        return {"recipe": recipe}
+    except Exception as e:
+        logger.error(f"Error generating recipe: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.on_event("startup")
 async def startup_event():
     """Run startup checks and initialize components"""
