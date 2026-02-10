@@ -8972,6 +8972,27 @@ async def delete_planned_meal(meal_id: str, user_id: str):
         logger.error(f"Error deleting planned meal: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class UpdateMealRequest(BaseModel):
+    user_id: str
+    meal: dict
+
+@api_router.put("/meals/planned/{meal_id}")
+async def update_planned_meal(meal_id: str, request: UpdateMealRequest):
+    """Update a planned meal"""
+    try:
+        meal_data = request.meal
+        meal_data["user_id"] = request.user_id
+        meal_data["updated_at"] = datetime.utcnow().isoformat()
+        
+        result = await db.planned_meals.update_one(
+            {"id": meal_id, "user_id": request.user_id},
+            {"$set": meal_data}
+        )
+        return {"message": "Meal updated", "modified": result.modified_count}
+    except Exception as e:
+        logger.error(f"Error updating planned meal: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Custom meal logging
 class CustomMealLog(BaseModel):
     user_id: str
