@@ -1065,6 +1065,12 @@ export default function ScanScreen() {
                           <Ionicons name="checkmark-circle" size={20} color="#10B981" />
                         </View>
                       )}
+                      <TouchableOpacity 
+                        style={[styles.deleteMealBtn]}
+                        onPress={() => confirmDeleteMeal(meal)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                      </TouchableOpacity>
                     </View>
                   </Pressable>
                 ))
