@@ -8909,30 +8909,6 @@ Previous conversation:
         logger.error(f"Error in AI workout chat: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to process message: {str(e)}")
 
-# ============================================================================
-# MIDDLEWARE AND APP SETUP
-# ============================================================================
-
-# Include the router in the main app
-app.include_router(api_router)
-
-# Add CORS middleware with configuration-based origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=CORSConfig.ALLOWED_ORIGINS + [
-        "https://fitness-journey-294.preview.emergentagent.com",  # Preview URL
-    ],
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
-)
-
-# Add request size limit middleware (10MB max)
-app.add_middleware(RequestSizeLimitMiddleware, max_size=10 * 1024 * 1024)
-
-# Add HTTPS redirect middleware (only enforces if ENFORCE_HTTPS=true)
-app.add_middleware(HTTPSRedirectMiddleware)
-
 
 # ============================================================
 # MEAL PLANNER, GROCERY LIST & RECIPE ENDPOINTS
@@ -9232,6 +9208,30 @@ Return ONLY the JSON object, no other text."""
         logger.error(f"Error generating recipe: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ============================================================================
+# MIDDLEWARE AND APP SETUP
+# ============================================================================
+
+# Include the router in the main app
+app.include_router(api_router)
+
+# Add CORS middleware with configuration-based origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=CORSConfig.ALLOWED_ORIGINS + [
+        "https://fitness-journey-294.preview.emergentagent.com",  # Preview URL
+    ],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
+)
+
+# Add request size limit middleware (10MB max)
+app.add_middleware(RequestSizeLimitMiddleware, max_size=10 * 1024 * 1024)
+
+# Add HTTPS redirect middleware (only enforces if ENFORCE_HTTPS=true)
+app.add_middleware(HTTPSRedirectMiddleware)
 
 @app.on_event("startup")
 async def startup_event():
