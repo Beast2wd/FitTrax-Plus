@@ -876,11 +876,51 @@ export default function ScanScreen() {
 
   // Render Meal Planner Tab
   const renderMealPlanner = () => {
+    const isToday = selectedDate === new Date().toISOString().split('T')[0];
+    
+    const goToPreviousDay = () => {
+      const date = new Date(selectedDate);
+      date.setDate(date.getDate() - 1);
+      setSelectedDate(date.toISOString().split('T')[0]);
+    };
+
+    const goToNextDay = () => {
+      const date = new Date(selectedDate);
+      date.setDate(date.getDate() + 1);
+      setSelectedDate(date.toISOString().split('T')[0]);
+    };
+
+    const goToToday = () => {
+      setSelectedDate(new Date().toISOString().split('T')[0]);
+    };
+
     return (
       <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-        {/* Date Header */}
-        <View style={styles.dateHeader}>
-          <Text style={[styles.dateTitle, { color: colors.text.primary }]}>{getFormattedDate()}</Text>
+        {/* Date Navigation Header */}
+        <View style={[styles.dateNavHeader, { backgroundColor: colors.background.card }]}>
+          <TouchableOpacity style={styles.dateNavBtn} onPress={goToPreviousDay}>
+            <Ionicons name="chevron-back" size={24} color={accent.primary} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.dateNavCenter} onPress={goToToday}>
+            <Text style={[styles.dateNavTitle, { color: colors.text.primary }]}>
+              {isToday ? "Today" : getFormattedDate()}
+            </Text>
+            <Text style={[styles.dateNavSubtitle, { color: colors.text.muted }]}>
+              {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </Text>
+            {!isToday && (
+              <Text style={[styles.tapToReturn, { color: accent.primary }]}>Tap to return to today</Text>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.dateNavBtn, isToday && styles.dateNavBtnDisabled]} 
+            onPress={goToNextDay}
+            disabled={isToday}
+          >
+            <Ionicons name="chevron-forward" size={24} color={isToday ? colors.text.muted : accent.primary} />
+          </TouchableOpacity>
         </View>
 
         {/* Nutrition Tracker */}
