@@ -1670,6 +1670,15 @@ const styles = StyleSheet.create({
   dateHeader: { marginBottom: 12 },
   dateTitle: { fontSize: 18, fontWeight: '700' },
   
+  // Date Navigation
+  dateNavHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 16, marginBottom: 16 },
+  dateNavBtn: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center', borderRadius: 22 },
+  dateNavBtnDisabled: { opacity: 0.3 },
+  dateNavCenter: { flex: 1, alignItems: 'center' },
+  dateNavTitle: { fontSize: 20, fontWeight: '700' },
+  dateNavSubtitle: { fontSize: 13, marginTop: 2 },
+  tapToReturn: { fontSize: 11, marginTop: 4, fontWeight: '600' },
+  
   // Nutrition Tracker
   nutritionTracker: { padding: 16, borderRadius: 16, marginBottom: 16 },
   trackerTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
