@@ -427,7 +427,7 @@ export default function ScanScreen() {
         { 
           text: 'Delete', 
           style: 'destructive',
-          onPress: () => handleDeleteMeal(meal.id)
+          onPress: () => confirmDeleteMeal(meal)
         },
       ]
     );
