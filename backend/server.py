@@ -9010,21 +9010,21 @@ class CustomMealLog(BaseModel):
 async def log_custom_meal(request: CustomMealLog):
     """Log a custom meal to nutrition tracker"""
     try:
+        today_date = datetime.utcnow().strftime("%Y-%m-%d")
         meal_data = {
             "meal_id": f"custom_{int(datetime.utcnow().timestamp() * 1000)}",
             "user_id": request.user_id,
             "meal_category": request.meal_category,
-            "analysis": {
-                "food_name": request.meal_name,
-                "calories": request.calories,
-                "protein": request.protein,
-                "carbs": request.carbs,
-                "fat": request.fat,
-                "sugar": request.sugar,
-                "fiber": request.fiber,
-                "sodium": request.sodium,
-            },
+            "food_name": request.meal_name,
+            "calories": request.calories,
+            "protein": request.protein,
+            "carbs": request.carbs,
+            "fat": request.fat,
+            "sugar": request.sugar,
+            "fiber": request.fiber,
+            "sodium": request.sodium,
             "timestamp": datetime.utcnow().isoformat(),
+            "date": today_date,
             "source": "custom_meal"
         }
         
