@@ -607,7 +607,7 @@ export default function ScanScreen() {
     }
   };
 
-  // Add recipe to meal plan with ingredients
+  // Add recipe to meal plan with ingredients AND auto-populate groceries
   const addRecipeToMealPlan = async (recipe: Recipe) => {
     const mealData: CustomMeal = {
       id: `meal_${Date.now()}`,
@@ -626,19 +626,62 @@ export default function ScanScreen() {
     };
 
     try {
+      // Add to meal plan
       await axios.post(`${API_URL}/api/meals/planned`, {
         user_id: userId,
         meal: mealData,
       });
 
       setPlannedMeals(prev => [...prev, mealData]);
+
+      // Auto-populate groceries from recipe ingredients
+      if (recipe.ingredients && recipe.ingredients.length > 0) {
+        const newGroceryItems: GroceryItem[] = recipe.ingredients.map((ingredient, index) => ({
+          id: `grocery_${Date.now()}_${index}`,
+          name: ingredient,
+          quantity: '1',
+          category: categorizeIngredient(ingredient),
+          checked: false,
+        }));
+
+        // Add each grocery item to database and state
+        for (const item of newGroceryItems) {
+          try {
+            await axios.post(`${API_URL}/api/meals/groceries`, {
+              user_id: userId,
+              item,
+            });
+          } catch (e) {
+            console.log('Error adding grocery item:', e);
+          }
+        }
+        
+        setGroceryList(prev => [...prev, ...newGroceryItems]);
+      }
+
       setShowRecipeModal(false);
       setActiveTab('planner');
-      Alert.alert('Added!', `${recipe.name} added to your meal plan. Generate groceries to get ingredients!`);
+      Alert.alert(
+        'Added!', 
+        `${recipe.name} added to your meal plan.\n\n✅ ${recipe.ingredients?.length || 0} ingredients added to your grocery list!`
+      );
     } catch (error) {
       console.error('Error adding recipe to meal plan:', error);
       Alert.alert('Error', 'Failed to add to meal plan');
     }
+  };
+
+  // Helper to categorize ingredients for grocery list
+  const categorizeIngredient = (ingredient: string): string => {
+    const lowerIng = ingredient.toLowerCase();
+    if (/chicken|beef|pork|fish|salmon|shrimp|turkey|bacon|sausage/.test(lowerIng)) return 'Meat & Seafood';
+    if (/milk|cheese|yogurt|butter|cream|egg/.test(lowerIng)) return 'Dairy';
+    if (/rice|pasta|bread|flour|oat|quinoa|cereal/.test(lowerIng)) return 'Grains';
+    if (/tomato|onion|garlic|pepper|lettuce|spinach|carrot|broccoli|potato|vegetable|fruit|apple|banana|lemon|lime|avocado/.test(lowerIng)) return 'Produce';
+    if (/can|canned|beans|broth|stock|sauce|tomato paste/.test(lowerIng)) return 'Canned Goods';
+    if (/salt|pepper|spice|herb|oregano|basil|cumin|paprika|cinnamon/.test(lowerIng)) return 'Spices';
+    if (/oil|olive|vinegar|soy sauce|honey|sugar/.test(lowerIng)) return 'Pantry';
+    return 'Other';
   };
 
   // Cook from recipe
