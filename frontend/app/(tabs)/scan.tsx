@@ -1057,13 +1057,23 @@ export default function ScanScreen() {
                   <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
                     {item.checked && <Ionicons name="checkmark" size={16} color="#fff" />}
                   </View>
-                  <Text style={[
-                    styles.groceryItemText, 
-                    { color: colors.text.primary },
-                    item.checked && styles.groceryItemChecked
-                  ]}>
-                    {item.quantity} {item.name}
-                  </Text>
+                  <View style={styles.groceryItemContent}>
+                    <Text style={[
+                      styles.groceryItemQty, 
+                      { color: accent.primary },
+                      item.checked && styles.groceryItemChecked
+                    ]}>
+                      {item.quantity}
+                    </Text>
+                    <Text style={[styles.groceryItemDash, { color: colors.text.muted }]}>—</Text>
+                    <Text style={[
+                      styles.groceryItemText, 
+                      { color: colors.text.primary },
+                      item.checked && styles.groceryItemChecked
+                    ]}>
+                      {item.name}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
