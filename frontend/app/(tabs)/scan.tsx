@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,18 +12,22 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useUserStore } from '../../stores/userStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { foodAPI } from '../../services/api';
 import { router } from 'expo-router';
 import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const MEAL_CATEGORIES = [
   { value: 'breakfast', label: 'Breakfast', icon: '🌅', color: '#F59E0B' },
@@ -32,46 +36,151 @@ const MEAL_CATEGORIES = [
   { value: 'dinner', label: 'Dinner', icon: '🌙', color: '#8B5CF6' },
 ];
 
-interface AdditionalIngredient {
+// Tab options for the meal planner
+const TABS = [
+  { id: 'planner', label: 'Meal Planner', icon: 'restaurant-menu' },
+  { id: 'groceries', label: 'Groceries', icon: 'shopping-cart' },
+  { id: 'recipes', label: 'Recipes', icon: 'menu-book' },
+];
+
+interface CustomMeal {
   id: string;
   name: string;
-  quantity: string;
+  category: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
+  sugar: number;
+  fiber: number;
+  sodium: number;
+  image?: string;
+  recipe?: string;
+  ingredients?: string[];
+  date: string;
+  cooked?: boolean;
+}
+
+interface GroceryItem {
+  id: string;
+  name: string;
+  quantity: string;
+  category: string;
+  checked: boolean;
+}
+
+interface Recipe {
+  id: string;
+  name: string;
+  image: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  prepTime: string;
+  ingredients: string[];
+  instructions: string[];
+  category: string;
 }
 
 export default function ScanScreen() {
   const { userId, triggerMealRefresh } = useUserStore();
   const { theme } = useThemeStore();
+  const colors = theme.colors;
+  const accent = theme.accentColors;
+
+  // Main tab state
+  const [activeTab, setActiveTab] = useState('planner');
+  
+  // Scan states
   const [image, setImage] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [mealCategory, setMealCategory] = useState('breakfast');
-  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [quantityModalVisible, setQuantityModalVisible] = useState(false);
-  const [servingQuantity, setServingQuantity] = useState('1');
-  const [editedNutrition, setEditedNutrition] = useState({
+  const [savedMealId, setSavedMealId] = useState<string | null>(null);
+
+  // Meal Planner states
+  const [plannedMeals, setPlannedMeals] = useState<CustomMeal[]>([]);
+  const [showCreateMealModal, setShowCreateMealModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [loadingMeals, setLoadingMeals] = useState(false);
+  
+  // New meal form
+  const [newMeal, setNewMeal] = useState({
+    name: '',
+    category: 'breakfast',
     calories: '',
     protein: '',
     carbs: '',
     fat: '',
+    sugar: '',
+    fiber: '',
+    sodium: '',
   });
-  const [savedMealId, setSavedMealId] = useState<string | null>(null);
-  
-  // Additional ingredients state
-  const [additionalIngredients, setAdditionalIngredients] = useState<AdditionalIngredient[]>([]);
-  const [addIngredientModalVisible, setAddIngredientModalVisible] = useState(false);
-  const [newIngredientName, setNewIngredientName] = useState('');
-  const [newIngredientQuantity, setNewIngredientQuantity] = useState('1 serving');
-  const [analyzingIngredient, setAnalyzingIngredient] = useState(false);
 
-  const colors = theme.colors;
-  const accent = theme.accentColors;
+  // Grocery states
+  const [groceryList, setGroceryList] = useState<GroceryItem[]>([]);
+  const [generatingGroceries, setGeneratingGroceries] = useState(false);
+  const [showAddGroceryModal, setShowAddGroceryModal] = useState(false);
+  const [newGroceryItem, setNewGroceryItem] = useState({ name: '', quantity: '1', category: 'Produce' });
 
+  // Recipe states
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loadingRecipes, setLoadingRecipes] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [showRecipeModal, setShowRecipeModal] = useState(false);
+  const [generatingRecipe, setGeneratingRecipe] = useState(false);
+  const [recipePrompt, setRecipePrompt] = useState('');
+  const [showRecipeGeneratorModal, setShowRecipeGeneratorModal] = useState(false);
+
+  // Load data on mount
+  useEffect(() => {
+    if (userId) {
+      loadPlannedMeals();
+      loadGroceryList();
+      loadRecipes();
+    }
+  }, [userId, selectedDate]);
+
+  const loadPlannedMeals = async () => {
+    if (!userId) return;
+    setLoadingMeals(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/meals/planned/${userId}?date=${selectedDate}`);
+      setPlannedMeals(response.data.meals || []);
+    } catch (error) {
+      console.log('No planned meals found');
+      setPlannedMeals([]);
+    } finally {
+      setLoadingMeals(false);
+    }
+  };
+
+  const loadGroceryList = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`${API_URL}/api/meals/groceries/${userId}`);
+      setGroceryList(response.data.items || []);
+    } catch (error) {
+      console.log('No grocery list found');
+    }
+  };
+
+  const loadRecipes = async () => {
+    if (!userId) return;
+    setLoadingRecipes(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/meals/recipes/${userId}`);
+      setRecipes(response.data.recipes || []);
+    } catch (error) {
+      console.log('No recipes found');
+    } finally {
+      setLoadingRecipes(false);
+    }
+  };
+
+  // Camera/Gallery functions
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
@@ -90,7 +199,7 @@ export default function ScanScreen() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
-        quality: 0.5, // Reduced for faster upload
+        quality: 0.5,
         base64: true,
       });
 
@@ -110,7 +219,7 @@ export default function ScanScreen() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
-        quality: 0.5, // Reduced for faster upload
+        quality: 0.5,
         base64: true,
       });
 
@@ -142,22 +251,10 @@ export default function ScanScreen() {
       });
 
       setResult(response);
-      // Get meal_id from the meal object in the response
       setSavedMealId(response.meal?.meal_id || null);
       
-      // Trigger dashboard refresh after successful meal analysis
       if (response.meal?.meal_id) {
         triggerMealRefresh();
-      }
-      
-      // Initialize edited nutrition with result values
-      if (response.analysis) {
-        setEditedNutrition({
-          calories: Math.round(response.analysis.calories).toString(),
-          protein: Math.round(response.analysis.protein).toString(),
-          carbs: Math.round(response.analysis.carbs).toString(),
-          fat: Math.round(response.analysis.fat).toString(),
-        });
       }
     } catch (error: any) {
       console.error('Analysis error:', error);
@@ -167,16 +264,106 @@ export default function ScanScreen() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!savedMealId) {
-      Alert.alert('Info', 'This scan was not saved to the database yet.');
-      reset();
+  const reset = () => {
+    setImage(null);
+    setImageBase64(null);
+    setResult(null);
+    setSavedMealId(null);
+  };
+
+  // Create custom meal
+  const handleCreateMeal = async () => {
+    if (!newMeal.name || !newMeal.calories) {
+      Alert.alert('Required', 'Please enter meal name and calories');
       return;
     }
 
+    try {
+      const mealData: CustomMeal = {
+        id: `meal_${Date.now()}`,
+        name: newMeal.name,
+        category: newMeal.category,
+        calories: parseInt(newMeal.calories) || 0,
+        protein: parseInt(newMeal.protein) || 0,
+        carbs: parseInt(newMeal.carbs) || 0,
+        fat: parseInt(newMeal.fat) || 0,
+        sugar: parseInt(newMeal.sugar) || 0,
+        fiber: parseInt(newMeal.fiber) || 0,
+        sodium: parseInt(newMeal.sodium) || 0,
+        date: selectedDate,
+        cooked: false,
+      };
+
+      await axios.post(`${API_URL}/api/meals/planned`, {
+        user_id: userId,
+        meal: mealData,
+      });
+
+      setPlannedMeals(prev => [...prev, mealData]);
+      setShowCreateMealModal(false);
+      setNewMeal({
+        name: '', category: 'breakfast', calories: '', protein: '',
+        carbs: '', fat: '', sugar: '', fiber: '', sodium: '',
+      });
+      Alert.alert('Success', 'Meal added to your plan!');
+    } catch (error) {
+      console.error('Error creating meal:', error);
+      Alert.alert('Error', 'Failed to create meal');
+    }
+  };
+
+  // Mark meal as cooked and log nutrients
+  const handleCookMeal = async (meal: CustomMeal) => {
     Alert.alert(
-      'Delete Scan',
-      'Are you sure you want to delete this food scan?',
+      'Log This Meal',
+      `Log "${meal.name}" to your nutrition tracker?\n\nCalories: ${meal.calories}\nProtein: ${meal.protein}g\nCarbs: ${meal.carbs}g\nFat: ${meal.fat}g`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log Meal',
+          onPress: async () => {
+            try {
+              // Log to nutrition tracker
+              await axios.post(`${API_URL}/api/food/log-custom`, {
+                user_id: userId,
+                meal_name: meal.name,
+                meal_category: meal.category,
+                calories: meal.calories,
+                protein: meal.protein,
+                carbs: meal.carbs,
+                fat: meal.fat,
+                sugar: meal.sugar,
+                fiber: meal.fiber,
+                sodium: meal.sodium,
+              });
+
+              // Mark as cooked
+              await axios.put(`${API_URL}/api/meals/planned/${meal.id}/cook`, {
+                user_id: userId,
+              });
+
+              // Update local state
+              setPlannedMeals(prev => 
+                prev.map(m => m.id === meal.id ? { ...m, cooked: true } : m)
+              );
+
+              triggerMealRefresh();
+              Alert.alert('Logged!', `${meal.name} has been added to your nutrition log.`);
+            } catch (error) {
+              console.error('Error logging meal:', error);
+              Alert.alert('Error', 'Failed to log meal');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Delete planned meal
+  const handleDeleteMeal = async (mealId: string) => {
+    Alert.alert(
+      'Delete Meal',
+      'Remove this meal from your plan?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -184,12 +371,10 @@ export default function ScanScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await foodAPI.deleteMeal(savedMealId);
-              Alert.alert('Deleted', 'Food scan has been removed');
-              reset();
+              await axios.delete(`${API_URL}/api/meals/planned/${mealId}?user_id=${userId}`);
+              setPlannedMeals(prev => prev.filter(m => m.id !== mealId));
             } catch (error) {
-              console.error('Delete error:', error);
-              Alert.alert('Error', 'Failed to delete');
+              console.error('Error deleting meal:', error);
             }
           },
         },
@@ -197,171 +382,147 @@ export default function ScanScreen() {
     );
   };
 
-  const handleSaveEdits = async () => {
-    if (!savedMealId) {
-      // If meal wasn't saved yet, just update local state
-      setResult((prev: any) => ({
-        ...prev,
-        analysis: {
-          ...prev.analysis,
-          calories: parseFloat(editedNutrition.calories) || 0,
-          protein: parseFloat(editedNutrition.protein) || 0,
-          carbs: parseFloat(editedNutrition.carbs) || 0,
-          fat: parseFloat(editedNutrition.fat) || 0,
-        },
-      }));
-      setEditModalVisible(false);
+  // Generate AI grocery list
+  const generateGroceryList = async () => {
+    if (plannedMeals.length === 0) {
+      Alert.alert('No Meals', 'Add some meals to your plan first to generate a grocery list.');
       return;
     }
 
+    setGeneratingGroceries(true);
     try {
-      // Update the meal with edited values
-      await foodAPI.updateMeal(savedMealId, {
-        calories: parseFloat(editedNutrition.calories) || 0,
-        protein: parseFloat(editedNutrition.protein) || 0,
-        carbs: parseFloat(editedNutrition.carbs) || 0,
-        fat: parseFloat(editedNutrition.fat) || 0,
+      const response = await axios.post(`${API_URL}/api/meals/generate-groceries`, {
+        user_id: userId,
+        meals: plannedMeals.map(m => m.name),
       });
 
-      // Update local result
-      setResult((prev: any) => ({
-        ...prev,
-        analysis: {
-          ...prev.analysis,
-          calories: parseFloat(editedNutrition.calories) || 0,
-          protein: parseFloat(editedNutrition.protein) || 0,
-          carbs: parseFloat(editedNutrition.carbs) || 0,
-          fat: parseFloat(editedNutrition.fat) || 0,
-        },
-      }));
-
-      setEditModalVisible(false);
-    } catch (error: any) {
-      console.error('Update error:', error);
-      // Still close modal and update local state even if API fails
-      setResult((prev: any) => ({
-        ...prev,
-        analysis: {
-          ...prev.analysis,
-          calories: parseFloat(editedNutrition.calories) || 0,
-          protein: parseFloat(editedNutrition.protein) || 0,
-          carbs: parseFloat(editedNutrition.carbs) || 0,
-          fat: parseFloat(editedNutrition.fat) || 0,
-        },
-      }));
-      setEditModalVisible(false);
-      Alert.alert('Note', 'Values updated locally. Sync may have failed.');
-    }
-  };
-
-  const reset = () => {
-    setImage(null);
-    setImageBase64(null);
-    setResult(null);
-    setSavedMealId(null);
-    setServingQuantity('1');
-    setAdditionalIngredients([]);
-  };
-
-  // Analyze an ingredient with AI to get nutritional info
-  const analyzeIngredient = async () => {
-    if (!newIngredientName.trim()) {
-      Alert.alert('Error', 'Please enter an ingredient name');
-      return;
-    }
-
-    try {
-      setAnalyzingIngredient(true);
-      
-      const response = await axios.post(`${API_URL}/api/analyze-ingredient`, {
-        ingredient_name: newIngredientName.trim(),
-        quantity: newIngredientQuantity.trim() || '1 serving',
-      });
-
-      const nutrition = response.data;
-      
-      const newIngredient: AdditionalIngredient = {
-        id: `ing_${Date.now()}`,
-        name: newIngredientName.trim(),
-        quantity: newIngredientQuantity.trim() || '1 serving',
-        calories: nutrition.calories || 0,
-        protein: nutrition.protein || 0,
-        carbs: nutrition.carbs || 0,
-        fat: nutrition.fat || 0,
-      };
-
-      setAdditionalIngredients([...additionalIngredients, newIngredient]);
-      
-      // Update the total nutrition in result
-      if (result && result.analysis) {
-        setResult((prev: any) => ({
-          ...prev,
-          analysis: {
-            ...prev.analysis,
-            calories: Math.round(prev.analysis.calories + newIngredient.calories),
-            protein: Math.round((prev.analysis.protein + newIngredient.protein) * 10) / 10,
-            carbs: Math.round((prev.analysis.carbs + newIngredient.carbs) * 10) / 10,
-            fat: Math.round((prev.analysis.fat + newIngredient.fat) * 10) / 10,
-          },
-        }));
-        
-        // Update edited nutrition values
-        setEditedNutrition(prev => ({
-          calories: Math.round(parseFloat(prev.calories || '0') + newIngredient.calories).toString(),
-          protein: Math.round((parseFloat(prev.protein || '0') + newIngredient.protein) * 10 / 10).toString(),
-          carbs: Math.round((parseFloat(prev.carbs || '0') + newIngredient.carbs) * 10 / 10).toString(),
-          fat: Math.round((parseFloat(prev.fat || '0') + newIngredient.fat) * 10 / 10).toString(),
-        }));
-      }
-
-      setAddIngredientModalVisible(false);
-      setNewIngredientName('');
-      setNewIngredientQuantity('1 serving');
-      
-      Alert.alert('Added!', `${newIngredient.name} added with ${newIngredient.calories} cal`);
-    } catch (error: any) {
-      console.error('Error analyzing ingredient:', error);
-      Alert.alert('Error', error.response?.data?.detail || 'Failed to analyze ingredient');
+      setGroceryList(response.data.items || []);
+      setActiveTab('groceries');
+      Alert.alert('Success', 'Grocery list generated based on your meal plan!');
+    } catch (error) {
+      console.error('Error generating groceries:', error);
+      Alert.alert('Error', 'Failed to generate grocery list');
     } finally {
-      setAnalyzingIngredient(false);
+      setGeneratingGroceries(false);
     }
   };
 
-  // Remove an additional ingredient
-  const removeIngredient = (ingredientId: string) => {
-    const ingredient = additionalIngredients.find(i => i.id === ingredientId);
-    if (!ingredient) return;
+  // Toggle grocery item
+  const toggleGroceryItem = async (itemId: string) => {
+    setGroceryList(prev =>
+      prev.map(item =>
+        item.id === itemId ? { ...item, checked: !item.checked } : item
+      )
+    );
+    // Save to backend
+    try {
+      await axios.put(`${API_URL}/api/meals/groceries/${itemId}/toggle`, {
+        user_id: userId,
+      });
+    } catch (error) {
+      console.log('Error saving grocery toggle');
+    }
+  };
 
+  // Add grocery item
+  const handleAddGroceryItem = async () => {
+    if (!newGroceryItem.name) return;
+    
+    const item: GroceryItem = {
+      id: `grocery_${Date.now()}`,
+      name: newGroceryItem.name,
+      quantity: newGroceryItem.quantity,
+      category: newGroceryItem.category,
+      checked: false,
+    };
+
+    try {
+      await axios.post(`${API_URL}/api/meals/groceries`, {
+        user_id: userId,
+        item,
+      });
+      setGroceryList(prev => [...prev, item]);
+      setShowAddGroceryModal(false);
+      setNewGroceryItem({ name: '', quantity: '1', category: 'Produce' });
+    } catch (error) {
+      console.error('Error adding grocery item:', error);
+    }
+  };
+
+  // Clear checked groceries
+  const clearCheckedGroceries = async () => {
+    const checkedIds = groceryList.filter(i => i.checked).map(i => i.id);
+    if (checkedIds.length === 0) return;
+
+    try {
+      await axios.post(`${API_URL}/api/meals/groceries/clear-checked`, {
+        user_id: userId,
+        item_ids: checkedIds,
+      });
+      setGroceryList(prev => prev.filter(i => !i.checked));
+    } catch (error) {
+      console.error('Error clearing groceries:', error);
+    }
+  };
+
+  // Generate AI recipe
+  const generateRecipe = async () => {
+    if (!recipePrompt.trim()) {
+      Alert.alert('Enter Recipe', 'Please describe what you want to cook');
+      return;
+    }
+
+    setGeneratingRecipe(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/meals/generate-recipe`, {
+        user_id: userId,
+        prompt: recipePrompt,
+      });
+
+      const newRecipe = response.data.recipe;
+      setRecipes(prev => [newRecipe, ...prev]);
+      setShowRecipeGeneratorModal(false);
+      setRecipePrompt('');
+      setSelectedRecipe(newRecipe);
+      setShowRecipeModal(true);
+    } catch (error) {
+      console.error('Error generating recipe:', error);
+      Alert.alert('Error', 'Failed to generate recipe');
+    } finally {
+      setGeneratingRecipe(false);
+    }
+  };
+
+  // Cook from recipe
+  const cookFromRecipe = async (recipe: Recipe) => {
     Alert.alert(
-      'Remove Ingredient',
-      `Remove ${ingredient.name} from your meal?`,
+      'Cook This Recipe',
+      `Log "${recipe.name}" to your nutrition tracker?\n\nCalories: ${recipe.calories}\nProtein: ${recipe.protein}g\nCarbs: ${recipe.carbs}g\nFat: ${recipe.fat}g`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            setAdditionalIngredients(additionalIngredients.filter(i => i.id !== ingredientId));
-            
-            // Update the total nutrition
-            if (result && result.analysis) {
-              setResult((prev: any) => ({
-                ...prev,
-                analysis: {
-                  ...prev.analysis,
-                  calories: Math.max(0, Math.round(prev.analysis.calories - ingredient.calories)),
-                  protein: Math.max(0, Math.round((prev.analysis.protein - ingredient.protein) * 10) / 10),
-                  carbs: Math.max(0, Math.round((prev.analysis.carbs - ingredient.carbs) * 10) / 10),
-                  fat: Math.max(0, Math.round((prev.analysis.fat - ingredient.fat) * 10) / 10),
-                },
-              }));
-              
-              setEditedNutrition(prev => ({
-                calories: Math.max(0, Math.round(parseFloat(prev.calories || '0') - ingredient.calories)).toString(),
-                protein: Math.max(0, Math.round((parseFloat(prev.protein || '0') - ingredient.protein) * 10) / 10).toString(),
-                carbs: Math.max(0, Math.round((parseFloat(prev.carbs || '0') - ingredient.carbs) * 10) / 10).toString(),
-                fat: Math.max(0, Math.round((parseFloat(prev.fat || '0') - ingredient.fat) * 10) / 10).toString(),
-              }));
+          text: 'Log Meal',
+          onPress: async () => {
+            try {
+              await axios.post(`${API_URL}/api/food/log-custom`, {
+                user_id: userId,
+                meal_name: recipe.name,
+                meal_category: recipe.category || 'dinner',
+                calories: recipe.calories,
+                protein: recipe.protein,
+                carbs: recipe.carbs,
+                fat: recipe.fat,
+                sugar: 0,
+                fiber: 0,
+                sodium: 0,
+              });
+
+              triggerMealRefresh();
+              setShowRecipeModal(false);
+              Alert.alert('Logged!', `${recipe.name} has been added to your nutrition log.`);
+            } catch (error) {
+              console.error('Error logging recipe:', error);
+              Alert.alert('Error', 'Failed to log meal');
             }
           },
         },
@@ -369,981 +530,810 @@ export default function ScanScreen() {
     );
   };
 
-  // Calculate total nutrition including additional ingredients
-  const getTotalNutrition = () => {
-    if (!result?.analysis) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
-    return {
-      calories: Math.round(result.analysis.calories),
-      protein: Math.round(result.analysis.protein * 10) / 10,
-      carbs: Math.round(result.analysis.carbs * 10) / 10,
-      fat: Math.round(result.analysis.fat * 10) / 10,
-    };
+  // Get today's date formatted
+  const getFormattedDate = () => {
+    const date = new Date(selectedDate);
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   };
 
-  // Apply quantity multiplier to nutrition values
-  const applyQuantity = () => {
-    const qty = parseFloat(servingQuantity) || 1;
-    if (qty <= 0) {
-      Alert.alert('Invalid Quantity', 'Please enter a number greater than 0');
-      return;
-    }
-
-    setResult((prev: any) => ({
-      ...prev,
-      analysis: {
-        ...prev.analysis,
-        calories: Math.round((prev.analysis.calories || 0) * qty),
-        protein: Math.round(((prev.analysis.protein || 0) * qty) * 10) / 10,
-        carbs: Math.round(((prev.analysis.carbs || 0) * qty) * 10) / 10,
-        fat: Math.round(((prev.analysis.fat || 0) * qty) * 10) / 10,
-        portion_size: `${qty} × ${prev.analysis.portion_size || '1 serving'}`,
-      },
-    }));
-    setQuantityModalVisible(false);
-    setServingQuantity('1');
+  // Calculate daily totals
+  const getDailyTotals = () => {
+    return plannedMeals.reduce((acc, meal) => ({
+      calories: acc.calories + meal.calories,
+      protein: acc.protein + meal.protein,
+      carbs: acc.carbs + meal.carbs,
+      fat: acc.fat + meal.fat,
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   };
 
-  const selectedCategory = MEAL_CATEGORIES.find(c => c.value === mealCategory);
+  // Group meals by category
+  const getMealsByCategory = (category: string) => {
+    return plannedMeals.filter(m => m.category === category);
+  };
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      {/* Header with Back Button */}
-      <View style={[styles.headerBar, { borderBottomColor: colors.border.primary }]}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={28} color={accent.primary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text.primary }]}>AI Food Scanner</Text>
-        <View style={{ width: 40 }} />
-      </View>
+  // Render Meal Planner Tab
+  const renderMealPlanner = () => {
+    const totals = getDailyTotals();
+    
+    return (
+      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+        {/* Date Header */}
+        <View style={styles.dateHeader}>
+          <Text style={[styles.dateTitle, { color: colors.text.primary }]}>{getFormattedDate()}</Text>
+          <Text style={[styles.dateCalories, { color: colors.text.secondary }]}>{totals.calories} cal</Text>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
-          Capture or upload a photo of your food for instant nutrition analysis
-        </Text>
-
-        {/* Meal Category Selector */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.text.secondary }]}>MEAL CATEGORY</Text>
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
           <TouchableOpacity 
-            style={[styles.categorySelector, { backgroundColor: colors.background.card, borderColor: colors.border.primary }]}
-            onPress={() => setCategoryModalVisible(true)}
+            style={[styles.quickActionBtn, { backgroundColor: accent.primary }]}
+            onPress={() => setShowCreateMealModal(true)}
           >
-            <View style={styles.categorySelectorContent}>
-              <Text style={styles.categoryIcon}>{selectedCategory?.icon}</Text>
-              <Text style={[styles.categorySelectorText, { color: colors.text.primary }]}>
-                {selectedCategory?.label}
-              </Text>
-            </View>
-            <Ionicons name="chevron-down" size={24} color={colors.text.muted} />
+            <Ionicons name="add" size={20} color="#fff" />
+            <Text style={styles.quickActionText}>Create</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.quickActionBtn, { backgroundColor: colors.background.card }]}
+            onPress={takePicture}
+          >
+            <Ionicons name="camera" size={20} color={accent.primary} />
+            <Text style={[styles.quickActionText, { color: colors.text.primary }]}>Scan</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.quickActionBtn, { backgroundColor: colors.background.card }]}
+            onPress={generateGroceryList}
+            disabled={generatingGroceries}
+          >
+            {generatingGroceries ? (
+              <ActivityIndicator size="small" color={accent.primary} />
+            ) : (
+              <MaterialIcons name="shopping-cart" size={20} color={accent.primary} />
+            )}
+            <Text style={[styles.quickActionText, { color: colors.text.primary }]}>Groceries</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Camera/Gallery Buttons */}
-        {!image && (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.background.card }]} 
-              onPress={takePicture}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: `${accent.primary}20` }]}>
-                <Ionicons name="camera" size={32} color={accent.primary} />
-              </View>
-              <Text style={[styles.actionButtonText, { color: colors.text.primary }]}>Take Photo</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.background.card }]} 
-              onPress={pickImage}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: `${accent.primary}20` }]}>
-                <Ionicons name="images" size={32} color={accent.primary} />
-              </View>
-              <Text style={[styles.actionButtonText, { color: colors.text.primary }]}>Choose from Gallery</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Image Preview */}
-        {image && (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: image }} style={styles.image} />
+        {/* Scan/Analyze Result */}
+        {(image || analyzing || result) && (
+          <View style={[styles.scanResultCard, { backgroundColor: colors.background.card }]}>
+            {image && (
+              <Image source={{ uri: image }} style={styles.scanImage} resizeMode="cover" />
+            )}
             {analyzing && (
               <View style={styles.analyzingOverlay}>
                 <ActivityIndicator size="large" color={accent.primary} />
                 <Text style={styles.analyzingText}>Analyzing food...</Text>
               </View>
             )}
-          </View>
-        )}
-
-        {/* Analysis Result */}
-        {result && result.analysis && (
-          <View style={[styles.resultCard, { backgroundColor: colors.background.card }]}>
-            <View style={[styles.resultHeader, { borderBottomColor: colors.border.primary }]}>
-              <MaterialIcons name="fastfood" size={24} color={accent.primary} />
-              <Text style={[styles.resultTitle, { color: colors.text.primary }]}>
-                {result.analysis.food_name}
-              </Text>
-              <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-                <Ionicons name="trash-outline" size={22} color="#EF4444" />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity 
-              style={styles.nutritionGrid}
-              onPress={() => setEditModalVisible(true)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.editHint}>
-                <Ionicons name="pencil" size={14} color={colors.text.muted} />
-                <Text style={[styles.editHintText, { color: colors.text.muted }]}>Tap to edit</Text>
-              </View>
-              
-              <View style={styles.nutritionRow}>
-                <View style={styles.nutritionItem}>
-                  <Text style={[styles.nutritionValue, { color: accent.primary }]}>
-                    {Math.round(result.analysis.calories)}
-                  </Text>
-                  <Text style={[styles.nutritionLabel, { color: colors.text.secondary }]}>Calories</Text>
-                </View>
-                <View style={[styles.nutritionDivider, { backgroundColor: colors.border.primary }]} />
-                <View style={styles.nutritionItem}>
-                  <Text style={[styles.nutritionValue, { color: accent.primary }]}>
-                    {Math.round(result.analysis.protein)}g
-                  </Text>
-                  <Text style={[styles.nutritionLabel, { color: colors.text.secondary }]}>Protein</Text>
-                </View>
-              </View>
-              
-              <View style={styles.nutritionRow}>
-                <View style={styles.nutritionItem}>
-                  <Text style={[styles.nutritionValue, { color: accent.primary }]}>
-                    {Math.round(result.analysis.carbs)}g
-                  </Text>
-                  <Text style={[styles.nutritionLabel, { color: colors.text.secondary }]}>Carbs</Text>
-                </View>
-                <View style={[styles.nutritionDivider, { backgroundColor: colors.border.primary }]} />
-                <View style={styles.nutritionItem}>
-                  <Text style={[styles.nutritionValue, { color: accent.primary }]}>
-                    {Math.round(result.analysis.fat)}g
-                  </Text>
-                  <Text style={[styles.nutritionLabel, { color: colors.text.secondary }]}>Fat</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            <View style={[styles.portionInfo, { backgroundColor: colors.background.elevated }]}>
-              <Ionicons name="resize" size={16} color={colors.text.secondary} />
-              <Text style={[styles.portionText, { color: colors.text.secondary }]}>
-                Portion: {result.analysis.portion_size}
-              </Text>
-            </View>
-
-            {/* Quantity Adjustment Button */}
-            <TouchableOpacity 
-              style={[styles.quantityButton, { backgroundColor: colors.background.card, borderColor: accent.primary }]}
-              onPress={() => setQuantityModalVisible(true)}
-            >
-              <Ionicons name="calculator" size={20} color={accent.primary} />
-              <View style={styles.quantityButtonText}>
-                <Text style={[styles.quantityButtonTitle, { color: colors.text.primary }]}>
-                  Adjust Quantity
-                </Text>
-                <Text style={[styles.quantityButtonHint, { color: colors.text.secondary }]}>
-                  For bulk items: cookies, donuts, etc.
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
-            </TouchableOpacity>
-
-            {/* Add Ingredients Button */}
-            <TouchableOpacity 
-              style={[styles.addIngredientButton, { backgroundColor: colors.background.card, borderColor: '#22C55E' }]}
-              onPress={() => setAddIngredientModalVisible(true)}
-            >
-              <Ionicons name="add-circle" size={20} color="#22C55E" />
-              <View style={styles.quantityButtonText}>
-                <Text style={[styles.quantityButtonTitle, { color: colors.text.primary }]}>
-                  Add More Ingredients
-                </Text>
-                <Text style={[styles.quantityButtonHint, { color: colors.text.secondary }]}>
-                  Add toppings, sides, sauces, etc.
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
-            </TouchableOpacity>
-
-            {/* Additional Ingredients List */}
-            {additionalIngredients.length > 0 && (
-              <View style={[styles.ingredientsList, { backgroundColor: colors.background.elevated }]}>
-                <Text style={[styles.ingredientsListTitle, { color: colors.text.primary }]}>
-                  Added Ingredients ({additionalIngredients.length})
-                </Text>
-                {additionalIngredients.map((ingredient) => (
-                  <View key={ingredient.id} style={[styles.ingredientItem, { borderBottomColor: colors.border.primary }]}>
-                    <View style={styles.ingredientInfo}>
-                      <Text style={[styles.ingredientName, { color: colors.text.primary }]}>
-                        {ingredient.name}
-                      </Text>
-                      <Text style={[styles.ingredientQuantity, { color: colors.text.secondary }]}>
-                        {ingredient.quantity}
-                      </Text>
-                    </View>
-                    <View style={styles.ingredientNutrition}>
-                      <Text style={[styles.ingredientCal, { color: accent.primary }]}>
-                        +{ingredient.calories} cal
-                      </Text>
-                      <Text style={[styles.ingredientMacros, { color: colors.text.muted }]}>
-                        P:{ingredient.protein}g C:{ingredient.carbs}g F:{ingredient.fat}g
-                      </Text>
-                    </View>
-                    <TouchableOpacity 
-                      onPress={() => removeIngredient(ingredient.id)}
-                      style={styles.removeIngredientBtn}
-                    >
-                      <Ionicons name="close-circle" size={22} color="#EF4444" />
-                    </TouchableOpacity>
+            {result && (
+              <View style={styles.scanResultContent}>
+                <Text style={[styles.foodName, { color: colors.text.primary }]}>{result.analysis?.food_name || 'Food'}</Text>
+                <View style={styles.macroRow}>
+                  <View style={styles.macroItem}>
+                    <Text style={styles.macroValue}>{Math.round(result.analysis?.calories || 0)}</Text>
+                    <Text style={styles.macroLabel}>Cal</Text>
                   </View>
-                ))}
+                  <View style={styles.macroItem}>
+                    <Text style={styles.macroValue}>{Math.round(result.analysis?.protein || 0)}g</Text>
+                    <Text style={styles.macroLabel}>Protein</Text>
+                  </View>
+                  <View style={styles.macroItem}>
+                    <Text style={styles.macroValue}>{Math.round(result.analysis?.carbs || 0)}g</Text>
+                    <Text style={styles.macroLabel}>Carbs</Text>
+                  </View>
+                  <View style={styles.macroItem}>
+                    <Text style={styles.macroValue}>{Math.round(result.analysis?.fat || 0)}g</Text>
+                    <Text style={styles.macroLabel}>Fat</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.resetBtn} onPress={reset}>
+                  <Text style={styles.resetBtnText}>Clear</Text>
+                </TouchableOpacity>
               </View>
             )}
-
-            <TouchableOpacity 
-              style={[styles.scanAgainButton, { backgroundColor: accent.primary }]} 
-              onPress={reset}
-            >
-              <Ionicons name="scan" size={20} color="#fff" />
-              <Text style={styles.scanAgainText}>Scan Another Food</Text>
-            </TouchableOpacity>
           </View>
         )}
 
-        {image && !analyzing && !result && (
-          <TouchableOpacity 
-            style={[styles.retryButton, { backgroundColor: '#EF4444' }]} 
-            onPress={reset}
-          >
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-
-      {/* Meal Category Picker Modal */}
-      <Modal
-        visible={categoryModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setCategoryModalVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={() => setCategoryModalVisible(false)}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={[styles.modalContainer, { backgroundColor: colors.background.card }]}
-          >
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
-              <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
-                <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Select Meal</Text>
-              <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
-                <Text style={[styles.modalDone, { color: accent.primary }]}>Done</Text>
-              </TouchableOpacity>
-            </View>
-            <Picker
-              selectedValue={mealCategory}
-              onValueChange={(value) => setMealCategory(value)}
-              style={[styles.picker, { color: colors.text.primary }]}
-              itemStyle={{ color: colors.text.primary, fontSize: 20 }}
-            >
-              {MEAL_CATEGORIES.map((cat) => (
-                <Picker.Item 
-                  key={cat.value} 
-                  label={`${cat.icon}  ${cat.label}`} 
-                  value={cat.value} 
-                />
-              ))}
-            </Picker>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Edit Nutrition Modal */}
-      <Modal
-        visible={editModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditModalVisible(false)}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <TouchableOpacity 
-            style={{ flex: 1 }} 
-            activeOpacity={1} 
-            onPress={() => setEditModalVisible(false)}
-          />
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={[styles.editModalContainer, { backgroundColor: colors.background.card }]}
-          >
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
-              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Edit Nutrition</Text>
-              <TouchableOpacity onPress={handleSaveEdits}>
-                <Text style={[styles.modalDone, { color: accent.primary }]}>Save</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.editForm}>
-              <View style={styles.editRow}>
-                <Text style={[styles.editLabel, { color: colors.text.secondary }]}>Calories</Text>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: colors.background.input, borderColor: colors.border.primary, color: colors.text.primary }]}
-                  value={editedNutrition.calories}
-                  onChangeText={(text) => setEditedNutrition(prev => ({ ...prev, calories: text }))}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={colors.text.muted}
-                />
+        {/* Meal Categories */}
+        {MEAL_CATEGORIES.map(cat => {
+          const meals = getMealsByCategory(cat.value);
+          return (
+            <View key={cat.value} style={styles.mealCategorySection}>
+              <View style={styles.categoryHeader}>
+                <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                <Text style={[styles.categoryTitle, { color: colors.text.primary }]}>{cat.label}</Text>
+                <TouchableOpacity 
+                  style={[styles.addMealBtn, { backgroundColor: `${cat.color}20` }]}
+                  onPress={() => {
+                    setNewMeal(prev => ({ ...prev, category: cat.value }));
+                    setShowCreateMealModal(true);
+                  }}
+                >
+                  <Ionicons name="add" size={18} color={cat.color} />
+                </TouchableOpacity>
               </View>
-
-              <View style={styles.editRow}>
-                <Text style={[styles.editLabel, { color: colors.text.secondary }]}>Protein (g)</Text>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: colors.background.input, borderColor: colors.border.primary, color: colors.text.primary }]}
-                  value={editedNutrition.protein}
-                  onChangeText={(text) => setEditedNutrition(prev => ({ ...prev, protein: text }))}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={colors.text.muted}
-                />
-              </View>
-
-              <View style={styles.editRow}>
-                <Text style={[styles.editLabel, { color: colors.text.secondary }]}>Carbs (g)</Text>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: colors.background.input, borderColor: colors.border.primary, color: colors.text.primary }]}
-                  value={editedNutrition.carbs}
-                  onChangeText={(text) => setEditedNutrition(prev => ({ ...prev, carbs: text }))}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={colors.text.muted}
-                />
-              </View>
-
-              <View style={styles.editRow}>
-                <Text style={[styles.editLabel, { color: colors.text.secondary }]}>Fat (g)</Text>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: colors.background.input, borderColor: colors.border.primary, color: colors.text.primary }]}
-                  value={editedNutrition.fat}
-                  onChangeText={(text) => setEditedNutrition(prev => ({ ...prev, fat: text }))}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={colors.text.muted}
-                />
-              </View>
-            </View>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Quantity Adjustment Modal */}
-      <Modal
-        visible={quantityModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setQuantityModalVisible(false)}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <TouchableOpacity 
-            style={{ flex: 1 }} 
-            activeOpacity={1} 
-            onPress={() => setQuantityModalVisible(false)}
-          />
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={[styles.editModalContainer, { backgroundColor: colors.background.card }]}
-          >
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
-              <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
-                <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Adjust Quantity</Text>
-              <TouchableOpacity onPress={applyQuantity}>
-                <Text style={[styles.modalDone, { color: accent.primary }]}>Apply</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.quantityForm}>
-              <Text style={[styles.quantityDescription, { color: colors.text.secondary }]}>
-                Enter the number of servings you consumed. The nutrition values will be multiplied by this amount.
-              </Text>
               
-              <View style={styles.quantityInputContainer}>
+              {meals.length === 0 ? (
                 <TouchableOpacity 
-                  style={[styles.quantityAdjustButton, { backgroundColor: colors.background.elevated }]}
+                  style={[styles.emptyMealCard, { borderColor: colors.border.primary }]}
                   onPress={() => {
-                    const current = parseFloat(servingQuantity) || 1;
-                    if (current > 0.5) setServingQuantity((current - 0.5).toString());
+                    setNewMeal(prev => ({ ...prev, category: cat.value }));
+                    setShowCreateMealModal(true);
                   }}
                 >
-                  <Ionicons name="remove" size={24} color={accent.primary} />
+                  <Ionicons name="add-circle-outline" size={24} color={colors.text.muted} />
+                  <Text style={[styles.emptyMealText, { color: colors.text.muted }]}>Add {cat.label}</Text>
                 </TouchableOpacity>
-                
-                <TextInput
-                  style={[styles.quantityInput, { 
-                    backgroundColor: colors.background.input, 
-                    borderColor: colors.border.primary, 
-                    color: colors.text.primary 
-                  }]}
-                  value={servingQuantity}
-                  onChangeText={setServingQuantity}
-                  keyboardType="decimal-pad"
-                  placeholder="1"
-                  placeholderTextColor={colors.text.muted}
-                  textAlign="center"
+              ) : (
+                meals.map(meal => (
+                  <View 
+                    key={meal.id} 
+                    style={[
+                      styles.mealCard, 
+                      { backgroundColor: colors.background.card },
+                      meal.cooked && styles.mealCardCooked
+                    ]}
+                  >
+                    <View style={styles.mealCardContent}>
+                      <Text style={[styles.mealName, { color: colors.text.primary }]}>{meal.name}</Text>
+                      <Text style={[styles.mealCalories, { color: colors.text.secondary }]}>
+                        {meal.calories} cal • {meal.protein}g P • {meal.carbs}g C • {meal.fat}g F
+                      </Text>
+                    </View>
+                    <View style={styles.mealActions}>
+                      {!meal.cooked && (
+                        <TouchableOpacity 
+                          style={[styles.cookBtn, { backgroundColor: '#10B98120' }]}
+                          onPress={() => handleCookMeal(meal)}
+                        >
+                          <MaterialCommunityIcons name="pot-steam" size={18} color="#10B981" />
+                        </TouchableOpacity>
+                      )}
+                      {meal.cooked && (
+                        <View style={styles.cookedBadge}>
+                          <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                        </View>
+                      )}
+                      <TouchableOpacity 
+                        style={styles.deleteMealBtn}
+                        onPress={() => handleDeleteMeal(meal.id)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          );
+        })}
+
+        {/* Daily Summary */}
+        {plannedMeals.length > 0 && (
+          <View style={[styles.dailySummary, { backgroundColor: colors.background.card }]}>
+            <Text style={[styles.summaryTitle, { color: colors.text.primary }]}>Daily Summary</Text>
+            <View style={styles.summaryGrid}>
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryValue, { color: accent.primary }]}>{totals.calories}</Text>
+                <Text style={[styles.summaryLabel, { color: colors.text.muted }]}>Calories</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryValue, { color: '#3B82F6' }]}>{totals.protein}g</Text>
+                <Text style={[styles.summaryLabel, { color: colors.text.muted }]}>Protein</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryValue, { color: '#F59E0B' }]}>{totals.carbs}g</Text>
+                <Text style={[styles.summaryLabel, { color: colors.text.muted }]}>Carbs</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryValue, { color: '#EF4444' }]}>{totals.fat}g</Text>
+                <Text style={[styles.summaryLabel, { color: colors.text.muted }]}>Fat</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    );
+  };
+
+  // Render Groceries Tab
+  const renderGroceries = () => {
+    const groupedGroceries = groceryList.reduce((acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    }, {} as { [key: string]: GroceryItem[] });
+
+    const checkedCount = groceryList.filter(i => i.checked).length;
+
+    return (
+      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.groceryHeader}>
+          <Text style={[styles.groceryTitle, { color: colors.text.primary }]}>Grocery List</Text>
+          <View style={styles.groceryActions}>
+            <TouchableOpacity 
+              style={[styles.groceryActionBtn, { backgroundColor: accent.primary }]}
+              onPress={() => setShowAddGroceryModal(true)}
+            >
+              <Ionicons name="add" size={20} color="#fff" />
+            </TouchableOpacity>
+            {checkedCount > 0 && (
+              <TouchableOpacity 
+                style={[styles.groceryActionBtn, { backgroundColor: '#EF444420' }]}
+                onPress={clearCheckedGroceries}
+              >
+                <Ionicons name="trash" size={20} color="#EF4444" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* AI Generate Button */}
+        <TouchableOpacity 
+          style={styles.aiGenerateBtn}
+          onPress={generateGroceryList}
+          disabled={generatingGroceries}
+        >
+          <LinearGradient colors={['#667eea', '#764ba2']} style={styles.aiGenerateGradient}>
+            {generatingGroceries ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <MaterialCommunityIcons name="robot" size={24} color="#fff" />
+            )}
+            <Text style={styles.aiGenerateText}>Generate from Meal Plan</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {groceryList.length === 0 ? (
+          <View style={styles.emptyGroceries}>
+            <MaterialIcons name="shopping-cart" size={64} color={colors.text.muted} />
+            <Text style={[styles.emptyGroceriesTitle, { color: colors.text.primary }]}>No groceries yet</Text>
+            <Text style={[styles.emptyGroceriesText, { color: colors.text.secondary }]}>
+              Add items manually or generate from your meal plan
+            </Text>
+          </View>
+        ) : (
+          Object.entries(groupedGroceries).map(([category, items]) => (
+            <View key={category} style={styles.groceryCategory}>
+              <Text style={[styles.groceryCategoryTitle, { color: colors.text.primary }]}>{category}</Text>
+              {items.map(item => (
+                <TouchableOpacity 
+                  key={item.id}
+                  style={[styles.groceryItem, { backgroundColor: colors.background.card }]}
+                  onPress={() => toggleGroceryItem(item.id)}
+                >
+                  <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
+                    {item.checked && <Ionicons name="checkmark" size={16} color="#fff" />}
+                  </View>
+                  <Text style={[
+                    styles.groceryItemText, 
+                    { color: colors.text.primary },
+                    item.checked && styles.groceryItemChecked
+                  ]}>
+                    {item.quantity} {item.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))
+        )}
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    );
+  };
+
+  // Render Recipes Tab
+  const renderRecipes = () => {
+    return (
+      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+        {/* AI Recipe Generator */}
+        <TouchableOpacity 
+          style={styles.aiGenerateBtn}
+          onPress={() => setShowRecipeGeneratorModal(true)}
+        >
+          <LinearGradient colors={['#667eea', '#764ba2']} style={styles.aiGenerateGradient}>
+            <MaterialCommunityIcons name="chef-hat" size={24} color="#fff" />
+            <Text style={styles.aiGenerateText}>Generate AI Recipe</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {loadingRecipes ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={accent.primary} />
+          </View>
+        ) : recipes.length === 0 ? (
+          <View style={styles.emptyRecipes}>
+            <MaterialIcons name="menu-book" size={64} color={colors.text.muted} />
+            <Text style={[styles.emptyRecipesTitle, { color: colors.text.primary }]}>No recipes yet</Text>
+            <Text style={[styles.emptyRecipesText, { color: colors.text.secondary }]}>
+              Generate AI recipes or they'll appear here
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.recipesGrid}>
+            {recipes.map(recipe => (
+              <TouchableOpacity 
+                key={recipe.id}
+                style={[styles.recipeCard, { backgroundColor: colors.background.card }]}
+                onPress={() => {
+                  setSelectedRecipe(recipe);
+                  setShowRecipeModal(true);
+                }}
+              >
+                <Image 
+                  source={{ uri: recipe.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}
+                  style={styles.recipeImage}
+                  resizeMode="cover"
                 />
-                
-                <TouchableOpacity 
-                  style={[styles.quantityAdjustButton, { backgroundColor: colors.background.elevated }]}
-                  onPress={() => {
-                    const current = parseFloat(servingQuantity) || 1;
-                    setServingQuantity((current + 0.5).toString());
-                  }}
-                >
-                  <Ionicons name="add" size={24} color={accent.primary} />
-                </TouchableOpacity>
+                <View style={styles.recipeInfo}>
+                  <Text style={[styles.recipeName, { color: colors.text.primary }]} numberOfLines={2}>
+                    {recipe.name}
+                  </Text>
+                  <Text style={[styles.recipeCalories, { color: colors.text.secondary }]}>
+                    {recipe.calories} cal • {recipe.prepTime}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    );
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Meals</Text>
+      </View>
+
+      {/* Tab Bar */}
+      <View style={[styles.tabBar, { backgroundColor: colors.background.card }]}>
+        {TABS.map(tab => (
+          <TouchableOpacity
+            key={tab.id}
+            style={[styles.tab, activeTab === tab.id && { backgroundColor: accent.primary }]}
+            onPress={() => setActiveTab(tab.id)}
+          >
+            <MaterialIcons 
+              name={tab.icon as any} 
+              size={20} 
+              color={activeTab === tab.id ? '#fff' : colors.text.muted} 
+            />
+            <Text style={[
+              styles.tabLabel,
+              { color: activeTab === tab.id ? '#fff' : colors.text.muted }
+            ]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Tab Content */}
+      {activeTab === 'planner' && renderMealPlanner()}
+      {activeTab === 'groceries' && renderGroceries()}
+      {activeTab === 'recipes' && renderRecipes()}
+
+      {/* Create Meal Modal */}
+      <Modal visible={showCreateMealModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Create Meal</Text>
+              <TouchableOpacity onPress={() => setShowCreateMealModal(false)}>
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalBody}>
+              <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Meal Name *</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                placeholder="e.g., Grilled Chicken Salad"
+                placeholderTextColor={colors.text.muted}
+                value={newMeal.name}
+                onChangeText={(t) => setNewMeal(prev => ({ ...prev, name: t }))}
+              />
+
+              <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Category</Text>
+              <View style={styles.categoryPicker}>
+                {MEAL_CATEGORIES.map(cat => (
+                  <TouchableOpacity
+                    key={cat.value}
+                    style={[
+                      styles.categoryOption,
+                      { borderColor: cat.color },
+                      newMeal.category === cat.value && { backgroundColor: `${cat.color}20` }
+                    ]}
+                    onPress={() => setNewMeal(prev => ({ ...prev, category: cat.value }))}
+                  >
+                    <Text>{cat.icon}</Text>
+                    <Text style={[styles.categoryOptionText, { color: colors.text.primary }]}>{cat.label}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
 
-              <Text style={[styles.quantityHint, { color: colors.text.muted }]}>
-                Example: Enter "2" if you ate 2 donuts from a bag
-              </Text>
-            </View>
-          </TouchableOpacity>
+              <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>Nutrition Info</Text>
+              <View style={styles.nutritionGrid}>
+                <View style={styles.nutritionInput}>
+                  <Text style={[styles.nutritionLabel, { color: colors.text.muted }]}>Calories *</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="numeric"
+                    value={newMeal.calories}
+                    onChangeText={(t) => setNewMeal(prev => ({ ...prev, calories: t }))}
+                  />
+                </View>
+                <View style={styles.nutritionInput}>
+                  <Text style={[styles.nutritionLabel, { color: colors.text.muted }]}>Protein (g)</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="numeric"
+                    value={newMeal.protein}
+                    onChangeText={(t) => setNewMeal(prev => ({ ...prev, protein: t }))}
+                  />
+                </View>
+                <View style={styles.nutritionInput}>
+                  <Text style={[styles.nutritionLabel, { color: colors.text.muted }]}>Carbs (g)</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="numeric"
+                    value={newMeal.carbs}
+                    onChangeText={(t) => setNewMeal(prev => ({ ...prev, carbs: t }))}
+                  />
+                </View>
+                <View style={styles.nutritionInput}>
+                  <Text style={[styles.nutritionLabel, { color: colors.text.muted }]}>Fat (g)</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="numeric"
+                    value={newMeal.fat}
+                    onChangeText={(t) => setNewMeal(prev => ({ ...prev, fat: t }))}
+                  />
+                </View>
+                <View style={styles.nutritionInput}>
+                  <Text style={[styles.nutritionLabel, { color: colors.text.muted }]}>Sugar (g)</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="numeric"
+                    value={newMeal.sugar}
+                    onChangeText={(t) => setNewMeal(prev => ({ ...prev, sugar: t }))}
+                  />
+                </View>
+                <View style={styles.nutritionInput}>
+                  <Text style={[styles.nutritionLabel, { color: colors.text.muted }]}>Fiber (g)</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="numeric"
+                    value={newMeal.fiber}
+                    onChangeText={(t) => setNewMeal(prev => ({ ...prev, fiber: t }))}
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.createBtn, { backgroundColor: accent.primary }]}
+                onPress={handleCreateMeal}
+              >
+                <Text style={styles.createBtnText}>Add to Meal Plan</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Add Ingredient Modal */}
-      <Modal
-        visible={addIngredientModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAddIngredientModalVisible(false)}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <TouchableOpacity 
-            style={styles.modalOverlay} 
-            activeOpacity={1} 
-            onPress={() => setAddIngredientModalVisible(false)}
-          >
+      {/* Add Grocery Modal */}
+      <Modal visible={showAddGroceryModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.smallModalContent, { backgroundColor: colors.background.primary }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Add Grocery Item</Text>
+              <TouchableOpacity onPress={() => setShowAddGroceryModal(false)}>
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+            
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+              placeholder="Item name"
+              placeholderTextColor={colors.text.muted}
+              value={newGroceryItem.name}
+              onChangeText={(t) => setNewGroceryItem(prev => ({ ...prev, name: t }))}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+              placeholder="Quantity (e.g., 2 lbs, 1 dozen)"
+              placeholderTextColor={colors.text.muted}
+              value={newGroceryItem.quantity}
+              onChangeText={(t) => setNewGroceryItem(prev => ({ ...prev, quantity: t }))}
+            />
+            
             <TouchableOpacity 
-              activeOpacity={1} 
-              onPress={(e) => e.stopPropagation()}
-              style={[styles.addIngredientModalContent, { backgroundColor: colors.background.card }]}
+              style={[styles.createBtn, { backgroundColor: accent.primary }]}
+              onPress={handleAddGroceryItem}
             >
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border.primary }]}>
-                <TouchableOpacity onPress={() => {
-                  setAddIngredientModalVisible(false);
-                  setNewIngredientName('');
-                  setNewIngredientQuantity('1 serving');
-                }}>
-                  <Text style={[styles.modalCancel, { color: colors.text.secondary }]}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Add Ingredient</Text>
-                <TouchableOpacity onPress={analyzeIngredient} disabled={analyzingIngredient}>
-                  {analyzingIngredient ? (
-                    <ActivityIndicator size="small" color={accent.primary} />
-                  ) : (
-                    <Text style={[styles.modalDone, { color: accent.primary }]}>Add</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.addIngredientForm}>
-                <View style={[styles.aiPoweredBadge, { backgroundColor: `${accent.primary}20` }]}>
-                  <Ionicons name="sparkles" size={16} color={accent.primary} />
-                  <Text style={[styles.aiPoweredText, { color: accent.primary }]}>
-                    AI-Powered Nutrition Analysis
-                  </Text>
-                </View>
-
-                <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>
-                  INGREDIENT NAME
-                </Text>
-                <TextInput
-                  style={[styles.ingredientInput, { 
-                    backgroundColor: colors.background.input, 
-                    borderColor: colors.border.primary, 
-                    color: colors.text.primary 
-                  }]}
-                  value={newIngredientName}
-                  onChangeText={setNewIngredientName}
-                  placeholder="e.g., Avocado, Ranch Dressing, Cheese"
-                  placeholderTextColor={colors.text.muted}
-                  autoFocus
-                />
-
-                <Text style={[styles.inputLabel, { color: colors.text.secondary, marginTop: 16 }]}>
-                  QUANTITY / PORTION
-                </Text>
-                <TextInput
-                  style={[styles.ingredientInput, { 
-                    backgroundColor: colors.background.input, 
-                    borderColor: colors.border.primary, 
-                    color: colors.text.primary 
-                  }]}
-                  value={newIngredientQuantity}
-                  onChangeText={setNewIngredientQuantity}
-                  placeholder="e.g., 1 tbsp, 1/2 cup, 2 slices"
-                  placeholderTextColor={colors.text.muted}
-                />
-
-                <View style={[styles.suggestionBox, { backgroundColor: colors.background.elevated }]}>
-                  <Text style={[styles.suggestionTitle, { color: colors.text.primary }]}>
-                    💡 Suggestions
-                  </Text>
-                  <Text style={[styles.suggestionText, { color: colors.text.secondary }]}>
-                    • Sauces: "2 tbsp ketchup", "1 tbsp mayo"{'\n'}
-                    • Toppings: "1/4 cup shredded cheese", "2 strips bacon"{'\n'}
-                    • Sides: "small fries", "side salad with dressing"
-                  </Text>
-                </View>
-              </View>
+              <Text style={styles.createBtnText}>Add Item</Text>
             </TouchableOpacity>
-          </TouchableOpacity>
+          </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Recipe Generator Modal */}
+      <Modal visible={showRecipeGeneratorModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.smallModalContent, { backgroundColor: colors.background.primary }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>AI Recipe Generator</Text>
+              <TouchableOpacity onPress={() => setShowRecipeGeneratorModal(false)}>
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={[styles.recipePromptLabel, { color: colors.text.secondary }]}>
+              Describe what you want to cook:
+            </Text>
+            <TextInput
+              style={[styles.recipePromptInput, { backgroundColor: colors.background.card, color: colors.text.primary }]}
+              placeholder="e.g., High protein chicken dinner under 500 calories"
+              placeholderTextColor={colors.text.muted}
+              value={recipePrompt}
+              onChangeText={setRecipePrompt}
+              multiline
+            />
+            
+            <TouchableOpacity 
+              style={[styles.createBtn, { backgroundColor: accent.primary }]}
+              onPress={generateRecipe}
+              disabled={generatingRecipe}
+            >
+              {generatingRecipe ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.createBtnText}>Generate Recipe</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Recipe Detail Modal */}
+      <Modal visible={showRecipeModal} animationType="slide">
+        <SafeAreaView style={[styles.recipeModalContainer, { backgroundColor: colors.background.primary }]}>
+          <ScrollView>
+            {selectedRecipe && (
+              <>
+                <Image 
+                  source={{ uri: selectedRecipe.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600' }}
+                  style={styles.recipeDetailImage}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity 
+                  style={styles.closeRecipeBtn}
+                  onPress={() => setShowRecipeModal(false)}
+                >
+                  <Ionicons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+                
+                <View style={styles.recipeDetailContent}>
+                  <Text style={[styles.recipeDetailName, { color: colors.text.primary }]}>{selectedRecipe.name}</Text>
+                  
+                  <View style={styles.recipeNutritionRow}>
+                    <View style={styles.recipeNutritionItem}>
+                      <Text style={styles.recipeNutritionValue}>{selectedRecipe.calories}</Text>
+                      <Text style={styles.recipeNutritionLabel}>Calories</Text>
+                    </View>
+                    <View style={styles.recipeNutritionItem}>
+                      <Text style={styles.recipeNutritionValue}>{selectedRecipe.protein}g</Text>
+                      <Text style={styles.recipeNutritionLabel}>Protein</Text>
+                    </View>
+                    <View style={styles.recipeNutritionItem}>
+                      <Text style={styles.recipeNutritionValue}>{selectedRecipe.carbs}g</Text>
+                      <Text style={styles.recipeNutritionLabel}>Carbs</Text>
+                    </View>
+                    <View style={styles.recipeNutritionItem}>
+                      <Text style={styles.recipeNutritionValue}>{selectedRecipe.fat}g</Text>
+                      <Text style={styles.recipeNutritionLabel}>Fat</Text>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.recipeDetailPrepTime, { color: colors.text.secondary }]}>
+                    ⏱️ {selectedRecipe.prepTime}
+                  </Text>
+
+                  <Text style={[styles.recipeSectionTitle, { color: colors.text.primary }]}>Ingredients</Text>
+                  {selectedRecipe.ingredients?.map((ing, i) => (
+                    <Text key={i} style={[styles.ingredientItem, { color: colors.text.secondary }]}>• {ing}</Text>
+                  ))}
+
+                  <Text style={[styles.recipeSectionTitle, { color: colors.text.primary }]}>Instructions</Text>
+                  {selectedRecipe.instructions?.map((step, i) => (
+                    <View key={i} style={styles.instructionItem}>
+                      <View style={styles.instructionNumber}>
+                        <Text style={styles.instructionNumberText}>{i + 1}</Text>
+                      </View>
+                      <Text style={[styles.instructionText, { color: colors.text.secondary }]}>{step}</Text>
+                    </View>
+                  ))}
+
+                  <TouchableOpacity 
+                    style={[styles.cookRecipeBtn, { backgroundColor: '#10B981' }]}
+                    onPress={() => cookFromRecipe(selectedRecipe)}
+                  >
+                    <MaterialCommunityIcons name="pot-steam" size={24} color="#fff" />
+                    <Text style={styles.cookRecipeBtnText}>Cook & Log This Meal</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  categorySelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  categorySelectorContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  categoryIcon: {
-    fontSize: 24,
-  },
-  categorySelectorText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 24,
-  },
-  actionButton: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  imageContainer: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 24,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  analyzingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  analyzingText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 12,
-  },
-  resultCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-  },
-  resultTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginLeft: 12,
-    flex: 1,
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  nutritionGrid: {
-    marginBottom: 16,
-  },
-  editHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    marginBottom: 12,
-  },
-  editHintText: {
-    fontSize: 12,
-  },
-  nutritionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  nutritionItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  nutritionValue: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  nutritionLabel: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  nutritionDivider: {
-    width: 1,
-    height: 50,
-  },
-  portionInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  portionText: {
-    fontSize: 14,
-  },
-  scanAgainButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 12,
-    padding: 16,
-  },
-  scanAgainText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  retryButton: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
-  },
-  editModalContainer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
-    maxHeight: '70%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  modalCancel: {
-    fontSize: 17,
-  },
-  modalDone: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  picker: {
-    height: 216,
-  },
-  editForm: {
-    padding: 20,
-  },
-  editRow: {
-    marginBottom: 16,
-  },
-  editLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  editInput: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  quantityButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 16,
-    gap: 12,
-  },
-  quantityButtonText: {
-    flex: 1,
-  },
-  quantityButtonTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  quantityButtonHint: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  quantityForm: {
-    padding: 20,
-  },
-  quantityDescription: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  quantityInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 16,
-  },
-  quantityAdjustButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityInput: {
-    width: 100,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  quantityHint: {
-    fontSize: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  // Add Ingredient Button Styles
-  addIngredientButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 16,
-    gap: 12,
-  },
-  ingredientsList: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  ingredientsListTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  ingredientItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  ingredientInfo: {
-    flex: 1,
-  },
-  ingredientName: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  ingredientQuantity: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  ingredientNutrition: {
-    alignItems: 'flex-end',
-    marginRight: 8,
-  },
-  ingredientCal: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  ingredientMacros: {
-    fontSize: 10,
-    marginTop: 2,
-  },
-  removeIngredientBtn: {
-    padding: 4,
-  },
-  // Add Ingredient Modal Styles
-  addIngredientModalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 30,
-  },
-  addIngredientForm: {
-    padding: 20,
-  },
-  aiPoweredBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginBottom: 20,
-    gap: 8,
-  },
-  aiPoweredText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  ingredientInput: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-  },
-  suggestionBox: {
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 20,
-  },
-  suggestionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  suggestionText: {
-    fontSize: 13,
-    lineHeight: 20,
-  },
+  container: { flex: 1 },
+  header: { padding: 16, paddingBottom: 8 },
+  headerTitle: { fontSize: 28, fontWeight: '700' },
+  
+  // Tab Bar
+  tabBar: { flexDirection: 'row', marginHorizontal: 16, borderRadius: 12, padding: 4 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 8, gap: 6 },
+  tabLabel: { fontSize: 12, fontWeight: '600' },
+  
+  tabContent: { flex: 1, padding: 16 },
+  
+  // Date Header
+  dateHeader: { marginBottom: 16 },
+  dateTitle: { fontSize: 20, fontWeight: '700' },
+  dateCalories: { fontSize: 14, marginTop: 4 },
+  
+  // Quick Actions
+  quickActions: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  quickActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 12, gap: 6 },
+  quickActionText: { fontSize: 13, fontWeight: '600', color: '#fff' },
+  
+  // Scan Result
+  scanResultCard: { borderRadius: 16, overflow: 'hidden', marginBottom: 20 },
+  scanImage: { width: '100%', height: 200 },
+  analyzingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  analyzingText: { color: '#fff', marginTop: 8, fontSize: 16 },
+  scanResultContent: { padding: 16 },
+  foodName: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  macroRow: { flexDirection: 'row', justifyContent: 'space-around' },
+  macroItem: { alignItems: 'center' },
+  macroValue: { fontSize: 18, fontWeight: '700', color: '#7C3AED' },
+  macroLabel: { fontSize: 12, color: '#888', marginTop: 2 },
+  resetBtn: { alignSelf: 'center', marginTop: 12, paddingHorizontal: 20, paddingVertical: 8, backgroundColor: '#EF444420', borderRadius: 20 },
+  resetBtnText: { color: '#EF4444', fontWeight: '600' },
+  
+  // Meal Category
+  mealCategorySection: { marginBottom: 20 },
+  categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  categoryIcon: { fontSize: 20, marginRight: 8 },
+  categoryTitle: { fontSize: 16, fontWeight: '700', flex: 1 },
+  addMealBtn: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  
+  emptyMealCard: { borderWidth: 1, borderStyle: 'dashed', borderRadius: 12, padding: 20, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  emptyMealText: { fontSize: 14 },
+  
+  mealCard: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
+  mealCardCooked: { opacity: 0.7 },
+  mealCardContent: { flex: 1 },
+  mealName: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  mealCalories: { fontSize: 13 },
+  mealActions: { flexDirection: 'row', gap: 8 },
+  cookBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  cookedBadge: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  deleteMealBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', backgroundColor: '#EF444410' },
+  
+  // Daily Summary
+  dailySummary: { padding: 16, borderRadius: 16, marginTop: 8 },
+  summaryTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
+  summaryGrid: { flexDirection: 'row', justifyContent: 'space-around' },
+  summaryItem: { alignItems: 'center' },
+  summaryValue: { fontSize: 24, fontWeight: '700' },
+  summaryLabel: { fontSize: 12, marginTop: 4 },
+  
+  // Groceries
+  groceryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  groceryTitle: { fontSize: 20, fontWeight: '700' },
+  groceryActions: { flexDirection: 'row', gap: 8 },
+  groceryActionBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  
+  aiGenerateBtn: { marginBottom: 20, borderRadius: 12, overflow: 'hidden' },
+  aiGenerateGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 10 },
+  aiGenerateText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  
+  emptyGroceries: { alignItems: 'center', paddingVertical: 40 },
+  emptyGroceriesTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
+  emptyGroceriesText: { fontSize: 14, marginTop: 8, textAlign: 'center' },
+  
+  groceryCategory: { marginBottom: 20 },
+  groceryCategoryTitle: { fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  groceryItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
+  checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#7C3AED', marginRight: 12, justifyContent: 'center', alignItems: 'center' },
+  checkboxChecked: { backgroundColor: '#7C3AED' },
+  groceryItemText: { fontSize: 15, flex: 1 },
+  groceryItemChecked: { textDecorationLine: 'line-through', opacity: 0.5 },
+  
+  // Recipes
+  loadingContainer: { paddingVertical: 40, alignItems: 'center' },
+  emptyRecipes: { alignItems: 'center', paddingVertical: 40 },
+  emptyRecipesTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
+  emptyRecipesText: { fontSize: 14, marginTop: 8, textAlign: 'center' },
+  
+  recipesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  recipeCard: { width: (SCREEN_WIDTH - 44) / 2, borderRadius: 12, overflow: 'hidden' },
+  recipeImage: { width: '100%', height: 120 },
+  recipeInfo: { padding: 12 },
+  recipeName: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  recipeCalories: { fontSize: 12 },
+  
+  // Modal
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '90%' },
+  smallModalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 20, fontWeight: '700' },
+  modalBody: { maxHeight: 500 },
+  
+  inputLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8, marginTop: 12 },
+  input: { borderRadius: 12, padding: 14, fontSize: 16, marginBottom: 8 },
+  
+  categoryPicker: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  categoryOption: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, gap: 6 },
+  categoryOptionText: { fontSize: 13, fontWeight: '500' },
+  
+  nutritionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  nutritionInput: { width: '31%' },
+  nutritionLabel: { fontSize: 11, marginBottom: 4 },
+  smallInput: { borderRadius: 8, padding: 10, fontSize: 14, textAlign: 'center' },
+  
+  createBtn: { marginTop: 20, paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
+  createBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  
+  recipePromptLabel: { fontSize: 14, marginBottom: 12 },
+  recipePromptInput: { borderRadius: 12, padding: 14, fontSize: 16, height: 100, textAlignVertical: 'top' },
+  
+  // Recipe Modal
+  recipeModalContainer: { flex: 1 },
+  recipeDetailImage: { width: '100%', height: 250 },
+  closeRecipeBtn: { position: 'absolute', top: 16, right: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  recipeDetailContent: { padding: 20 },
+  recipeDetailName: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
+  recipeNutritionRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16, paddingVertical: 16, backgroundColor: 'rgba(124,58,237,0.1)', borderRadius: 12 },
+  recipeNutritionItem: { alignItems: 'center' },
+  recipeNutritionValue: { fontSize: 20, fontWeight: '700', color: '#7C3AED' },
+  recipeNutritionLabel: { fontSize: 12, color: '#888', marginTop: 4 },
+  recipeDetailPrepTime: { fontSize: 14, marginBottom: 20 },
+  recipeSectionTitle: { fontSize: 18, fontWeight: '700', marginTop: 20, marginBottom: 12 },
+  ingredientItem: { fontSize: 15, marginBottom: 6, lineHeight: 22 },
+  instructionItem: { flexDirection: 'row', marginBottom: 16 },
+  instructionNumber: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#7C3AED', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  instructionNumberText: { color: '#fff', fontWeight: '700' },
+  instructionText: { flex: 1, fontSize: 15, lineHeight: 22 },
+  cookRecipeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 12, marginTop: 20, gap: 10 },
+  cookRecipeBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
