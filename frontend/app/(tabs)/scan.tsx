@@ -579,6 +579,59 @@ export default function ScanScreen() {
     }
   };
 
+  // Clear ALL groceries
+  const clearAllGroceries = () => {
+    Alert.alert(
+      'Clear Grocery List',
+      'Are you sure you want to delete all grocery items?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const allIds = groceryList.map(i => i.id);
+              await axios.post(`${API_URL}/api/meals/groceries/clear-checked`, {
+                user_id: userId,
+                item_ids: allIds,
+              });
+              setGroceryList([]);
+            } catch (error) {
+              console.error('Error clearing all groceries:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Delete single grocery item
+  const handleDeleteGroceryItem = (item: GroceryItem) => {
+    Alert.alert(
+      'Delete Item',
+      `Remove "${item.name}" from your list?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.post(`${API_URL}/api/meals/groceries/clear-checked`, {
+                user_id: userId,
+                item_ids: [item.id],
+              });
+              setGroceryList(prev => prev.filter(i => i.id !== item.id));
+            } catch (error) {
+              console.error('Error deleting grocery item:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // Generate AI recipe
   const generateRecipe = async () => {
     if (!recipePrompt.trim()) {
