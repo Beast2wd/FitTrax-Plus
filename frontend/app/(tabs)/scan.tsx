@@ -1740,6 +1740,8 @@ const styles = StyleSheet.create({
   groceryItemDash: { fontSize: 15, marginHorizontal: 8 },
   groceryItemText: { fontSize: 15, flex: 1 },
   groceryItemChecked: { textDecorationLine: 'line-through', opacity: 0.5 },
+  groceryDeleteBtn: { padding: 4, marginLeft: 8 },
+  groceryHint: { fontSize: 12, textAlign: 'center', marginBottom: 12 },
   
   // Recipes
   loadingContainer: { paddingVertical: 40, alignItems: 'center' },
