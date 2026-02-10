@@ -1258,19 +1258,24 @@ export default function ScanScreen() {
         ) : (
           <View style={styles.recipesGrid}>
             {recipes.map(recipe => (
-              <TouchableOpacity 
+              <Pressable 
                 key={recipe.id}
                 style={[styles.recipeCard, { backgroundColor: colors.background.card }]}
                 onPress={() => {
                   setSelectedRecipe(recipe);
                   setShowRecipeModal(true);
                 }}
+                onLongPress={() => confirmDeleteRecipe(recipe)}
+                delayLongPress={500}
               >
                 <Image 
                   source={{ uri: recipe.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}
                   style={styles.recipeImage}
                   resizeMode="cover"
                 />
+                <View style={styles.recipeDeleteHint}>
+                  <Ionicons name="trash-outline" size={14} color="#fff" />
+                </View>
                 <View style={styles.recipeInfo}>
                   <Text style={[styles.recipeName, { color: colors.text.primary }]} numberOfLines={2}>
                     {recipe.name}
@@ -1279,7 +1284,7 @@ export default function ScanScreen() {
                     {recipe.calories} cal • {recipe.prepTime}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         )}
