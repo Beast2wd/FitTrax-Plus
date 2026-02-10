@@ -9174,7 +9174,11 @@ Return a JSON object with these exact fields:
 
 IMPORTANT: Return ONLY the raw JSON object. No markdown, no code blocks, no extra text."""
 
-        chat = LlmChat(api_key=api_key).with_model("openai", "gpt-4o")
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"recipe_gen_{datetime.utcnow().timestamp()}",
+            system_message="You are a helpful cooking assistant. Generate healthy recipes based on user requests."
+        ).with_model("openai", "gpt-4o")
         response = await chat.send_message(UserMessage(text=prompt))
         
         # Parse JSON from response
