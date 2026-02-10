@@ -45,7 +45,7 @@ const STAT_CARD_IMAGES = {
 // Professional AI images for quick action buttons
 const QUICK_ACTION_IMAGES = {
   aiCoach: 'https://images.unsplash.com/photo-1535914254981-b5012eebbd15?w=200&q=80', // AI/Robot coach
-  scanFood: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80', // Food photography
+  scanFood: 'https://customer-assets.emergentagent.com/job_fitness-journey-294/artifacts/st3byqjm_Scan%20Food.PNG', // Custom scan food image
   schedule: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=200&q=80', // Calendar planning
   workoutLog: 'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=200&q=80', // Workout/gym
   run: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=200&q=80', // Running outdoors
