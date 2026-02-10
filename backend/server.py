@@ -9156,20 +9156,19 @@ async def generate_recipe(request: RecipeGenerateRequest):
         
         prompt = f"""Create a healthy recipe based on this request: {request.prompt}
 
-Return a JSON object with:
-- id: unique string like "recipe_{timestamp}"
-- name: recipe name
-- image: a URL to a relevant food image from unsplash (format: https://images.unsplash.com/photo-XXXXX?w=600)
-- calories: total calories (number)
-- protein: grams of protein (number)
-- carbs: grams of carbs (number)
-- fat: grams of fat (number)
-- prepTime: preparation time like "25 mins"
+Return a JSON object with these exact fields:
+- name: recipe name (string)
+- image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600"
+- calories: total calories (integer number only)
+- protein: grams of protein (integer number only)
+- carbs: grams of carbs (integer number only)
+- fat: grams of fat (integer number only)
+- prepTime: preparation time like "25 mins" (string)
 - ingredients: array of ingredient strings with amounts
-- instructions: array of step-by-step instructions
+- instructions: array of step-by-step instruction strings
 - category: one of "breakfast", "lunch", "dinner", "snack"
 
-Return ONLY the JSON object, no other text."""
+IMPORTANT: Return ONLY the raw JSON object. No markdown, no code blocks, no extra text."""
 
         chat = LlmChat(api_key=api_key).with_model("openai", "gpt-4o")
         response = await chat.send_message(UserMessage(text=prompt))
