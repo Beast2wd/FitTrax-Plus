@@ -605,28 +605,10 @@ export default function DashboardScreen() {
           {/* Meals Card */}
           <TouchableOpacity 
             style={[styles.statCardWithImage, { backgroundColor: colors.background.card }]}
-            onPress={() => {
-              if (isPremium) {
-                router.push('/(tabs)/scan');
-              } else {
-                Alert.alert(
-                  'Premium Feature',
-                  'AI Food Scanning is a premium feature. Upgrade to FitTrax+ Premium to scan and track your meals.',
-                  [
-                    { text: 'Maybe Later', style: 'cancel' },
-                    { text: 'Upgrade Now', onPress: () => router.push('/membership') }
-                  ]
-                );
-              }
-            }}
+            onPress={() => router.push('/(tabs)/scan')}
           >
             <Image source={{ uri: STAT_CARD_IMAGES.meals }} style={styles.statCardImage} resizeMode="cover" />
             <View style={styles.statCardOverlay}>
-              {!isPremium && (
-                <View style={styles.premiumBadgeImage}>
-                  <Ionicons name="diamond" size={10} color="#fff" />
-                </View>
-              )}
               <Text style={styles.statValueImage}>{today.meals_count || 0}</Text>
               <Text style={styles.statLabelImage}>{t('dashboard.meals')}</Text>
             </View>
