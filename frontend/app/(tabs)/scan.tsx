@@ -1771,9 +1771,10 @@ const styles = StyleSheet.create({
   mealName: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
   mealCalories: { fontSize: 13 },
   mealSugar: { fontSize: 12, marginTop: 2 },
-  mealActions: { flexDirection: 'row', gap: 8 },
+  mealActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   cookBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   cookedBadge: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  deleteMealBtn: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center', borderRadius: 16, backgroundColor: 'rgba(239, 68, 68, 0.1)' },
   
   hintText: { fontSize: 12, textAlign: 'center', marginTop: 8 },
   
