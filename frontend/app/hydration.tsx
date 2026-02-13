@@ -741,6 +741,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.text.secondary,
     marginBottom: 12,
   },
+  quickAddLabelWhite: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 12,
+  },
   quickAddButtons: {
     flexDirection: 'row',
     gap: 10,
@@ -759,6 +765,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#06B6D4',
+  },
+  quickAddBtnTextWhite: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
   },
   // View Toggle
   viewToggleContainer: {
