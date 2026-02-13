@@ -598,7 +598,7 @@ export default function WeightTrainingScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => handleDeleteWorkout(workout.workout_id)
+          onPress: () => handleDeleteWorkout(workout.log_id)
         },
       ]
     );
