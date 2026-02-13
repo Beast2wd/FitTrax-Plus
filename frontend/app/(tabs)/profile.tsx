@@ -137,6 +137,10 @@ export default function ProfileScreen() {
   const [customCalorieGoal, setCustomCalorieGoal] = useState('');
   const [isCustomCalorieGoal, setIsCustomCalorieGoal] = useState(false);
 
+  // Voice Greeting state
+  const [voiceGreetingEnabled, setVoiceGreetingEnabled] = useState(true);
+  const [voiceGender, setVoiceGender] = useState<'male' | 'female'>('female');
+
   const [formData, setFormData] = useState({
     name: profile?.name || '',
     age: profile?.age || 30,
