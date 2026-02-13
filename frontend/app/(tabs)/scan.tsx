@@ -1430,23 +1430,29 @@ export default function ScanScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={120}
       >
-        {/* Coach Header */}
-        <View style={[styles.coachHeader, { backgroundColor: colors.background.card }]}>
-          <View style={styles.coachHeaderLeft}>
-            <LinearGradient colors={['#10B981', '#059669']} style={styles.coachAvatar}>
-              <MaterialCommunityIcons name="robot-happy" size={28} color="#fff" />
-            </LinearGradient>
-            <View>
-              <Text style={[styles.coachTitle, { color: colors.text.primary }]}>AI Nutrition Coach</Text>
-              <Text style={[styles.coachSubtitle, { color: colors.text.muted }]}>Your personalized diet advisor</Text>
+        {/* Coach Header with Background Image */}
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600' }}
+          style={styles.coachHeaderBg}
+          imageStyle={styles.coachHeaderBgImage}
+        >
+          <View style={styles.coachHeaderOverlay}>
+            <View style={styles.coachHeaderLeft}>
+              <View style={styles.coachAvatarGlow}>
+                <MaterialCommunityIcons name="robot-happy" size={32} color="#fff" />
+              </View>
+              <View>
+                <Text style={styles.coachTitleWhite}>AI Nutrition Coach</Text>
+                <Text style={styles.coachSubtitleWhite}>Your personalized diet advisor</Text>
+              </View>
             </View>
+            {coachMessages.length > 0 && (
+              <TouchableOpacity style={styles.clearChatBtnWhite} onPress={clearCoachConversation}>
+                <Ionicons name="trash-outline" size={20} color="#fff" />
+              </TouchableOpacity>
+            )}
           </View>
-          {coachMessages.length > 0 && (
-            <TouchableOpacity style={styles.clearChatBtn} onPress={clearCoachConversation}>
-              <Ionicons name="trash-outline" size={20} color="#EF4444" />
-            </TouchableOpacity>
-          )}
-        </View>
+        </ImageBackground>
 
         {/* Chat Messages */}
         <ScrollView 
