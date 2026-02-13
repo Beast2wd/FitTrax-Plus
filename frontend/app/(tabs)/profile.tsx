@@ -917,7 +917,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 16,
+    paddingTop: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
     alignItems: 'center',
   },
   headerTitle: {
@@ -927,6 +929,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     marginHorizontal: 16,
+    marginTop: 8,
     marginBottom: 16,
     borderRadius: 12,
     padding: 4,
