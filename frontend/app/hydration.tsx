@@ -315,50 +315,57 @@ export default function HydrationScreen() {
         </View>
 
         {/* Today's Progress Card */}
-        <View style={styles.todayCard}>
-          <View style={styles.todayHeader}>
-            <Text style={styles.todayTitle}>Today's Progress</Text>
-            <View style={[styles.goalBadge, todayData.goalMet && styles.goalBadgeMet]}>
-              <Text style={[styles.goalBadgeText, todayData.goalMet && styles.goalBadgeTextMet]}>
-                {todayData.goalMet ? '✓ Goal Met!' : `Goal: ${dailyGoal}oz`}
-              </Text>
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800' }}
+          style={styles.todayCardBg}
+          imageStyle={styles.todayCardBgImage}
+          resizeMode="cover"
+        >
+          <View style={styles.todayCardOverlay}>
+            <View style={styles.todayHeader}>
+              <Text style={styles.todayTitleWhite}>Today's Progress</Text>
+              <View style={[styles.goalBadge, todayData.goalMet && styles.goalBadgeMetWhite, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Text style={[styles.goalBadgeTextWhite, todayData.goalMet && styles.goalBadgeTextMetWhite]}>
+                  {todayData.goalMet ? '✓ Goal Met!' : `Goal: ${dailyGoal}oz`}
+                </Text>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.todayContent}>
-            <View style={styles.progressContainer}>
-              {renderProgressRing(todayData.percentage, 120, 10)}
+            <View style={styles.todayContent}>
+              <View style={styles.progressContainer}>
+                {renderProgressRing(todayData.percentage, 120, 10)}
+              </View>
+              <View style={styles.todayStats}>
+                <Text style={styles.todayAmountWhite}>{Math.round(todayData.total)}</Text>
+                <Text style={styles.todayUnitWhite}>oz</Text>
+                <Text style={styles.todayPercentageWhite}>{Math.round(todayData.percentage)}% of daily goal</Text>
+                <Text style={styles.todayRemainingWhite}>
+                  {todayData.total >= dailyGoal 
+                    ? `${Math.round(todayData.total - dailyGoal)}oz over goal! 🎉`
+                    : `${Math.round(dailyGoal - todayData.total)}oz remaining`
+                  }
+                </Text>
+              </View>
             </View>
-            <View style={styles.todayStats}>
-              <Text style={styles.todayAmount}>{Math.round(todayData.total)}</Text>
-              <Text style={styles.todayUnit}>oz</Text>
-              <Text style={styles.todayPercentage}>{Math.round(todayData.percentage)}% of daily goal</Text>
-              <Text style={styles.todayRemaining}>
-                {todayData.total >= dailyGoal 
-                  ? `${Math.round(todayData.total - dailyGoal)}oz over goal! 🎉`
-                  : `${Math.round(dailyGoal - todayData.total)}oz remaining`
-                }
-              </Text>
-            </View>
-          </View>
 
-          {/* Quick Add Buttons */}
-          <View style={styles.quickAddContainer}>
-            <Text style={styles.quickAddLabel}>Quick Add</Text>
-            <View style={styles.quickAddButtons}>
-              {[8, 16, 24, 32].map((amount) => (
-                <TouchableOpacity
-                  key={amount}
-                  style={styles.quickAddBtn}
-                  onPress={() => addWater(amount)}
-                >
-                  <MaterialCommunityIcons name="cup-water" size={20} color="#06B6D4" />
-                  <Text style={styles.quickAddBtnText}>+{amount}oz</Text>
-                </TouchableOpacity>
-              ))}
+            {/* Quick Add Buttons */}
+            <View style={styles.quickAddContainer}>
+              <Text style={styles.quickAddLabelWhite}>Quick Add</Text>
+              <View style={styles.quickAddButtons}>
+                {[8, 16, 24, 32].map((amount) => (
+                  <TouchableOpacity
+                    key={amount}
+                    style={[styles.quickAddBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                    onPress={() => addWater(amount)}
+                  >
+                    <MaterialCommunityIcons name="cup-water" size={20} color="#fff" />
+                    <Text style={styles.quickAddBtnTextWhite}>+{amount}oz</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
-        </View>
+        </ImageBackground>
 
         {/* View Mode Toggle */}
         <View style={styles.viewToggleContainer}>
