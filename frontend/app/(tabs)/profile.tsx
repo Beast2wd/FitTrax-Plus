@@ -672,13 +672,11 @@ export default function ProfileScreen() {
                     </Text>
                   </View>
                 </View>
-                <Switch
+                <CustomToggle
                   value={mode === 'dark'}
                   onValueChange={() => setMode(mode === 'dark' ? 'light' : 'dark')}
-                  trackColor={{ false: '#E5E5EA', true: accentColors.primary }}
-                  thumbColor="#FFFFFF"
-                  ios_backgroundColor="#E5E5EA"
-                  style={{ transform: [{ scaleX: 1 }, { scaleY: 1 }] }}
+                  activeColor={accentColors.primary}
+                  inactiveColor={mode === 'dark' ? '#39393D' : '#E5E5EA'}
                 />
               </View>
 
