@@ -80,6 +80,8 @@ export default function DashboardScreen() {
   const [streakData, setStreakData] = useState<any>(null);
   const [achievementModal, setAchievementModal] = useState<any>({ visible: false, achievement: null });
   const [pendingAchievements, setPendingAchievements] = useState<any[]>([]);
+  const [hasGreeted, setHasGreeted] = useState(false);
+  const appState = useRef(AppState.currentState);
   
   // Premium status
   const isPremium = membershipStatus?.is_premium || false;
@@ -97,6 +99,137 @@ export default function DashboardScreen() {
 
   const colors = theme.colors;
   const accent = theme.accentColors;
+
+  // Voice Greeting Function
+  const playVoiceGreeting = async () => {
+    try {
+      // Check if voice greeting is enabled
+      const voiceEnabled = await AsyncStorage.getItem('voiceGreetingEnabled');
+      if (voiceEnabled === 'false') return;
+
+      // Get voice preference (male/female)
+      const voiceGender = await AsyncStorage.getItem('voiceGreetingGender') || 'female';
+      
+      // Get current language
+      const currentLang = i18next.language || 'en';
+      
+      // Determine time of day greeting
+      const hour = new Date().getHours();
+      let greeting = '';
+      let greetingKey = '';
+      
+      if (hour >= 5 && hour < 12) {
+        greetingKey = 'morning';
+      } else if (hour >= 12 && hour < 17) {
+        greetingKey = 'afternoon';
+      } else {
+        greetingKey = 'evening';
+      }
+
+      // Get user's first name
+      const userName = profile?.first_name || profile?.name?.split(' ')[0] || '';
+
+      // Build greeting based on language
+      const greetings: { [key: string]: { [key: string]: string } } = {
+        en: { morning: 'Good Morning', afternoon: 'Good Afternoon', evening: 'Good Evening' },
+        es: { morning: 'Buenos Días', afternoon: 'Buenas Tardes', evening: 'Buenas Noches' },
+        fr: { morning: 'Bonjour', afternoon: 'Bon Après-midi', evening: 'Bonsoir' },
+        de: { morning: 'Guten Morgen', afternoon: 'Guten Tag', evening: 'Guten Abend' },
+        it: { morning: 'Buongiorno', afternoon: 'Buon Pomeriggio', evening: 'Buonasera' },
+        pt: { morning: 'Bom Dia', afternoon: 'Boa Tarde', evening: 'Boa Noite' },
+        ja: { morning: 'おはようございます', afternoon: 'こんにちは', evening: 'こんばんは' },
+        ko: { morning: '좋은 아침이에요', afternoon: '안녕하세요', evening: '좋은 저녁이에요' },
+        zh: { morning: '早上好', afternoon: '下午好', evening: '晚上好' },
+      };
+
+      const langKey = currentLang.split('-')[0]; // Handle 'en-US' -> 'en'
+      const langGreetings = greetings[langKey] || greetings['en'];
+      greeting = langGreetings[greetingKey];
+
+      // Add name if available
+      const fullGreeting = userName ? `${greeting}, ${userName}!` : `${greeting}!`;
+
+      // Get available voices and select based on gender preference
+      const voices = await Speech.getAvailableVoicesAsync();
+      let selectedVoice = null;
+
+      // Filter voices by language
+      const langVoices = voices.filter(v => 
+        v.language.toLowerCase().startsWith(langKey.toLowerCase())
+      );
+
+      if (langVoices.length > 0) {
+        // Try to find a voice matching the gender preference
+        if (voiceGender === 'male') {
+          selectedVoice = langVoices.find(v => 
+            v.name?.toLowerCase().includes('male') || 
+            v.identifier?.toLowerCase().includes('male') ||
+            v.name?.toLowerCase().includes('daniel') ||
+            v.name?.toLowerCase().includes('tom') ||
+            v.name?.toLowerCase().includes('alex')
+          ) || langVoices[0];
+        } else {
+          selectedVoice = langVoices.find(v => 
+            v.name?.toLowerCase().includes('female') || 
+            v.identifier?.toLowerCase().includes('female') ||
+            v.name?.toLowerCase().includes('samantha') ||
+            v.name?.toLowerCase().includes('karen') ||
+            v.name?.toLowerCase().includes('victoria')
+          ) || langVoices[0];
+        }
+      }
+
+      // Speak the greeting
+      await Speech.speak(fullGreeting, {
+        language: langKey,
+        voice: selectedVoice?.identifier,
+        pitch: voiceGender === 'female' ? 1.1 : 0.9,
+        rate: 0.9,
+      });
+
+    } catch (error) {
+      console.log('Voice greeting error:', error);
+    }
+  };
+
+  // Handle app state changes for greeting
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextAppState) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App came to foreground - check if we should greet
+        const lastGreetTime = await AsyncStorage.getItem('lastGreetingTime');
+        const now = Date.now();
+        const thirtyMinutes = 30 * 60 * 1000;
+        
+        if (!lastGreetTime || (now - parseInt(lastGreetTime)) > thirtyMinutes) {
+          await AsyncStorage.setItem('lastGreetingTime', now.toString());
+          playVoiceGreeting();
+        }
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => subscription.remove();
+  }, [profile]);
+
+  // Initial greeting on first load
+  useEffect(() => {
+    if (profile && !hasGreeted) {
+      setHasGreeted(true);
+      const initGreeting = async () => {
+        const lastGreetTime = await AsyncStorage.getItem('lastGreetingTime');
+        const now = Date.now();
+        const thirtyMinutes = 30 * 60 * 1000;
+        
+        if (!lastGreetTime || (now - parseInt(lastGreetTime)) > thirtyMinutes) {
+          await AsyncStorage.setItem('lastGreetingTime', now.toString());
+          // Small delay to let the UI render first
+          setTimeout(() => playVoiceGreeting(), 1500);
+        }
+      };
+      initGreeting();
+    }
+  }, [profile, hasGreeted]);
 
   const loadDashboard = async () => {
     try {
