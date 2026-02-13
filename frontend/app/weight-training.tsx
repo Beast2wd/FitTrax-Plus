@@ -2299,6 +2299,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 12,
     color: theme.colors.text.muted,
   },
+  historyHint: {
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  historyDeleteBtn: {
+    padding: 8,
+    marginLeft: 8,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
