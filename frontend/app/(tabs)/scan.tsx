@@ -1304,9 +1304,6 @@ export default function ScanScreen() {
             </View>
           </ImageBackground>
         </TouchableOpacity>
-            <Text style={styles.aiGenerateText}>Generate from Meal Plan</Text>
-          </LinearGradient>
-        </TouchableOpacity>
 
         {groceryList.length === 0 ? (
           <View style={styles.emptyGroceries}>
