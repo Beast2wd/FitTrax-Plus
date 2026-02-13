@@ -1355,13 +1355,20 @@ export default function ScanScreen() {
     return (
       <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
         <TouchableOpacity 
-          style={styles.aiGenerateBtn}
+          style={styles.aiGenerateBtnWithImage}
           onPress={() => setShowRecipeGeneratorModal(true)}
         >
-          <LinearGradient colors={['#667eea', '#764ba2']} style={styles.aiGenerateGradient}>
-            <MaterialCommunityIcons name="chef-hat" size={24} color="#fff" />
-            <Text style={styles.aiGenerateText}>Generate AI Recipe</Text>
-          </LinearGradient>
+          <ImageBackground
+            source={{ uri: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600' }}
+            style={styles.aiGenerateBgImage}
+            imageStyle={styles.aiGenerateBgImageStyle}
+          >
+            <View style={styles.aiGenerateOverlay}>
+              <MaterialCommunityIcons name="chef-hat" size={28} color="#fff" />
+              <Text style={styles.aiGenerateTextLarge}>Generate AI Recipe</Text>
+              <Text style={styles.aiGenerateSubtext}>AI-powered recipe creation</Text>
+            </View>
+          </ImageBackground>
         </TouchableOpacity>
 
         {loadingRecipes ? (
