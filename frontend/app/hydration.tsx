@@ -613,6 +613,18 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 20,
     marginBottom: 20,
   },
+  todayCardBg: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  todayCardBgImage: {
+    borderRadius: 20,
+  },
+  todayCardOverlay: {
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
   todayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -624,6 +636,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text.primary,
   },
+  todayTitleWhite: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   goalBadge: {
     backgroundColor: theme.colors.background.elevated,
     paddingHorizontal: 12,
@@ -633,13 +653,24 @@ const createStyles = (theme: any) => StyleSheet.create({
   goalBadgeMet: {
     backgroundColor: '#10B98120',
   },
+  goalBadgeMetWhite: {
+    backgroundColor: 'rgba(16, 185, 129, 0.4)',
+  },
   goalBadgeText: {
     fontSize: 13,
     fontWeight: '600',
     color: theme.colors.text.secondary,
   },
+  goalBadgeTextWhite: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
   goalBadgeTextMet: {
     color: '#10B981',
+  },
+  goalBadgeTextMetWhite: {
+    color: '#fff',
   },
   todayContent: {
     flexDirection: 'row',
@@ -657,15 +688,34 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: '800',
     color: '#06B6D4',
   },
+  todayAmountWhite: {
+    fontSize: 48,
+    fontWeight: '800',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
   todayUnit: {
     fontSize: 20,
     fontWeight: '600',
     color: theme.colors.text.secondary,
     marginTop: -8,
   },
+  todayUnitWhite: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: -8,
+  },
   todayPercentage: {
     fontSize: 14,
     color: theme.colors.text.muted,
+    marginTop: 8,
+  },
+  todayPercentageWhite: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
     marginTop: 8,
   },
   todayRemaining: {
@@ -674,9 +724,15 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.text.secondary,
     marginTop: 4,
   },
+  todayRemainingWhite: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginTop: 4,
+  },
   quickAddContainer: {
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border.primary,
+    borderTopColor: 'rgba(255,255,255,0.2)',
     paddingTop: 16,
   },
   quickAddLabel: {
