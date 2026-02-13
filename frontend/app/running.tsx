@@ -338,85 +338,92 @@ export default function RunningScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
 
         {/* Daily Run Progress Section */}
-        <View style={styles.dailyProgressSection}>
-          <View style={styles.dailyProgressHeader}>
-            <Text style={styles.dailyProgressTitle}>Today's Progress</Text>
-            <Text style={styles.dailyProgressDate}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-            </Text>
-          </View>
-          
-          {/* Progress Bar */}
-          <View style={styles.goalProgressContainer}>
-            <View style={styles.goalProgressBar}>
-              <LinearGradient
-                colors={['#EC4899', '#F472B6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[
-                  styles.goalProgressFill,
-                  { width: `${Math.min(100, ((dailyProgress?.distance || 0) / dailyGoal) * 100)}%` }
-                ]}
-              />
-            </View>
-            <View style={styles.goalProgressLabels}>
-              <Text style={styles.goalProgressCurrent}>
-                {(dailyProgress?.distance || 0).toFixed(2)} mi
-              </Text>
-              <Text style={styles.goalProgressTarget}>Goal: {dailyGoal} mi</Text>
-            </View>
-          </View>
-
-          {/* Daily Stats Grid */}
-          <View style={styles.dailyStatsGrid}>
-            <View style={styles.dailyStatCard}>
-              <View style={[styles.dailyStatIcon, { backgroundColor: '#FCE7F3' }]}>
-                <Ionicons name="footsteps" size={20} color="#EC4899" />
-              </View>
-              <Text style={styles.dailyStatValue}>{dailyProgress?.runs || 0}</Text>
-              <Text style={styles.dailyStatLabel}>Runs</Text>
-            </View>
-            
-            <View style={styles.dailyStatCard}>
-              <View style={[styles.dailyStatIcon, { backgroundColor: '#DBEAFE' }]}>
-                <Ionicons name="navigate" size={20} color="#3B82F6" />
-              </View>
-              <Text style={styles.dailyStatValue}>{(dailyProgress?.distance || 0).toFixed(1)}</Text>
-              <Text style={styles.dailyStatLabel}>mi</Text>
-            </View>
-            
-            <View style={styles.dailyStatCard}>
-              <View style={[styles.dailyStatIcon, { backgroundColor: '#D1FAE5' }]}>
-                <Ionicons name="time" size={20} color="#10B981" />
-              </View>
-              <Text style={styles.dailyStatValue}>{formatTime(dailyProgress?.duration || 0)}</Text>
-              <Text style={styles.dailyStatLabel}>Time</Text>
-            </View>
-            
-            <View style={styles.dailyStatCard}>
-              <View style={[styles.dailyStatIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="flame" size={20} color="#F59E0B" />
-              </View>
-              <Text style={styles.dailyStatValue}>{Math.round(dailyProgress?.calories || 0)}</Text>
-              <Text style={styles.dailyStatLabel}>cal</Text>
-            </View>
-          </View>
-
-          {/* Motivational Message */}
-          {dailyProgress?.distance >= dailyGoal ? (
-            <View style={styles.goalAchieved}>
-              <Ionicons name="trophy" size={24} color="#F59E0B" />
-              <Text style={styles.goalAchievedText}>Daily goal achieved! 🎉</Text>
-            </View>
-          ) : dailyProgress?.distance > 0 ? (
-            <View style={styles.goalRemaining}>
-              <Ionicons name="trending-up" size={20} color="#10B981" />
-              <Text style={styles.goalRemainingText}>
-                {(dailyGoal - (dailyProgress?.distance || 0)).toFixed(2)} mi to reach your goal
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800' }}
+          style={styles.dailyProgressBg}
+          imageStyle={styles.dailyProgressBgImage}
+          resizeMode="cover"
+        >
+          <View style={styles.dailyProgressOverlay}>
+            <View style={styles.dailyProgressHeader}>
+              <Text style={styles.dailyProgressTitleWhite}>Today's Progress</Text>
+              <Text style={styles.dailyProgressDateWhite}>
+                {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </Text>
             </View>
-          ) : null}
-        </View>
+            
+            {/* Progress Bar */}
+            <View style={styles.goalProgressContainer}>
+              <View style={[styles.goalProgressBar, { backgroundColor: 'rgba(255,255,255,0.3)' }]}>
+                <LinearGradient
+                  colors={['#EC4899', '#F472B6']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[
+                    styles.goalProgressFill,
+                    { width: `${Math.min(100, ((dailyProgress?.distance || 0) / dailyGoal) * 100)}%` }
+                  ]}
+                />
+              </View>
+              <View style={styles.goalProgressLabels}>
+                <Text style={styles.goalProgressCurrentWhite}>
+                  {(dailyProgress?.distance || 0).toFixed(2)} mi
+                </Text>
+                <Text style={styles.goalProgressTargetWhite}>Goal: {dailyGoal} mi</Text>
+              </View>
+            </View>
+
+            {/* Daily Stats Grid */}
+            <View style={styles.dailyStatsGrid}>
+              <View style={[styles.dailyStatCard, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                <View style={[styles.dailyStatIcon, { backgroundColor: 'rgba(236,72,153,0.3)' }]}>
+                  <Ionicons name="footsteps" size={20} color="#fff" />
+                </View>
+                <Text style={styles.dailyStatValueWhite}>{dailyProgress?.runs || 0}</Text>
+                <Text style={styles.dailyStatLabelWhite}>Runs</Text>
+              </View>
+              
+              <View style={[styles.dailyStatCard, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                <View style={[styles.dailyStatIcon, { backgroundColor: 'rgba(59,130,246,0.3)' }]}>
+                  <Ionicons name="navigate" size={20} color="#fff" />
+                </View>
+                <Text style={styles.dailyStatValueWhite}>{(dailyProgress?.distance || 0).toFixed(1)}</Text>
+                <Text style={styles.dailyStatLabelWhite}>mi</Text>
+              </View>
+              
+              <View style={[styles.dailyStatCard, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                <View style={[styles.dailyStatIcon, { backgroundColor: 'rgba(16,185,129,0.3)' }]}>
+                  <Ionicons name="time" size={20} color="#fff" />
+                </View>
+                <Text style={styles.dailyStatValueWhite}>{formatTime(dailyProgress?.duration || 0)}</Text>
+                <Text style={styles.dailyStatLabelWhite}>Time</Text>
+              </View>
+              
+              <View style={[styles.dailyStatCard, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                <View style={[styles.dailyStatIcon, { backgroundColor: 'rgba(245,158,11,0.3)' }]}>
+                  <Ionicons name="flame" size={20} color="#fff" />
+                </View>
+                <Text style={styles.dailyStatValueWhite}>{Math.round(dailyProgress?.calories || 0)}</Text>
+                <Text style={styles.dailyStatLabelWhite}>cal</Text>
+              </View>
+            </View>
+
+            {/* Motivational Message */}
+            {dailyProgress?.distance >= dailyGoal ? (
+              <View style={[styles.goalAchieved, { backgroundColor: 'rgba(245,158,11,0.2)' }]}>
+                <Ionicons name="trophy" size={24} color="#F59E0B" />
+                <Text style={[styles.goalAchievedText, { color: '#fff' }]}>Daily goal achieved! 🎉</Text>
+              </View>
+            ) : dailyProgress?.distance > 0 ? (
+              <View style={[styles.goalRemaining, { backgroundColor: 'rgba(16,185,129,0.2)' }]}>
+                <Ionicons name="trending-up" size={20} color="#10B981" />
+                <Text style={[styles.goalRemainingText, { color: '#fff' }]}>
+                  {(dailyGoal - (dailyProgress?.distance || 0)).toFixed(2)} mi to reach your goal
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </ImageBackground>
 
         {/* GPS Tracking Status */}
         {isTracking && routeCoords.length > 0 && (
