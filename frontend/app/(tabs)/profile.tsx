@@ -713,8 +713,9 @@ export default function ProfileScreen() {
                   <Switch
                     value={voiceGreetingEnabled}
                     onValueChange={handleVoiceGreetingToggle}
-                    trackColor={{ false: colors.border.primary, true: accentColors.primary }}
-                    thumbColor="#fff"
+                    trackColor={{ false: '#E5E5EA', true: accentColors.primary }}
+                    thumbColor="#FFFFFF"
+                    ios_backgroundColor="#E5E5EA"
                   />
                 </View>
                 
