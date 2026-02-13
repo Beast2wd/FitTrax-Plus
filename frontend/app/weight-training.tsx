@@ -929,31 +929,41 @@ export default function WeightTrainingScreen() {
         {history.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Workouts</Text>
+            <Text style={[styles.historyHint, { color: theme.colors.text.muted }]}>
+              💡 Long press to delete
+            </Text>
             {history.slice(0, 5).map((workout, index) => (
-              <TouchableOpacity 
+              <Pressable 
                 key={index} 
-                style={styles.historyCard}
+                style={[styles.historyCard, { backgroundColor: theme.colors.background.card }]}
                 onPress={() => {
                   setSelectedPastWorkout(workout);
                   setShowPastWorkoutModal(true);
                 }}
+                onLongPress={() => confirmDeleteWorkout(workout)}
+                delayLongPress={500}
               >
                 <View style={styles.historyIcon}>
                   <MaterialCommunityIcons name="dumbbell" size={24} color="#7C3AED" />
                 </View>
                 <View style={styles.historyInfo}>
-                  <Text style={styles.historyName}>{workout.workout_name}</Text>
-                  <Text style={styles.historyMeta}>
+                  <Text style={[styles.historyName, { color: theme.colors.text.primary }]}>{workout.workout_name}</Text>
+                  <Text style={[styles.historyMeta, { color: theme.colors.text.secondary }]}>
                     {workout.exercises?.length || 0} exercises • {workout.duration_minutes} min
                   </Text>
                 </View>
                 <View style={styles.historyRight}>
-                  <Text style={styles.historyDate}>
+                  <Text style={[styles.historyDate, { color: theme.colors.text.muted }]}>
                     {new Date(workout.timestamp).toLocaleDateString()}
                   </Text>
-                  <Ionicons name="chevron-forward" size={18} color={theme.colors.text.muted} />
+                  <TouchableOpacity 
+                    style={styles.historyDeleteBtn}
+                    onPress={() => confirmDeleteWorkout(workout)}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         )}
