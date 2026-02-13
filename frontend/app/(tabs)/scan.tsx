@@ -2204,15 +2204,15 @@ const styles = StyleSheet.create({
   quickPromptBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 20 },
   quickPromptText: { fontSize: 14, textAlign: 'center' },
   
-  chatBubble: { maxWidth: '85%', padding: 14, borderRadius: 16, marginBottom: 12 },
+  chatBubble: { maxWidth: '80%', padding: 14, borderRadius: 16, marginBottom: 12 },
   userBubble: { alignSelf: 'flex-end', borderBottomRightRadius: 4 },
-  assistantBubble: { alignSelf: 'flex-start', borderBottomLeftRadius: 4, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
-  assistantIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B98120', justifyContent: 'center', alignItems: 'center', marginRight: 8, marginTop: 2 },
-  chatText: { fontSize: 15, lineHeight: 22, flex: 1 },
-  chatTime: { fontSize: 11, marginTop: 6, width: '100%' },
+  assistantBubble: { alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
+  assistantIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B98120', justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
+  chatText: { fontSize: 15, lineHeight: 22 },
+  chatTime: { fontSize: 11, marginTop: 6, opacity: 0.7 },
   typingText: { fontSize: 14, marginLeft: 8 },
   
-  chatInputContainer: { flexDirection: 'row', alignItems: 'flex-end', padding: 12, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)', gap: 10 },
-  chatInput: { flex: 1, minHeight: 44, maxHeight: 100, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15 },
+  chatInputContainer: { flexDirection: 'row', alignItems: 'flex-end', padding: 12, paddingBottom: 20, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)', gap: 10 },
+  chatInput: { flex: 1, minHeight: 44, maxHeight: 80, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15 },
   sendBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
 });
