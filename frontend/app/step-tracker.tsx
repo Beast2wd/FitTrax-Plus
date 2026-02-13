@@ -1026,9 +1026,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 6,
   },
+  statValueWhite: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 6,
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
   statLabel: {
     fontSize: 12,
     marginTop: 2,
+  },
+  statLabelWhite: {
+    fontSize: 12,
+    marginTop: 2,
+    color: 'rgba(255,255,255,0.9)',
   },
   statDivider: {
     width: 1,
@@ -1040,12 +1054,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(128,128,128,0.2)',
+    borderTopColor: 'rgba(255,255,255,0.2)',
   },
   inputLabel: {
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 8,
+  },
+  inputLabelWhite: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#fff',
   },
   manualAddRow: {
     flexDirection: 'row',
