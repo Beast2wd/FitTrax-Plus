@@ -12,6 +12,7 @@ import {
   Platform,
   Modal,
   Image,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -27,6 +28,7 @@ import { AchievementModal } from '../../components/AchievementModal';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as Location from 'expo-location';
+import * as Speech from 'expo-speech';
 import i18next from 'i18next';
 import { AccentColors } from '../../constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
