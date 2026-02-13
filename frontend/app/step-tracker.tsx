@@ -956,10 +956,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  ringCardBg: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  ringCardBgImage: {
+    borderRadius: 20,
+  },
+  ringCardOverlay: {
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
   ringCardTitle: {
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 20,
+  },
+  ringCardTitleWhite: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 20,
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   ringContainer: {
     position: 'relative',
