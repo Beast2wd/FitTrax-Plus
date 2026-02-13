@@ -9377,7 +9377,9 @@ RECENT CONVERSATION:
             system_message=system_prompt
         ).with_model("openai", "gpt-4o")
         
-        response = await chat.send_message(f"User message: {request.message}")
+        user_msg = UserMessage(text=f"User message: {request.message}")
+        response = await chat.send_message(user_msg)
+        response_text = response.strip() if isinstance(response, str) else str(response)
         
         # Save conversation to database
         new_messages = request.conversation_history + [
