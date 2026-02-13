@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Switch,
   AppState,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
