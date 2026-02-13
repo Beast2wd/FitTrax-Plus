@@ -9367,8 +9367,12 @@ RECENT CONVERSATION:
 {history_text if history_text else "This is the start of the conversation."}"""
 
         # Generate response using LLM
+        emergent_key = os.getenv("EMERGENT_API_KEY") or os.getenv("EMERGENT_LLM_KEY")
+        if not emergent_key:
+            raise HTTPException(status_code=500, detail="API key not configured")
+            
         chat = LlmChat(
-            api_key=EMERGENT_API_KEY,
+            api_key=emergent_key,
             model="gpt-4o"
         )
         
