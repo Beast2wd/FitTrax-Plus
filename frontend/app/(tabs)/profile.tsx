@@ -1173,4 +1173,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  // Voice Greeting Styles
+  voiceSettingsCard: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+  },
+  voiceSettingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  voiceSettingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  voiceSettingLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  voiceSettingHint: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  voiceDivider: {
+    height: 1,
+    marginVertical: 16,
+  },
+  voiceGenderLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  voiceGenderRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  voiceGenderOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  voiceGenderText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  voiceLanguageNote: {
+    fontSize: 12,
+    marginTop: 12,
+    textAlign: 'center',
+  },
 });
