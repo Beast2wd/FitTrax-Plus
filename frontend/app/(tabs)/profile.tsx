@@ -613,9 +613,10 @@ export default function ProfileScreen() {
                 <Switch
                   value={mode === 'dark'}
                   onValueChange={() => setMode(mode === 'dark' ? 'light' : 'dark')}
-                  trackColor={{ false: '#767577', true: accentColors.primary }}
-                  thumbColor={mode === 'dark' ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
+                  trackColor={{ false: '#E5E5EA', true: accentColors.primary }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor="#E5E5EA"
+                  style={{ transform: [{ scaleX: 1 }, { scaleY: 1 }] }}
                 />
               </View>
 
