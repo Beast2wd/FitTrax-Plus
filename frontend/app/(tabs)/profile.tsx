@@ -193,10 +193,93 @@ export default function ProfileScreen() {
     await AsyncStorage.setItem('voiceGreetingEnabled', value.toString());
   };
 
-  // Save voice gender preference
+  // Save voice gender preference and test the voice
   const handleVoiceGenderChange = async (gender: 'male' | 'female') => {
     setVoiceGender(gender);
     await AsyncStorage.setItem('voiceGreetingGender', gender);
+    // Automatically test the voice when changed
+    testVoiceGreeting(gender);
+  };
+
+  // Test voice greeting
+  const testVoiceGreeting = async (genderToTest?: 'male' | 'female') => {
+    try {
+      const gender = genderToTest || voiceGender;
+      const currentLang = i18next.language || 'en';
+      const langKey = currentLang.split('-')[0];
+      
+      // Get user's first name
+      const userName = profile?.first_name || profile?.name?.split(' ')[0] || 'there';
+
+      // Determine time of day greeting
+      const hour = new Date().getHours();
+      let greetingKey = '';
+      if (hour >= 5 && hour < 12) {
+        greetingKey = 'morning';
+      } else if (hour >= 12 && hour < 17) {
+        greetingKey = 'afternoon';
+      } else {
+        greetingKey = 'evening';
+      }
+
+      // Greetings in different languages
+      const greetings: { [key: string]: { [key: string]: string } } = {
+        en: { morning: 'Good Morning', afternoon: 'Good Afternoon', evening: 'Good Evening' },
+        es: { morning: 'Buenos Días', afternoon: 'Buenas Tardes', evening: 'Buenas Noches' },
+        fr: { morning: 'Bonjour', afternoon: 'Bon Après-midi', evening: 'Bonsoir' },
+        de: { morning: 'Guten Morgen', afternoon: 'Guten Tag', evening: 'Guten Abend' },
+        it: { morning: 'Buongiorno', afternoon: 'Buon Pomeriggio', evening: 'Buonasera' },
+        pt: { morning: 'Bom Dia', afternoon: 'Boa Tarde', evening: 'Boa Noite' },
+        ja: { morning: 'おはようございます', afternoon: 'こんにちは', evening: 'こんばんは' },
+        ko: { morning: '좋은 아침이에요', afternoon: '안녕하세요', evening: '좋은 저녁이에요' },
+        zh: { morning: '早上好', afternoon: '下午好', evening: '晚上好' },
+      };
+
+      const langGreetings = greetings[langKey] || greetings['en'];
+      const greeting = langGreetings[greetingKey];
+      const fullGreeting = `${greeting}, ${userName}!`;
+
+      // Stop any current speech
+      await Speech.stop();
+
+      // Get available voices and select based on gender preference
+      const voices = await Speech.getAvailableVoicesAsync();
+      let selectedVoice = null;
+
+      const langVoices = voices.filter(v => 
+        v.language.toLowerCase().startsWith(langKey.toLowerCase())
+      );
+
+      if (langVoices.length > 0) {
+        if (gender === 'male') {
+          selectedVoice = langVoices.find(v => 
+            v.name?.toLowerCase().includes('male') || 
+            v.identifier?.toLowerCase().includes('male') ||
+            v.name?.toLowerCase().includes('daniel') ||
+            v.name?.toLowerCase().includes('tom') ||
+            v.name?.toLowerCase().includes('alex')
+          ) || langVoices[0];
+        } else {
+          selectedVoice = langVoices.find(v => 
+            v.name?.toLowerCase().includes('female') || 
+            v.identifier?.toLowerCase().includes('female') ||
+            v.name?.toLowerCase().includes('samantha') ||
+            v.name?.toLowerCase().includes('karen') ||
+            v.name?.toLowerCase().includes('victoria')
+          ) || langVoices[0];
+        }
+      }
+
+      // Speak the greeting
+      await Speech.speak(fullGreeting, {
+        language: langKey,
+        voice: selectedVoice?.identifier,
+        pitch: gender === 'female' ? 1.1 : 0.9,
+        rate: 0.9,
+      });
+    } catch (error) {
+      console.log('Test voice error:', error);
+    }
   };
 
   useEffect(() => {
