@@ -600,7 +600,7 @@ export default function ProfileScreen() {
               <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Appearance</Text>
 
               {/* Theme Mode */}
-              <View style={styles.settingRow}>
+              <View style={[styles.darkModeCard, { backgroundColor: colors.background.input, borderColor: colors.border.primary }]}>
                 <View style={styles.settingInfo}>
                   <Ionicons name={mode === 'dark' ? 'moon' : 'sunny'} size={24} color={accentColors.primary} />
                   <View style={styles.settingText}>
@@ -613,8 +613,9 @@ export default function ProfileScreen() {
                 <Switch
                   value={mode === 'dark'}
                   onValueChange={() => setMode(mode === 'dark' ? 'light' : 'dark')}
-                  trackColor={{ false: '#10B981', true: accentColors.primary }}
-                  thumbColor="#fff"
+                  trackColor={{ false: '#767577', true: accentColors.primary }}
+                  thumbColor={mode === 'dark' ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="#3e3e3e"
                 />
               </View>
 
