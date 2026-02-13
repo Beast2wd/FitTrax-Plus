@@ -1105,6 +1105,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  // Dark Mode Card Style
+  darkModeCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
   // Calorie Goal Section Styles
   calorieGoalSection: {
     borderRadius: 16,
