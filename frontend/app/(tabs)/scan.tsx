@@ -2191,7 +2191,7 @@ const styles = StyleSheet.create({
   clearChatBtnWhite: { padding: 8, backgroundColor: 'rgba(239, 68, 68, 0.3)', borderRadius: 20 },
   
   chatMessages: { flex: 1, padding: 16 },
-  chatMessagesContent: { paddingBottom: 20 },
+  chatMessagesContent: { paddingBottom: 100 },
   coachLoading: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 },
   
   coachWelcome: { alignItems: 'center', paddingTop: 20 },
