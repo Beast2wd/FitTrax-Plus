@@ -2145,4 +2145,39 @@ const styles = StyleSheet.create({
   addToPlanBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   cookRecipeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, gap: 8 },
   cookRecipeBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  
+  // AI Nutrition Coach Styles
+  coachContainer: { flex: 1 },
+  coachHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 16, margin: 16, marginBottom: 0 },
+  coachHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  coachAvatar: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+  coachTitle: { fontSize: 18, fontWeight: '700' },
+  coachSubtitle: { fontSize: 13 },
+  clearChatBtn: { padding: 8 },
+  
+  chatMessages: { flex: 1, padding: 16 },
+  chatMessagesContent: { paddingBottom: 20 },
+  coachLoading: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 },
+  
+  coachWelcome: { alignItems: 'center', paddingTop: 20 },
+  welcomeGradient: { width: '100%', alignItems: 'center', padding: 24, borderRadius: 16 },
+  welcomeTitle: { fontSize: 20, fontWeight: '700', marginTop: 16, textAlign: 'center' },
+  welcomeText: { fontSize: 14, marginTop: 12, textAlign: 'center', lineHeight: 20 },
+  
+  quickPromptsTitle: { fontSize: 14, fontWeight: '600', marginTop: 24, marginBottom: 12 },
+  quickPrompts: { width: '100%', gap: 8 },
+  quickPromptBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 20 },
+  quickPromptText: { fontSize: 14, textAlign: 'center' },
+  
+  chatBubble: { maxWidth: '85%', padding: 14, borderRadius: 16, marginBottom: 12 },
+  userBubble: { alignSelf: 'flex-end', borderBottomRightRadius: 4 },
+  assistantBubble: { alignSelf: 'flex-start', borderBottomLeftRadius: 4, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
+  assistantIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B98120', justifyContent: 'center', alignItems: 'center', marginRight: 8, marginTop: 2 },
+  chatText: { fontSize: 15, lineHeight: 22, flex: 1 },
+  chatTime: { fontSize: 11, marginTop: 6, width: '100%' },
+  typingText: { fontSize: 14, marginLeft: 8 },
+  
+  chatInputContainer: { flexDirection: 'row', alignItems: 'flex-end', padding: 12, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)', gap: 10 },
+  chatInput: { flex: 1, minHeight: 44, maxHeight: 100, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15 },
+  sendBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
 });
