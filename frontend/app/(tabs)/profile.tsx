@@ -610,6 +610,81 @@ export default function ProfileScreen() {
                 ))}
               </View>
 
+              {/* Voice Greeting Settings */}
+              <Text style={[styles.fieldLabel, { color: colors.text.secondary, marginTop: 24 }]}>
+                Voice Greeting
+              </Text>
+              <View style={[styles.voiceSettingsCard, { backgroundColor: colors.background.input, borderColor: colors.border.primary }]}>
+                <View style={styles.voiceSettingRow}>
+                  <View style={styles.voiceSettingInfo}>
+                    <Ionicons name="volume-high" size={24} color={accentColors.primary} />
+                    <View style={{ marginLeft: 12 }}>
+                      <Text style={[styles.voiceSettingLabel, { color: colors.text.primary }]}>Enable Voice Greeting</Text>
+                      <Text style={[styles.voiceSettingHint, { color: colors.text.muted }]}>Greet you when opening the app</Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={voiceGreetingEnabled}
+                    onValueChange={handleVoiceGreetingToggle}
+                    trackColor={{ false: colors.border.primary, true: accentColors.primary }}
+                    thumbColor="#fff"
+                  />
+                </View>
+                
+                {voiceGreetingEnabled && (
+                  <>
+                    <View style={[styles.voiceDivider, { backgroundColor: colors.border.primary }]} />
+                    <Text style={[styles.voiceGenderLabel, { color: colors.text.secondary }]}>Voice Type</Text>
+                    <View style={styles.voiceGenderRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.voiceGenderOption,
+                          { 
+                            backgroundColor: voiceGender === 'female' ? accentColors.primary : colors.background.card,
+                            borderColor: voiceGender === 'female' ? accentColors.primary : colors.border.primary,
+                          }
+                        ]}
+                        onPress={() => handleVoiceGenderChange('female')}
+                      >
+                        <Ionicons 
+                          name="woman" 
+                          size={24} 
+                          color={voiceGender === 'female' ? '#fff' : colors.text.primary} 
+                        />
+                        <Text style={[
+                          styles.voiceGenderText,
+                          { color: voiceGender === 'female' ? '#fff' : colors.text.primary }
+                        ]}>Female</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={[
+                          styles.voiceGenderOption,
+                          { 
+                            backgroundColor: voiceGender === 'male' ? accentColors.primary : colors.background.card,
+                            borderColor: voiceGender === 'male' ? accentColors.primary : colors.border.primary,
+                          }
+                        ]}
+                        onPress={() => handleVoiceGenderChange('male')}
+                      >
+                        <Ionicons 
+                          name="man" 
+                          size={24} 
+                          color={voiceGender === 'male' ? '#fff' : colors.text.primary} 
+                        />
+                        <Text style={[
+                          styles.voiceGenderText,
+                          { color: voiceGender === 'male' ? '#fff' : colors.text.primary }
+                        ]}>Male</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.voiceLanguageNote, { color: colors.text.muted }]}>
+                      💡 Voice will speak in your selected app language
+                    </Text>
+                  </>
+                )}
+              </View>
+
               {/* Terms of Service Status */}
               <Text style={[styles.fieldLabel, { color: colors.text.secondary, marginTop: 24 }]}>
                 Legal
