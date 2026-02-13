@@ -570,85 +570,91 @@ export default function StepTrackerScreen() {
           </View>
 
           {/* Ring Chart Progress Card */}
-          <View style={[styles.ringCard, { backgroundColor: colors.background.card }]}>
-            <Text style={[styles.ringCardTitle, { color: colors.text.primary }]}>
-              Today's Progress
-            </Text>
-            
-            <RingChart
-              progress={ringProgress}
-              size={200}
-              strokeWidth={16}
-              currentSteps={currentSteps}
-              goalSteps={settings.daily_goal}
-              colors={colors}
-              accentGradient={accent.gradient as string[]}
-            />
-
-            {/* Stats Row */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Ionicons name="flame" size={20} color="#EF4444" />
-                <Text style={[styles.statValue, { color: colors.text.primary }]}>{caloriesBurned}</Text>
-                <Text style={[styles.statLabel, { color: colors.text.muted }]}>calories</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: colors.border.primary }]} />
-              <View style={styles.statItem}>
-                <Ionicons name="location" size={20} color="#06B6D4" />
-                <Text style={[styles.statValue, { color: colors.text.primary }]}>{distanceMiles}</Text>
-                <Text style={[styles.statLabel, { color: colors.text.muted }]}>miles</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: colors.border.primary }]} />
-              <View style={styles.statItem}>
-                <Ionicons name="time" size={20} color="#8B5CF6" />
-                <Text style={[styles.statValue, { color: colors.text.primary }]}>{Math.round(currentSteps / 100)}</Text>
-                <Text style={[styles.statLabel, { color: colors.text.muted }]}>min walk</Text>
-              </View>
-            </View>
-
-            {/* Manual Add Section */}
-            <View style={styles.manualAddSection}>
-              <Text style={[styles.inputLabel, { color: colors.text.secondary }]}>
-                Add Steps Manually
+          <ImageBackground
+            source={{ uri: 'https://images.unsplash.com/photo-1758396367575-75053a0b6e78?w=800' }}
+            style={styles.ringCardBg}
+            imageStyle={styles.ringCardBgImage}
+            resizeMode="cover"
+          >
+            <View style={styles.ringCardOverlay}>
+              <Text style={styles.ringCardTitleWhite}>
+                Today's Progress
               </Text>
-              <View style={styles.manualAddRow}>
-                <View style={[styles.manualInputContainer, { backgroundColor: colors.background.input, borderColor: colors.border.primary }]}>
-                  <TextInput
-                    style={[styles.manualInput, { color: colors.text.primary }]}
-                    value={manualStepsInput}
-                    onChangeText={setManualStepsInput}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor={colors.text.muted}
-                  />
-                </View>
-                <TouchableOpacity
-                  style={[styles.addButton, { backgroundColor: accent.primary }]}
-                  onPress={handleAddManualSteps}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Ionicons name="add" size={24} color="#fff" />
-                  )}
-                </TouchableOpacity>
-              </View>
               
-              {/* Quick Add Buttons */}
-              <View style={styles.quickAddRow}>
-                {[1000, 2500, 5000].map((amount) => (
+              <RingChart
+                progress={ringProgress}
+                size={200}
+                strokeWidth={16}
+                currentSteps={currentSteps}
+                goalSteps={settings.daily_goal}
+                colors={colors}
+                accentGradient={accent.gradient as string[]}
+              />
+
+              {/* Stats Row */}
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Ionicons name="flame" size={20} color="#EF4444" />
+                  <Text style={styles.statValueWhite}>{caloriesBurned}</Text>
+                  <Text style={styles.statLabelWhite}>calories</Text>
+                </View>
+                <View style={[styles.statDivider, { backgroundColor: 'rgba(255,255,255,0.3)' }]} />
+                <View style={styles.statItem}>
+                  <Ionicons name="location" size={20} color="#06B6D4" />
+                  <Text style={styles.statValueWhite}>{distanceMiles}</Text>
+                  <Text style={styles.statLabelWhite}>miles</Text>
+                </View>
+                <View style={[styles.statDivider, { backgroundColor: 'rgba(255,255,255,0.3)' }]} />
+                <View style={styles.statItem}>
+                  <Ionicons name="time" size={20} color="#8B5CF6" />
+                  <Text style={styles.statValueWhite}>{Math.round(currentSteps / 100)}</Text>
+                  <Text style={styles.statLabelWhite}>min walk</Text>
+                </View>
+              </View>
+
+              {/* Manual Add Section */}
+              <View style={styles.manualAddSection}>
+                <Text style={styles.inputLabelWhite}>
+                  Add Steps Manually
+                </Text>
+                <View style={styles.manualAddRow}>
+                  <View style={[styles.manualInputContainer, { backgroundColor: 'rgba(255,255,255,0.9)', borderColor: 'rgba(255,255,255,0.5)' }]}>
+                    <TextInput
+                      style={[styles.manualInput, { color: '#1a1a2e' }]}
+                      value={manualStepsInput}
+                      onChangeText={setManualStepsInput}
+                      keyboardType="numeric"
+                      placeholder="0"
+                      placeholderTextColor="#666"
+                    />
+                  </View>
                   <TouchableOpacity
-                    key={amount}
-                    style={[styles.quickAddButton, { backgroundColor: colors.background.elevated }]}
-                    onPress={() => {
-                      const newTotal = currentSteps + amount;
-                      setTodaysSteps(newTotal);
-                      saveSteps(newTotal);
-                    }}
+                    style={[styles.addButton, { backgroundColor: accent.primary }]}
+                    onPress={handleAddManualSteps}
+                    disabled={saving}
                   >
-                    <Text style={[styles.quickAddText, { color: accent.primary }]}>+{amount.toLocaleString()}</Text>
+                    {saving ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Ionicons name="add" size={24} color="#fff" />
+                    )}
                   </TouchableOpacity>
+                </View>
+                
+                {/* Quick Add Buttons */}
+                <View style={styles.quickAddRow}>
+                  {[1000, 2500, 5000].map((amount) => (
+                    <TouchableOpacity
+                      key={amount}
+                      style={[styles.quickAddButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                      onPress={() => {
+                        const newTotal = currentSteps + amount;
+                        setTodaysSteps(newTotal);
+                        saveSteps(newTotal);
+                      }}
+                    >
+                      <Text style={[styles.quickAddText, { color: '#fff' }]}>+{amount.toLocaleString()}</Text>
+                    </TouchableOpacity>
                 ))}
               </View>
             </View>
