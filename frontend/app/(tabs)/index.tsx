@@ -609,8 +609,10 @@ export default function DashboardScreen() {
   }
 
   const today = dashboardData?.today || {};
-  const caloriesRemaining = (today.calories_goal || 2000) - (today.net_calories || 0);
-  const progressPercentage = Math.min(((today.net_calories || 0) / (today.calories_goal || 2000)) * 100, 100);
+  // Use profile calorie goal from store for live updates, fallback to dashboard data
+  const userCalorieGoal = profile?.custom_calorie_goal || profile?.daily_calorie_goal || today.calories_goal || 2000;
+  const caloriesRemaining = userCalorieGoal - (today.net_calories || 0);
+  const progressPercentage = Math.min(((today.net_calories || 0) / userCalorieGoal) * 100, 100);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
