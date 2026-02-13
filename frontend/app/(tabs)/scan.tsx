@@ -2084,6 +2084,13 @@ const styles = StyleSheet.create({
   aiGenerateGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 10 },
   aiGenerateText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   
+  aiGenerateBtnWithImage: { marginBottom: 20, borderRadius: 16, overflow: 'hidden' },
+  aiGenerateBgImage: { height: 100, justifyContent: 'center' },
+  aiGenerateBgImageStyle: { borderRadius: 16 },
+  aiGenerateOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 20 },
+  aiGenerateTextLarge: { color: '#fff', fontSize: 18, fontWeight: '700', marginTop: 6 },
+  aiGenerateSubtext: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2 },
+  
   emptyGroceries: { alignItems: 'center', paddingVertical: 40 },
   emptyGroceriesTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
   emptyGroceriesText: { fontSize: 14, marginTop: 8, textAlign: 'center', paddingHorizontal: 20 },
