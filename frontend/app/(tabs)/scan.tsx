@@ -852,6 +852,83 @@ export default function ScanScreen() {
     }
   };
 
+  // AI Nutrition Coach Functions
+  const loadCoachConversation = async () => {
+    if (!userId) return;
+    setLoadingCoachHistory(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/nutrition-coach/conversation/${userId}`);
+      setCoachMessages(response.data.messages || []);
+    } catch (error) {
+      console.log('No coach conversation found');
+      setCoachMessages([]);
+    } finally {
+      setLoadingCoachHistory(false);
+    }
+  };
+
+  const sendCoachMessage = async () => {
+    if (!coachInput.trim() || coachLoading) return;
+    
+    const userMessage: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      role: 'user',
+      content: coachInput.trim(),
+      timestamp: new Date().toISOString(),
+    };
+    
+    setCoachMessages(prev => [...prev, userMessage]);
+    setCoachInput('');
+    setCoachLoading(true);
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/nutrition-coach/chat`, {
+        user_id: userId,
+        message: userMessage.content,
+        conversation_history: coachMessages.slice(-10), // Send last 10 messages for context
+      });
+      
+      const assistantMessage: ChatMessage = {
+        id: `msg_${Date.now()}_assistant`,
+        role: 'assistant',
+        content: response.data.response,
+        timestamp: new Date().toISOString(),
+      };
+      
+      setCoachMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending coach message:', error);
+      Alert.alert('Error', 'Failed to get response from AI Coach');
+      // Remove the user message if failed
+      setCoachMessages(prev => prev.filter(m => m.id !== userMessage.id));
+    } finally {
+      setCoachLoading(false);
+    }
+  };
+
+  const clearCoachConversation = () => {
+    Alert.alert(
+      'Clear Conversation',
+      'Are you sure you want to delete this conversation?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/nutrition-coach/conversation/${userId}`);
+              setCoachMessages([]);
+              Alert.alert('Cleared', 'Conversation has been deleted.');
+            } catch (error) {
+              console.error('Error clearing conversation:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getFormattedDate = () => {
     const date = new Date(selectedDate);
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
