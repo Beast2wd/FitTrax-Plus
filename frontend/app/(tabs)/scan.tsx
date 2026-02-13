@@ -1706,6 +1706,7 @@ export default function ScanScreen() {
       {activeTab === 'planner' && renderMealPlanner()}
       {activeTab === 'groceries' && renderGroceries()}
       {activeTab === 'recipes' && renderRecipes()}
+      {activeTab === 'coach' && renderNutritionCoach()}
 
       {/* Category Picker Modal (for scanning) */}
       <Modal visible={showCategoryPicker} animationType="fade" transparent>
