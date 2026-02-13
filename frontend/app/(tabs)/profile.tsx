@@ -1323,4 +1323,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
   },
+  testVoiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  testVoiceBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
