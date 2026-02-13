@@ -1886,6 +1886,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
+  askAiImageBg: {
+    width: '100%',
+    height: 90,
+    justifyContent: 'center',
+  },
+  askAiImageBgStyle: {
+    borderRadius: 16,
+  },
+  askAiOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  },
   askAiGradient: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1900,10 +1916,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
     marginBottom: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   askAiSubtitle: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.95)',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   header: {
     flexDirection: 'row',
