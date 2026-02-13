@@ -9264,6 +9264,155 @@ async def delete_recipe(recipe_id: str, user_id: str):
 
 
 # ============================================================================
+# AI NUTRITION COACH ENDPOINTS
+# ============================================================================
+
+class NutritionCoachChatRequest(BaseModel):
+    user_id: str
+    message: str
+    conversation_history: list = []
+
+@api_router.get("/nutrition-coach/conversation/{user_id}")
+async def get_nutrition_coach_conversation(user_id: str):
+    """Get nutrition coach conversation (auto-delete after 12 hours)"""
+    try:
+        # Delete conversations older than 12 hours
+        cutoff_time = datetime.utcnow() - timedelta(hours=12)
+        await db.nutrition_coach_conversations.delete_many({
+            "user_id": user_id,
+            "created_at": {"$lt": cutoff_time.isoformat()}
+        })
+        
+        # Get current conversation
+        conversation = await db.nutrition_coach_conversations.find_one(
+            {"user_id": user_id},
+            sort=[("created_at", -1)]
+        )
+        
+        if conversation:
+            conversation.pop("_id", None)
+            return {"messages": conversation.get("messages", [])}
+        return {"messages": []}
+    except Exception as e:
+        logger.error(f"Error getting nutrition coach conversation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/nutrition-coach/chat")
+async def chat_with_nutrition_coach(request: NutritionCoachChatRequest):
+    """Chat with AI nutrition coach - learns from user's meal history"""
+    try:
+        # Get user's recent meal history for context
+        recent_meals = await db.meals.find({
+            "user_id": request.user_id
+        }).sort("timestamp", -1).limit(20).to_list(20)
+        
+        # Get user's planned meals
+        planned_meals = await db.planned_meals.find({
+            "user_id": request.user_id
+        }).sort("date", -1).limit(10).to_list(10)
+        
+        # Get user profile for goals
+        profile = await db.profiles.find_one({"user_id": request.user_id})
+        
+        # Build nutrition context
+        meal_summary = []
+        total_calories = 0
+        total_protein = 0
+        total_carbs = 0
+        total_fat = 0
+        
+        for meal in recent_meals[:7]:  # Last 7 meals
+            calories = meal.get("calories", 0)
+            protein = meal.get("protein", 0)
+            carbs = meal.get("carbs", 0)
+            fat = meal.get("fat", 0)
+            name = meal.get("food_name", meal.get("meal_name", "Unknown"))
+            total_calories += calories
+            total_protein += protein
+            total_carbs += carbs
+            total_fat += fat
+            meal_summary.append(f"- {name}: {calories} cal, {protein}g protein")
+        
+        avg_calories = total_calories / max(len(recent_meals[:7]), 1)
+        
+        # Build conversation history for context
+        history_text = "\n".join([
+            f"{'User' if m.get('role') == 'user' else 'Coach'}: {m.get('content', '')}"
+            for m in request.conversation_history[-6:]
+        ])
+        
+        calorie_goal = profile.get("custom_calorie_goal", 2000) if profile else 2000
+        fitness_goals = profile.get("fitness_goals", []) if profile else []
+        
+        system_prompt = f"""You are a friendly, knowledgeable AI Nutrition Coach for FitTrax+. Your role is to provide personalized nutrition advice based on the user's eating habits and goals.
+
+USER'S NUTRITION PROFILE:
+- Daily Calorie Goal: {calorie_goal} cal
+- Fitness Goals: {', '.join(fitness_goals) if fitness_goals else 'Not specified'}
+- Recent Average Calories: {avg_calories:.0f} cal/meal
+
+USER'S RECENT MEALS:
+{chr(10).join(meal_summary) if meal_summary else "No recent meals logged"}
+
+GUIDELINES:
+1. Be encouraging and supportive
+2. Give specific, actionable advice
+3. Reference their actual eating patterns when relevant
+4. Keep responses concise (2-3 paragraphs max)
+5. Use emojis sparingly for friendliness
+6. If they ask about meal planning, consider their calorie goals
+7. Suggest improvements based on their actual meal history
+
+RECENT CONVERSATION:
+{history_text if history_text else "This is the start of the conversation."}"""
+
+        # Generate response using LLM
+        chat = LlmChat(
+            api_key=EMERGENT_API_KEY,
+            model="gpt-4o"
+        )
+        
+        response = chat.send_message(
+            f"User message: {request.message}",
+            system_message=system_prompt
+        )
+        
+        # Save conversation to database
+        new_messages = request.conversation_history + [
+            {"id": f"msg_{int(datetime.utcnow().timestamp() * 1000)}", "role": "user", "content": request.message, "timestamp": datetime.utcnow().isoformat()},
+            {"id": f"msg_{int(datetime.utcnow().timestamp() * 1000)}_assistant", "role": "assistant", "content": response, "timestamp": datetime.utcnow().isoformat()}
+        ]
+        
+        await db.nutrition_coach_conversations.update_one(
+            {"user_id": request.user_id},
+            {
+                "$set": {
+                    "user_id": request.user_id,
+                    "messages": new_messages,
+                    "created_at": datetime.utcnow().isoformat(),
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {"response": response}
+    except Exception as e:
+        logger.error(f"Error in nutrition coach chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/nutrition-coach/conversation/{user_id}")
+async def delete_nutrition_coach_conversation(user_id: str):
+    """Delete nutrition coach conversation"""
+    try:
+        result = await db.nutrition_coach_conversations.delete_many({"user_id": user_id})
+        return {"message": "Conversation deleted", "deleted_count": result.deleted_count}
+    except Exception as e:
+        logger.error(f"Error deleting nutrition coach conversation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # MIDDLEWARE AND APP SETUP
 # ============================================================================
 
