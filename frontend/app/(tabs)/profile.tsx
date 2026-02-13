@@ -11,7 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-  Switch,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
@@ -29,6 +29,68 @@ import { LANGUAGES } from '../../services/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Speech from 'expo-speech';
 import i18next from 'i18next';
+
+// Custom Toggle Component
+const CustomToggle = ({ 
+  value, 
+  onValueChange, 
+  activeColor = '#007AFF',
+  inactiveColor = '#E5E5EA',
+}: { 
+  value: boolean; 
+  onValueChange: (value: boolean) => void;
+  activeColor?: string;
+  inactiveColor?: string;
+}) => {
+  const translateX = React.useRef(new Animated.Value(value ? 22 : 2)).current;
+
+  React.useEffect(() => {
+    Animated.spring(translateX, {
+      toValue: value ? 22 : 2,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 100,
+    }).start();
+  }, [value]);
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => onValueChange(!value)}
+      style={[
+        customToggleStyles.track,
+        { backgroundColor: value ? activeColor : inactiveColor }
+      ]}
+    >
+      <Animated.View
+        style={[
+          customToggleStyles.thumb,
+          { transform: [{ translateX }] }
+        ]}
+      />
+    </TouchableOpacity>
+  );
+};
+
+const customToggleStyles = StyleSheet.create({
+  track: {
+    width: 51,
+    height: 31,
+    borderRadius: 15.5,
+    justifyContent: 'center',
+  },
+  thumb: {
+    width: 27,
+    height: 27,
+    borderRadius: 13.5,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2.5,
+    elevation: 4,
+  },
+});
 
 const AGE_OPTIONS = Array.from({ length: 83 }, (_, i) => i + 18);
 const HEIGHT_FEET_OPTIONS = Array.from({ length: 5 }, (_, i) => i + 4);
