@@ -766,6 +766,15 @@ export default function ProfileScreen() {
                     <Text style={[styles.voiceLanguageNote, { color: colors.text.muted }]}>
                       💡 Voice will speak in your selected app language
                     </Text>
+                    
+                    {/* Test Voice Button */}
+                    <TouchableOpacity
+                      style={[styles.testVoiceBtn, { backgroundColor: accentColors.primary + '20', borderColor: accentColors.primary }]}
+                      onPress={() => testVoiceGreeting()}
+                    >
+                      <Ionicons name="volume-medium" size={20} color={accentColors.primary} />
+                      <Text style={[styles.testVoiceBtnText, { color: accentColors.primary }]}>Test Voice</Text>
+                    </TouchableOpacity>
                   </>
                 )}
               </View>
