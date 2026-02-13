@@ -14,6 +14,7 @@ import {
   Platform,
   Dimensions,
   Animated,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
