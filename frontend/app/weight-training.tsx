@@ -588,6 +588,34 @@ export default function WeightTrainingScreen() {
     }
   };
 
+  // Delete a workout from history
+  const confirmDeleteWorkout = (workout: any) => {
+    Alert.alert(
+      'Delete Workout',
+      `Are you sure you want to delete "${workout.workout_name}"?\n\nThis will remove it from your history and stats.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => handleDeleteWorkout(workout.workout_id)
+        },
+      ]
+    );
+  };
+
+  const handleDeleteWorkout = async (workoutId: string) => {
+    try {
+      await axios.delete(`${API_URL}/api/weight-training/workout/${workoutId}?user_id=${userId}`);
+      setHistory(prev => prev.filter(w => w.workout_id !== workoutId));
+      Alert.alert('Deleted', 'Workout has been removed from your history.');
+      loadData(); // Refresh stats
+    } catch (error) {
+      console.error('Delete workout error:', error);
+      Alert.alert('Error', 'Failed to delete workout');
+    }
+  };
+
   const quickLogWorkout = () => {
     setWorkoutName('Quick Workout');
     setWorkoutExercises([]);
