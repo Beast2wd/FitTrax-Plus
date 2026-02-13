@@ -611,19 +611,21 @@ export default function PeptideCalculatorScreen() {
                 style={styles.askAiButton}
                 onPress={() => setActiveTab('ai')}
               >
-                <LinearGradient
-                  colors={['#667eea', '#764ba2']}
-                  style={styles.askAiGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+                <ImageBackground
+                  source={{ uri: 'https://customer-assets.emergentagent.com/job_970ac2e4-990e-43f3-b947-2a52c9d782f5/artifacts/u64bo8xe_vials-blue-background_1249787-26915.PNG' }}
+                  style={styles.askAiImageBg}
+                  imageStyle={styles.askAiImageBgStyle}
+                  resizeMode="cover"
                 >
-                  <MaterialCommunityIcons name="robot" size={28} color="#fff" />
-                  <View style={styles.askAiTextContainer}>
-                    <Text style={styles.askAiTitle}>Ask FitTrax Peptide AI</Text>
-                    <Text style={styles.askAiSubtitle}>Get research-backed insights instantly</Text>
+                  <View style={styles.askAiOverlay}>
+                    <MaterialCommunityIcons name="robot" size={28} color="#fff" />
+                    <View style={styles.askAiTextContainer}>
+                      <Text style={styles.askAiTitle}>Ask FitTrax Peptide AI</Text>
+                      <Text style={styles.askAiSubtitle}>Get research-backed insights instantly</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color="#fff" />
                   </View>
-                  <Ionicons name="chevron-forward" size={24} color="#fff" />
-                </LinearGradient>
+                </ImageBackground>
               </TouchableOpacity>
 
               {/* Stats Summary */}
