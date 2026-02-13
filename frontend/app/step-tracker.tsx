@@ -659,6 +659,7 @@ export default function StepTrackerScreen() {
               </View>
             </View>
           </View>
+          </ImageBackground>
 
           {/* Daily Goal Setting */}
           <View style={[styles.goalCard, { backgroundColor: colors.background.card }]}>
