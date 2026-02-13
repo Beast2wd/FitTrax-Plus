@@ -549,7 +549,7 @@ export default function ProfileScreen() {
                         Use Custom Goal
                       </Text>
                     </View>
-                    <Switch
+                    <CustomToggle
                       value={isCustomCalorieGoal}
                       onValueChange={(value) => {
                         setIsCustomCalorieGoal(value);
@@ -559,8 +559,8 @@ export default function ProfileScreen() {
                           setCustomCalorieGoal((profile.daily_calorie_goal || 2000).toString());
                         }
                       }}
-                      trackColor={{ false: colors.border.primary, true: `${accentColors.primary}50` }}
-                      thumbColor={isCustomCalorieGoal ? accentColors.primary : colors.text.muted}
+                      activeColor={accentColors.primary}
+                      inactiveColor={mode === 'dark' ? '#39393D' : '#E5E5EA'}
                     />
                   </View>
 
