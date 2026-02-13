@@ -126,14 +126,16 @@ export default function ScanScreen() {
   const [dailyNutrition, setDailyNutrition] = useState<DailyNutrition>({
     calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0
   });
-  const [nutritionGoals] = useState({
-    calories: profile?.custom_calorie_goal || 2000,
-    protein: 150,
-    carbs: 250,
-    fat: 65,
+  
+  // Nutrition goals - reactive to profile changes
+  const nutritionGoals = {
+    calories: profile?.custom_calorie_goal || profile?.daily_calorie_goal || 2000,
+    protein: Math.round((profile?.custom_calorie_goal || profile?.daily_calorie_goal || 2000) * 0.075), // ~30% of calories from protein
+    carbs: Math.round((profile?.custom_calorie_goal || profile?.daily_calorie_goal || 2000) * 0.125), // ~50% of calories from carbs
+    fat: Math.round((profile?.custom_calorie_goal || profile?.daily_calorie_goal || 2000) * 0.0325), // ~30% of calories from fat
     sugar: 50,
     fiber: 30
-  });
+  };
   
   // New meal form
   const [newMeal, setNewMeal] = useState({
