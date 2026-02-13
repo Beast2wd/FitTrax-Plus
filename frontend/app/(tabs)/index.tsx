@@ -691,7 +691,7 @@ export default function DashboardScreen() {
                 </TouchableOpacity>
               )}
               <Text style={[styles.calorieGoal, { color: colors.text.muted }]}>
-                {t('dashboard.goal')}: {today.calories_goal || 2000}
+                {t('dashboard.goal')}: {userCalorieGoal}
               </Text>
             </View>
           </View>
