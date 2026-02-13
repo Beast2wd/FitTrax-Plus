@@ -770,12 +770,11 @@ export default function ProfileScreen() {
                       <Text style={[styles.voiceSettingHint, { color: colors.text.muted }]}>Greet you when opening the app</Text>
                     </View>
                   </View>
-                  <Switch
+                  <CustomToggle
                     value={voiceGreetingEnabled}
                     onValueChange={handleVoiceGreetingToggle}
-                    trackColor={{ false: '#E5E5EA', true: accentColors.primary }}
-                    thumbColor="#FFFFFF"
-                    ios_backgroundColor="#E5E5EA"
+                    activeColor={accentColors.primary}
+                    inactiveColor={mode === 'dark' ? '#39393D' : '#E5E5EA'}
                   />
                 </View>
                 
