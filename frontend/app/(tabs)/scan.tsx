@@ -1414,6 +1414,138 @@ export default function ScanScreen() {
     );
   };
 
+  // Render AI Nutrition Coach Tab
+  const renderNutritionCoach = () => {
+    const quickPrompts = [
+      "How can I reduce my sugar intake?",
+      "What's a good pre-workout meal?",
+      "Suggest high-protein snacks",
+      "Help me balance my macros",
+    ];
+
+    return (
+      <KeyboardAvoidingView 
+        style={styles.coachContainer} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={120}
+      >
+        {/* Coach Header */}
+        <View style={[styles.coachHeader, { backgroundColor: colors.background.card }]}>
+          <View style={styles.coachHeaderLeft}>
+            <LinearGradient colors={['#10B981', '#059669']} style={styles.coachAvatar}>
+              <MaterialCommunityIcons name="robot-happy" size={28} color="#fff" />
+            </LinearGradient>
+            <View>
+              <Text style={[styles.coachTitle, { color: colors.text.primary }]}>AI Nutrition Coach</Text>
+              <Text style={[styles.coachSubtitle, { color: colors.text.muted }]}>Your personalized diet advisor</Text>
+            </View>
+          </View>
+          {coachMessages.length > 0 && (
+            <TouchableOpacity style={styles.clearChatBtn} onPress={clearCoachConversation}>
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Chat Messages */}
+        <ScrollView 
+          style={styles.chatMessages}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.chatMessagesContent}
+        >
+          {loadingCoachHistory ? (
+            <View style={styles.coachLoading}>
+              <ActivityIndicator size="large" color={accent.primary} />
+            </View>
+          ) : coachMessages.length === 0 ? (
+            <View style={styles.coachWelcome}>
+              <LinearGradient colors={['#10B98120', '#059669 10']} style={styles.welcomeGradient}>
+                <MaterialCommunityIcons name="food-apple" size={48} color="#10B981" />
+                <Text style={[styles.welcomeTitle, { color: colors.text.primary }]}>
+                  Hi! I'm your AI Nutrition Coach 🥗
+                </Text>
+                <Text style={[styles.welcomeText, { color: colors.text.secondary }]}>
+                  I learn from your meal history and eating habits to provide personalized nutrition advice. Ask me anything about diet, macros, meal planning, or healthy eating!
+                </Text>
+              </LinearGradient>
+              
+              <Text style={[styles.quickPromptsTitle, { color: colors.text.muted }]}>Try asking:</Text>
+              <View style={styles.quickPrompts}>
+                {quickPrompts.map((prompt, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.quickPromptBtn, { backgroundColor: colors.background.card }]}
+                    onPress={() => {
+                      setCoachInput(prompt);
+                    }}
+                  >
+                    <Text style={[styles.quickPromptText, { color: colors.text.primary }]}>{prompt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : (
+            coachMessages.map((message) => (
+              <View
+                key={message.id}
+                style={[
+                  styles.chatBubble,
+                  message.role === 'user' ? styles.userBubble : styles.assistantBubble,
+                  { backgroundColor: message.role === 'user' ? accent.primary : colors.background.card }
+                ]}
+              >
+                {message.role === 'assistant' && (
+                  <View style={styles.assistantIcon}>
+                    <MaterialCommunityIcons name="robot-happy" size={16} color="#10B981" />
+                  </View>
+                )}
+                <Text style={[
+                  styles.chatText,
+                  { color: message.role === 'user' ? '#fff' : colors.text.primary }
+                ]}>
+                  {message.content}
+                </Text>
+                <Text style={[
+                  styles.chatTime,
+                  { color: message.role === 'user' ? 'rgba(255,255,255,0.7)' : colors.text.muted }
+                ]}>
+                  {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+            ))
+          )}
+          
+          {coachLoading && (
+            <View style={[styles.chatBubble, styles.assistantBubble, { backgroundColor: colors.background.card }]}>
+              <ActivityIndicator size="small" color="#10B981" />
+              <Text style={[styles.typingText, { color: colors.text.muted }]}>Coach is typing...</Text>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Input Area */}
+        <View style={[styles.chatInputContainer, { backgroundColor: colors.background.card }]}>
+          <TextInput
+            style={[styles.chatInput, { backgroundColor: colors.background.primary, color: colors.text.primary }]}
+            placeholder="Ask about nutrition, diet tips..."
+            placeholderTextColor={colors.text.muted}
+            value={coachInput}
+            onChangeText={setCoachInput}
+            multiline
+            maxLength={500}
+          />
+          <TouchableOpacity
+            style={[styles.sendBtn, { backgroundColor: coachInput.trim() ? '#10B981' : colors.text.muted }]}
+            onPress={sendCoachMessage}
+            disabled={!coachInput.trim() || coachLoading}
+          >
+            <Ionicons name="send" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  };
+
   // Render Meal Form (shared between create and edit)
   const renderMealForm = (isEdit: boolean) => (
     <ScrollView style={styles.modalBody}>
