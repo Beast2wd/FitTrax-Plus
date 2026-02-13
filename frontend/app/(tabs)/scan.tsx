@@ -38,7 +38,15 @@ const TABS = [
   { id: 'planner', label: 'Meal Planner', icon: 'restaurant-menu' },
   { id: 'groceries', label: 'Groceries', icon: 'shopping-cart' },
   { id: 'recipes', label: 'Recipes', icon: 'menu-book' },
+  { id: 'coach', label: 'AI Coach', icon: 'psychology' },
 ];
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
 
 interface CustomMeal {
   id: string;
