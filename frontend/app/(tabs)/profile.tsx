@@ -165,6 +165,38 @@ export default function ProfileScreen() {
     }
   }, [userId]);
 
+  // Load voice greeting settings
+  useEffect(() => {
+    const loadVoiceSettings = async () => {
+      try {
+        const enabled = await AsyncStorage.getItem('voiceGreetingEnabled');
+        const gender = await AsyncStorage.getItem('voiceGreetingGender');
+        
+        if (enabled !== null) {
+          setVoiceGreetingEnabled(enabled !== 'false');
+        }
+        if (gender) {
+          setVoiceGender(gender as 'male' | 'female');
+        }
+      } catch (error) {
+        console.log('Error loading voice settings:', error);
+      }
+    };
+    loadVoiceSettings();
+  }, []);
+
+  // Save voice greeting enabled
+  const handleVoiceGreetingToggle = async (value: boolean) => {
+    setVoiceGreetingEnabled(value);
+    await AsyncStorage.setItem('voiceGreetingEnabled', value.toString());
+  };
+
+  // Save voice gender preference
+  const handleVoiceGenderChange = async (gender: 'male' | 'female') => {
+    setVoiceGender(gender);
+    await AsyncStorage.setItem('voiceGreetingGender', gender);
+  };
+
   useEffect(() => {
     if (profile) {
       setFormData({
