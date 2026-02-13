@@ -606,8 +606,8 @@ export default function WeightTrainingScreen() {
 
   const handleDeleteWorkout = async (workoutId: string) => {
     try {
-      await axios.delete(`${API_URL}/api/weight-training/workout/${workoutId}?user_id=${userId}`);
-      setHistory(prev => prev.filter(w => w.workout_id !== workoutId));
+      await axios.delete(`${API_URL}/api/weight-training/log/${workoutId}?user_id=${userId}`);
+      setHistory(prev => prev.filter(w => w.log_id !== workoutId));
       Alert.alert('Deleted', 'Workout has been removed from your history.');
       loadData(); // Refresh stats
     } catch (error) {
