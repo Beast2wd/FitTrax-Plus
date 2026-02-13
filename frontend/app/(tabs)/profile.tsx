@@ -26,6 +26,7 @@ import { storage } from '../../services/storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../../services/i18n';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AGE_OPTIONS = Array.from({ length: 83 }, (_, i) => i + 18);
 const HEIGHT_FEET_OPTIONS = Array.from({ length: 5 }, (_, i) => i + 4);
