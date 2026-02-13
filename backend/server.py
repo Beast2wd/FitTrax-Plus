@@ -9384,7 +9384,7 @@ RECENT CONVERSATION:
         # Save conversation to database
         new_messages = request.conversation_history + [
             {"id": f"msg_{int(datetime.utcnow().timestamp() * 1000)}", "role": "user", "content": request.message, "timestamp": datetime.utcnow().isoformat()},
-            {"id": f"msg_{int(datetime.utcnow().timestamp() * 1000)}_assistant", "role": "assistant", "content": response, "timestamp": datetime.utcnow().isoformat()}
+            {"id": f"msg_{int(datetime.utcnow().timestamp() * 1000)}_assistant", "role": "assistant", "content": response_text, "timestamp": datetime.utcnow().isoformat()}
         ]
         
         await db.nutrition_coach_conversations.update_one(
@@ -9400,7 +9400,7 @@ RECENT CONVERSATION:
             upsert=True
         )
         
-        return {"response": response}
+        return {"response": response_text}
     except Exception as e:
         logger.error(f"Error in nutrition coach chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
