@@ -2169,12 +2169,19 @@ const styles = StyleSheet.create({
   
   // AI Nutrition Coach Styles
   coachContainer: { flex: 1 },
+  coachHeaderBg: { margin: 16, marginBottom: 0, borderRadius: 16, overflow: 'hidden' },
+  coachHeaderBgImage: { borderRadius: 16 },
+  coachHeaderOverlay: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'rgba(0,0,0,0.5)' },
   coachHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 16, margin: 16, marginBottom: 0 },
   coachHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   coachAvatar: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+  coachAvatarGlow: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(16, 185, 129, 0.8)' },
   coachTitle: { fontSize: 18, fontWeight: '700' },
+  coachTitleWhite: { fontSize: 18, fontWeight: '700', color: '#fff' },
   coachSubtitle: { fontSize: 13 },
+  coachSubtitleWhite: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
   clearChatBtn: { padding: 8 },
+  clearChatBtnWhite: { padding: 8, backgroundColor: 'rgba(239, 68, 68, 0.3)', borderRadius: 20 },
   
   chatMessages: { flex: 1, padding: 16 },
   chatMessagesContent: { paddingBottom: 20 },
