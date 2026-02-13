@@ -717,6 +717,18 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
+  dailyProgressBg: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  dailyProgressBgImage: {
+    borderRadius: 20,
+  },
+  dailyProgressOverlay: {
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
   dailyProgressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -728,9 +740,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.text.primary,
   },
+  dailyProgressTitleWhite: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   dailyProgressDate: {
     fontSize: 14,
     color: Colors.text.secondary,
+  },
+  dailyProgressDateWhite: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
   },
   goalProgressContainer: {
     marginBottom: 20,
@@ -756,9 +780,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#EC4899',
   },
+  goalProgressCurrentWhite: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
   goalProgressTarget: {
     fontSize: 14,
     color: Colors.text.secondary,
+  },
+  goalProgressTargetWhite: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
   },
   dailyStatsGrid: {
     flexDirection: 'row',
@@ -769,6 +805,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 12,
+    borderRadius: 12,
+    marginHorizontal: 2,
   },
   dailyStatIcon: {
     width: 40,
