@@ -2445,7 +2445,7 @@ async def get_dashboard(user_id: str, local_date: Optional[str] = None):
         
         # Calculate net calories
         net_calories = calories_consumed - calories_burned
-        calorie_goal = profile.get('daily_calorie_goal', 2000) if profile else 2000
+        calorie_goal = profile.get('custom_calorie_goal') or profile.get('daily_calorie_goal', 2000) if profile else 2000
         
         return {
             "profile": profile,
