@@ -1528,7 +1528,7 @@ export default function ScanScreen() {
                 </Text>
                 <Text style={[
                   styles.chatTime,
-                  { color: message.role === 'user' ? 'rgba(255,255,255,0.7)' : colors.text.muted }
+                  { color: message.role === 'user' ? 'rgba(255,255,255,0.6)' : colors.text.muted }
                 ]}>
                   {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
