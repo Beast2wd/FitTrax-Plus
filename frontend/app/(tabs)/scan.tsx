@@ -1284,16 +1284,26 @@ export default function ScanScreen() {
         </View>
 
         <TouchableOpacity 
-          style={styles.aiGenerateBtn}
+          style={styles.aiGenerateBtnWithImage}
           onPress={generateGroceryList}
           disabled={generatingGroceries}
         >
-          <LinearGradient colors={['#667eea', '#764ba2']} style={styles.aiGenerateGradient}>
-            {generatingGroceries ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <MaterialCommunityIcons name="robot" size={24} color="#fff" />
-            )}
+          <ImageBackground
+            source={{ uri: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600' }}
+            style={styles.aiGenerateBgImage}
+            imageStyle={styles.aiGenerateBgImageStyle}
+          >
+            <View style={styles.aiGenerateOverlay}>
+              {generatingGroceries ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <MaterialCommunityIcons name="cart-plus" size={28} color="#fff" />
+              )}
+              <Text style={styles.aiGenerateTextLarge}>Generate from Meal Plan</Text>
+              <Text style={styles.aiGenerateSubtext}>Auto-create your shopping list</Text>
+            </View>
+          </ImageBackground>
+        </TouchableOpacity>
             <Text style={styles.aiGenerateText}>Generate from Meal Plan</Text>
           </LinearGradient>
         </TouchableOpacity>
