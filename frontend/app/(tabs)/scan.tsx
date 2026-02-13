@@ -162,12 +162,19 @@ export default function ScanScreen() {
   const [recipePrompt, setRecipePrompt] = useState('');
   const [showRecipeGeneratorModal, setShowRecipeGeneratorModal] = useState(false);
 
+  // AI Nutrition Coach states
+  const [coachMessages, setCoachMessages] = useState<ChatMessage[]>([]);
+  const [coachInput, setCoachInput] = useState('');
+  const [coachLoading, setCoachLoading] = useState(false);
+  const [loadingCoachHistory, setLoadingCoachHistory] = useState(false);
+
   useEffect(() => {
     if (userId) {
       loadPlannedMeals();
       loadGroceryList();
       loadRecipes();
       loadDailyNutrition();
+      loadCoachConversation();
     }
   }, [userId, selectedDate]);
 
