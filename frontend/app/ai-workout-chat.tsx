@@ -26,6 +26,9 @@ import { format } from 'date-fns';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
+// AI Workout Coach Header Image
+const AI_HEADER_IMAGE = 'https://images.pexels.com/photos/8097820/pexels-photo-8097820.jpeg?auto=compress&cs=tinysrgb&w=800';
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
