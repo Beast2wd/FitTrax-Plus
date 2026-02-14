@@ -478,6 +478,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     gap: 12,
   },
+  featureImageContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  featureImage: {
+    width: 44,
+    height: 44,
+  },
   featureIcon: {
     width: 40,
     height: 40,
