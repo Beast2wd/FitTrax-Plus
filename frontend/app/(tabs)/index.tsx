@@ -904,7 +904,7 @@ export default function DashboardScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
           {[
-            { image: QUICK_ACTION_IMAGES.aiCoach, label: 'AI Workout Coach', route: '/ai-workout-chat', premium: true },
+            { image: QUICK_ACTION_IMAGES.aiCoach, label: 'AI Workout Coach', route: '/ai-workout-chat', premium: false },
             { image: QUICK_ACTION_IMAGES.scanFood, label: t('dashboard.scanFood'), route: '/scan', premium: true },
             { image: QUICK_ACTION_IMAGES.schedule, label: t('dashboard.schedule'), route: '/schedule', premium: false },
             { image: QUICK_ACTION_IMAGES.workoutLog, label: 'Workout Log', route: '/manual-workout-log', premium: false },
