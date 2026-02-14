@@ -254,8 +254,12 @@ export default function MembershipScreen() {
           </Text>
           {pricing?.features?.map((feature: string, index: number) => (
             <View key={index} style={styles.featureRow}>
-              <View style={[styles.featureIcon, { backgroundColor: `${getFeatureColor(index)}20` }]}>
-                <Ionicons name={getFeatureIcon(index) as any} size={20} color={getFeatureColor(index)} />
+              <View style={styles.featureImageContainer}>
+                <Image 
+                  source={{ uri: FEATURE_IMAGES[feature] || `https://images.unsplash.com/photo-1581090124355-6c1376cf3047?w=100&h=100&fit=crop` }} 
+                  style={styles.featureImage}
+                  resizeMode="cover"
+                />
               </View>
               <Text style={[styles.featureText, { color: colors.text.primary }]}>
                 {feature}
