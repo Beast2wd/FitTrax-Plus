@@ -550,12 +550,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
   },
-  header: {
+  headerImageBackground: {
+    width: '100%',
+    height: 120,
+  },
+  headerGradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
   },
   backButton: {
     width: 40,
@@ -565,13 +572,19 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  headerSubtitle: {
+  headerTitleWhite: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  headerSubtitleWhite: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
+    color: 'rgba(255,255,255,0.8)',
   },
   headerActions: {
     flexDirection: 'row',
@@ -583,12 +596,16 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 18,
   },
   newChatButton: {
     width: 36,
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 18,
   },
   keyboardAvoid: {
     flex: 1,
