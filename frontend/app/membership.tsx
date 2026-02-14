@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,24 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+
+// Feature images mapping
+const FEATURE_IMAGES: { [key: string]: string } = {
+  'AI Food Scanner & Analysis': 'https://images.unsplash.com/photo-1581090124355-6c1376cf3047?w=100&h=100&fit=crop',
+  'AI Body Composition Scan': 'https://images.unsplash.com/photo-1767556030465-c4f92dcfa8c7?w=100&h=100&fit=crop',
+  'AI-Personalized Workouts': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=100&h=100&fit=crop',
+  'AI Nutrition Coach': 'https://images.unsplash.com/photo-1603808326448-ff7a2d980272?w=100&h=100&fit=crop',
+  'AI Recipe Generator': 'https://images.unsplash.com/photo-1591951314140-7b6eef23edf0?w=100&h=100&fit=crop',
+  'AI Groceries Planner': 'https://images.unsplash.com/photo-1628102491629-778571d893a3?w=100&h=100&fit=crop',
+  'Custom Meal Planning & Nutrition': 'https://images.unsplash.com/photo-1569420077790-afb136b3bb8c?w=100&h=100&fit=crop',
+  'Gamification: Badges & Challenges': 'https://images.unsplash.com/photo-1730692504752-c411cf0306ac?w=100&h=100&fit=crop',
+  'Advanced Progress Analytics': 'https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86?w=100&h=100&fit=crop',
+  'Wearable Device Integration': 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=100&h=100&fit=crop',
+  'Diverse Workout Library (Yoga, HIIT, Dance, Martial Arts)': 'https://images.unsplash.com/photo-1645238426817-8c3e7d1396cf?w=100&h=100&fit=crop',
+  'Peptide Calculator, Tracking and FitTrax Peptide AI': 'https://images.unsplash.com/photo-1686009799252-a050bc211cea?w=100&h=100&fit=crop',
+  'Multi-Language Support (EN, ES, DE)': 'https://images.unsplash.com/photo-1758272133392-b5bbce307e0b?w=100&h=100&fit=crop',
+  'Accessibility Features': 'https://images.unsplash.com/photo-1634947096506-6d9f114cf64e?w=100&h=100&fit=crop',
+};
 
 export default function MembershipScreen() {
   const { userId, profile } = useUserStore();
