@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://mealmaster-47.preview.emergentagent.com/api"
+BACKEND_URL = "https://fitness-diary-19.preview.emergentagent.com/api"
 
 # Test data
 TEST_USER_ID = "test_meal_user_123"

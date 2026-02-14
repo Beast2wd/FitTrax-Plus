@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://mealmaster-47.preview.emergentagent.com')
+BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://fitness-diary-19.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 def test_heart_rate_endpoints():
