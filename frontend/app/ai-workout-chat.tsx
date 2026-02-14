@@ -419,28 +419,42 @@ export default function AIWorkoutChatScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border.primary }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>AI Workout Coach</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.text.secondary }]}>
-            {expiresAt ? 'Conversation saves for 12 hours' : 'Create your perfect workout'}
-          </Text>
-        </View>
-        <View style={styles.headerActions}>
-          {messages.length > 1 && (
-            <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
-              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+      {/* Header with AI Image */}
+      <ImageBackground
+        source={{ uri: AI_HEADER_IMAGE }}
+        style={styles.headerImageBackground}
+        resizeMode="cover"
+      >
+        <LinearGradient
+          colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.8)']}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
-            <Ionicons name="refresh" size={22} color={accent.primary} />
-          </TouchableOpacity>
-        </View>
-      </View>
+            <View style={styles.headerCenter}>
+              <View style={styles.headerTitleRow}>
+                <MaterialCommunityIcons name="robot" size={24} color={accent.primary} style={{ marginRight: 8 }} />
+                <Text style={styles.headerTitleWhite}>AI Workout Coach</Text>
+              </View>
+              <Text style={styles.headerSubtitleWhite}>
+                {expiresAt ? 'Conversation saves for 12 hours' : 'Create your perfect workout'}
+              </Text>
+            </View>
+            <View style={styles.headerActions}>
+              {messages.length > 1 && (
+                <TouchableOpacity onPress={clearConversation} style={styles.clearButton}>
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
+                <Ionicons name="refresh" size={22} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </LinearGradient>
+      </ImageBackground>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
