@@ -313,31 +313,46 @@ export default function ProfileScreen() {
       );
 
       if (langVoices.length > 0) {
+        // Try to find a premium/enhanced voice for more natural sound
+        // Priority: Enhanced/Premium voices > Younger sounding voices > Default
         if (gender === 'male') {
           selectedVoice = langVoices.find(v => 
+            v.name?.toLowerCase().includes('enhanced') ||
+            v.name?.toLowerCase().includes('premium') ||
+            v.quality === 'Enhanced'
+          ) || langVoices.find(v => 
             v.name?.toLowerCase().includes('male') || 
             v.identifier?.toLowerCase().includes('male') ||
+            v.name?.toLowerCase().includes('aaron') ||
+            v.name?.toLowerCase().includes('jamie') ||
+            v.name?.toLowerCase().includes('evan') ||
             v.name?.toLowerCase().includes('daniel') ||
-            v.name?.toLowerCase().includes('tom') ||
-            v.name?.toLowerCase().includes('alex')
+            v.name?.toLowerCase().includes('tom')
           ) || langVoices[0];
         } else {
           selectedVoice = langVoices.find(v => 
+            v.name?.toLowerCase().includes('enhanced') ||
+            v.name?.toLowerCase().includes('premium') ||
+            v.quality === 'Enhanced'
+          ) || langVoices.find(v => 
             v.name?.toLowerCase().includes('female') || 
             v.identifier?.toLowerCase().includes('female') ||
+            v.name?.toLowerCase().includes('zoe') ||
+            v.name?.toLowerCase().includes('ava') ||
+            v.name?.toLowerCase().includes('allison') ||
             v.name?.toLowerCase().includes('samantha') ||
-            v.name?.toLowerCase().includes('karen') ||
-            v.name?.toLowerCase().includes('victoria')
+            v.name?.toLowerCase().includes('siri')
           ) || langVoices[0];
         }
       }
 
-      // Speak the greeting
+      // Speak the greeting with enthusiastic, natural-sounding parameters
+      // Higher pitch for youthful sound, slightly faster rate for energy
       await Speech.speak(fullGreeting, {
         language: langKey,
         voice: selectedVoice?.identifier,
-        pitch: gender === 'female' ? 1.1 : 0.9,
-        rate: 0.9,
+        pitch: gender === 'female' ? 1.2 : 1.05,  // Slightly higher pitch for younger sound
+        rate: 1.05,  // Slightly faster for enthusiasm and energy
       });
     } catch (error) {
       console.log('Test voice error:', error);
