@@ -1023,9 +1023,161 @@ export default function ProfileScreen() {
         options={ACTIVITY_OPTIONS}
         selectedValue={formData.activity_level}
       />
+
+      {/* Voice Picker Modal */}
+      <Modal 
+        visible={voicePickerVisible} 
+        transparent 
+        animationType="slide" 
+        onRequestClose={() => setVoicePickerVisible(false)}
+      >
+        <TouchableOpacity 
+          style={modalStyles.overlay} 
+          activeOpacity={1} 
+          onPress={() => setVoicePickerVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={[voicePickerStyles.container, { backgroundColor: colors.background.card }]}
+          >
+            <View style={[voicePickerStyles.header, { borderBottomColor: colors.border.primary }]}>
+              <TouchableOpacity onPress={() => setVoicePickerVisible(false)}>
+                <Text style={[modalStyles.cancelText, { color: colors.text.secondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[modalStyles.title, { color: colors.text.primary }]}>Choose Voice</Text>
+              <TouchableOpacity onPress={() => {
+                setSelectedVoiceId('');
+                AsyncStorage.setItem('voiceGreetingVoiceId', '');
+                setVoicePickerVisible(false);
+              }}>
+                <Text style={[modalStyles.doneText, { color: accentColors.primary }]}>Auto</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={voicePickerStyles.voiceList}>
+              {/* Auto option */}
+              <TouchableOpacity 
+                style={[
+                  voicePickerStyles.voiceOption, 
+                  { borderBottomColor: colors.border.primary },
+                  !selectedVoiceId && { backgroundColor: accentColors.primary + '20' }
+                ]}
+                onPress={() => handleVoiceSelect('')}
+              >
+                <View style={voicePickerStyles.voiceInfo}>
+                  <Text style={[voicePickerStyles.voiceName, { color: colors.text.primary }]}>
+                    🎯 Auto (Best Match)
+                  </Text>
+                  <Text style={[voicePickerStyles.voiceDesc, { color: colors.text.muted }]}>
+                    Automatically selects the best voice for {voiceGender}
+                  </Text>
+                </View>
+                {!selectedVoiceId && (
+                  <Ionicons name="checkmark-circle" size={24} color={accentColors.primary} />
+                )}
+              </TouchableOpacity>
+
+              {/* Filter voices by gender */}
+              {availableVoices.length > 0 && (
+                <Text style={[voicePickerStyles.sectionHeader, { color: colors.text.secondary }]}>
+                  Available Voices ({availableVoices.length})
+                </Text>
+              )}
+              
+              {availableVoices.map((voice, index) => (
+                <TouchableOpacity 
+                  key={voice.identifier}
+                  style={[
+                    voicePickerStyles.voiceOption, 
+                    { borderBottomColor: colors.border.primary },
+                    selectedVoiceId === voice.identifier && { backgroundColor: accentColors.primary + '20' }
+                  ]}
+                  onPress={() => handleVoiceSelect(voice.identifier)}
+                >
+                  <View style={voicePickerStyles.voiceInfo}>
+                    <Text style={[voicePickerStyles.voiceName, { color: colors.text.primary }]}>
+                      {voice.name || `Voice ${index + 1}`}
+                    </Text>
+                    <Text style={[voicePickerStyles.voiceDesc, { color: colors.text.muted }]}>
+                      {voice.language} {voice.quality === 'Enhanced' ? '• Enhanced' : ''}
+                    </Text>
+                  </View>
+                  {selectedVoiceId === voice.identifier && (
+                    <Ionicons name="checkmark-circle" size={24} color={accentColors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+              
+              {availableVoices.length === 0 && (
+                <View style={voicePickerStyles.emptyState}>
+                  <Text style={[voicePickerStyles.emptyText, { color: colors.text.muted }]}>
+                    No voices available for current language
+                  </Text>
+                </View>
+              )}
+              
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
+
+const voicePickerStyles = StyleSheet.create({
+  container: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  voiceList: {
+    flex: 1,
+  },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '600',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    textTransform: 'uppercase',
+  },
+  voiceOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  voiceInfo: {
+    flex: 1,
+  },
+  voiceName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  voiceDesc: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  emptyState: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+});
 
 const modalStyles = StyleSheet.create({
   overlay: {
