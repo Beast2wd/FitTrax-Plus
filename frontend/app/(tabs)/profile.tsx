@@ -960,7 +960,7 @@ export default function ProfileScreen() {
                     <Ionicons name="volume-high" size={24} color={accentColors.primary} />
                     <View style={{ marginLeft: 12 }}>
                       <Text style={[styles.voiceSettingLabel, { color: colors.text.primary }]}>Enable Voice Greeting</Text>
-                      <Text style={[styles.voiceSettingHint, { color: colors.text.muted }]}>Greet you when opening the app</Text>
+                      <Text style={[styles.voiceSettingHint, { color: colors.text.muted }]}>Play your recorded greeting on app open</Text>
                     </View>
                   </View>
                   <CustomToggle
@@ -971,86 +971,82 @@ export default function ProfileScreen() {
                   />
                 </View>
                 
-                {voiceGreetingEnabled && (
-                  <>
-                    <View style={[styles.voiceDivider, { backgroundColor: colors.border.primary }]} />
-                    <Text style={[styles.voiceGenderLabel, { color: colors.text.secondary }]}>Voice Type</Text>
-                    <View style={styles.voiceGenderRow}>
-                      <TouchableOpacity
-                        style={[
-                          styles.voiceGenderOption,
-                          { 
-                            backgroundColor: voiceGender === 'female' ? accentColors.primary : colors.background.card,
-                            borderColor: voiceGender === 'female' ? accentColors.primary : colors.border.primary,
-                          }
-                        ]}
-                        onPress={() => handleVoiceGenderChange('female')}
-                      >
-                        <Ionicons 
-                          name="woman" 
-                          size={24} 
-                          color={voiceGender === 'female' ? '#fff' : colors.text.primary} 
-                        />
-                        <Text style={[
-                          styles.voiceGenderText,
-                          { color: voiceGender === 'female' ? '#fff' : colors.text.primary }
-                        ]}>Female</Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity
-                        style={[
-                          styles.voiceGenderOption,
-                          { 
-                            backgroundColor: voiceGender === 'male' ? accentColors.primary : colors.background.card,
-                            borderColor: voiceGender === 'male' ? accentColors.primary : colors.border.primary,
-                          }
-                        ]}
-                        onPress={() => handleVoiceGenderChange('male')}
-                      >
-                        <Ionicons 
-                          name="man" 
-                          size={24} 
-                          color={voiceGender === 'male' ? '#fff' : colors.text.primary} 
-                        />
-                        <Text style={[
-                          styles.voiceGenderText,
-                          { color: voiceGender === 'male' ? '#fff' : colors.text.primary }
-                        ]}>Male</Text>
-                      </TouchableOpacity>
+                <View style={[styles.voiceDivider, { backgroundColor: colors.border.primary }]} />
+                
+                {/* Record Custom Greeting Section */}
+                <View style={styles.recordSectionInline}>
+                  <View style={styles.recordHeader}>
+                    <Ionicons name="mic" size={24} color={accentColors.primary} />
+                    <View style={styles.recordHeaderText}>
+                      <Text style={[styles.recordTitle, { color: colors.text.primary }]}>
+                        🎙️ Your Voice Greeting
+                      </Text>
+                      <Text style={[styles.recordSubtitle, { color: colors.text.muted }]}>
+                        {hasCustomRecording ? 'Recording saved!' : 'Record a personalized greeting (max 5 sec)'}
+                      </Text>
                     </View>
-                    <Text style={[styles.voiceLanguageNote, { color: colors.text.muted }]}>
-                      💡 Voice will speak in your selected app language
-                    </Text>
+                  </View>
 
-                    {/* Choose Voice Button */}
-                    <TouchableOpacity
-                      style={[styles.chooseVoiceBtn, { backgroundColor: colors.background.input, borderColor: colors.border.primary }]}
-                      onPress={() => setVoicePickerVisible(true)}
+                  {/* Recording Controls */}
+                  {!hasCustomRecording ? (
+                    <TouchableOpacity 
+                      style={[
+                        styles.recordButton, 
+                        { backgroundColor: isRecording ? '#EF4444' : accentColors.primary }
+                      ]}
+                      onPress={isRecording ? stopRecording : startRecording}
                     >
-                      <View style={styles.chooseVoiceContent}>
-                        <Ionicons name="mic" size={20} color={accentColors.primary} />
-                        <View style={styles.chooseVoiceTextContainer}>
-                          <Text style={[styles.chooseVoiceLabel, { color: colors.text.secondary }]}>Voice Selection</Text>
-                          <Text style={[styles.chooseVoiceValue, { color: colors.text.primary }]}>
-                            {selectedVoiceId 
-                              ? availableVoices.find(v => v.identifier === selectedVoiceId)?.name || 'Custom Voice'
-                              : 'Auto (Best Match)'}
-                          </Text>
-                        </View>
+                      <Ionicons 
+                        name={isRecording ? "stop" : "mic"} 
+                        size={24} 
+                        color="#fff" 
+                      />
+                      <Text style={styles.recordButtonText}>
+                        {isRecording ? `Recording... ${5 - recordingTime}s` : 'Record Greeting'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.customRecordingControls}>
+                      <View style={styles.customRecordingActions}>
+                        <TouchableOpacity 
+                          style={[styles.playButton, { backgroundColor: accentColors.primary }]}
+                          onPress={playCustomRecording}
+                        >
+                          <Ionicons name="play" size={20} color="#fff" />
+                          <Text style={styles.playButtonTextWhite}>Test Greeting</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.reRecordButton, { backgroundColor: colors.background.card, borderColor: colors.border.primary }]}
+                          onPress={() => setHasCustomRecording(false)}
+                        >
+                          <Ionicons name="refresh" size={18} color={colors.text.secondary} />
+                          <Text style={[styles.reRecordText, { color: colors.text.secondary }]}>Re-record</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.deleteButtonSmall, { backgroundColor: '#FEE2E2' }]}
+                          onPress={deleteCustomRecording}
+                        >
+                          <Ionicons name="trash" size={18} color="#EF4444" />
+                        </TouchableOpacity>
                       </View>
-                      <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
-                    </TouchableOpacity>
-                    
-                    {/* Test Voice Button */}
-                    <TouchableOpacity
-                      style={[styles.testVoiceBtn, { backgroundColor: accentColors.primary + '20', borderColor: accentColors.primary }]}
-                      onPress={() => testVoiceGreeting()}
-                    >
-                      <Ionicons name="volume-medium" size={20} color={accentColors.primary} />
-                      <Text style={[styles.testVoiceBtnText, { color: accentColors.primary }]}>Test Voice</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
+                    </View>
+                  )}
+
+                  {isRecording && (
+                    <View style={styles.recordingIndicator}>
+                      <View style={[styles.recordingDot, { backgroundColor: '#EF4444' }]} />
+                      <Text style={[styles.recordingText, { color: '#EF4444' }]}>
+                        Recording... Speak now!
+                      </Text>
+                    </View>
+                  )}
+
+                  {!hasCustomRecording && !isRecording && (
+                    <Text style={[styles.recordingHint, { color: colors.text.muted }]}>
+                      💡 Record yourself saying "Good morning!" or any personal greeting
+                    </Text>
+                  )}
+                </View>
               </View>
 
               {/* Terms of Service Status */}
