@@ -101,149 +101,26 @@ export default function DashboardScreen() {
   const colors = theme.colors;
   const accent = theme.accentColors;
 
-  // Voice Greeting Function
+  // Voice Greeting Function - Only plays custom recorded greeting
   const playVoiceGreeting = async () => {
     try {
       // Check if voice greeting is enabled
       const voiceEnabled = await AsyncStorage.getItem('voiceGreetingEnabled');
       if (voiceEnabled === 'false') return;
 
-      // Check if user has a custom recording and wants to use it
-      const useCustomRecording = await AsyncStorage.getItem('useCustomVoiceRecording');
+      // Check if user has a custom recording
       const customRecordingUri = await AsyncStorage.getItem('customVoiceRecordingUri');
       
-      if (useCustomRecording === 'true' && customRecordingUri) {
+      if (customRecordingUri) {
         // Play the custom recorded greeting
         try {
           const { sound } = await Audio.Sound.createAsync({ uri: customRecordingUri });
           await sound.playAsync();
-          return;
         } catch (audioError) {
-          console.log('Error playing custom recording, falling back to TTS:', audioError);
+          console.log('Error playing custom recording:', audioError);
         }
       }
-
-      // Get voice preference (male/female) and specific voice
-      const voiceGender = await AsyncStorage.getItem('voiceGreetingGender') || 'female';
-      const selectedVoiceId = await AsyncStorage.getItem('voiceGreetingVoiceId') || '';
-      
-      // Get current language
-      const currentLang = i18next.language || 'en';
-      
-      // Determine time of day greeting
-      const hour = new Date().getHours();
-      let greetingKey = '';
-      
-      if (hour >= 5 && hour < 12) {
-        greetingKey = 'morning';
-      } else if (hour >= 12 && hour < 17) {
-        greetingKey = 'afternoon';
-      } else {
-        greetingKey = 'evening';
-      }
-
-      // Get user's first name
-      const userName = profile?.first_name || profile?.name?.split(' ')[0] || '';
-
-      // Build greeting based on language
-      const greetings: { [key: string]: { [key: string]: string } } = {
-        en: { morning: 'Good Morning', afternoon: 'Good Afternoon', evening: 'Good Evening' },
-        es: { morning: 'Buenos Días', afternoon: 'Buenas Tardes', evening: 'Buenas Noches' },
-        fr: { morning: 'Bonjour', afternoon: 'Bon Après-midi', evening: 'Bonsoir' },
-        de: { morning: 'Guten Morgen', afternoon: 'Guten Tag', evening: 'Guten Abend' },
-        it: { morning: 'Buongiorno', afternoon: 'Buon Pomeriggio', evening: 'Buonasera' },
-        pt: { morning: 'Bom Dia', afternoon: 'Boa Tarde', evening: 'Boa Noite' },
-        ja: { morning: 'おはようございます', afternoon: 'こんにちは', evening: 'こんばんは' },
-        ko: { morning: '좋은 아침이에요', afternoon: '안녕하세요', evening: '좋은 저녁이에요' },
-        zh: { morning: '早上好', afternoon: '下午好', evening: '晚上好' },
-      };
-
-      const langKey = currentLang.split('-')[0];
-      const langGreetings = greetings[langKey] || greetings['en'];
-      const greeting = langGreetings[greetingKey];
-
-      // Athletic, upbeat motivational quotes
-      const motivationalQuotes = [
-        "Let's crush it today!",
-        "Time to make gains!",
-        "You've got this, champion!",
-        "Let's get that workout in!",
-        "Today's the day to level up!",
-        "No excuses, just results!",
-        "Push harder than yesterday!",
-        "Champions train, losers complain!",
-        "Your body can do it, convince your mind!",
-        "Stronger every single day!",
-        "Let's go beast mode!",
-        "Rise and grind!",
-        "Every rep counts!",
-        "Make yourself proud today!",
-        "Greatness awaits you!"
-      ];
-
-      // Select a random motivational quote
-      const motivationalQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-
-      // Build the full greeting with name and motivation
-      let fullGreeting = userName ? `${greeting}, ${userName}!` : `${greeting}!`;
-      fullGreeting += ` ${motivationalQuote}`;
-
-      // Get available voices
-      const voices = await Speech.getAvailableVoicesAsync();
-      let selectedVoice = null;
-
-      // If user has selected a specific voice, use it
-      if (selectedVoiceId) {
-        selectedVoice = voices.find(v => v.identifier === selectedVoiceId);
-      }
-
-      // If no specific voice selected, find best match
-      if (!selectedVoice) {
-        const langVoices = voices.filter(v => 
-          v.language.toLowerCase().startsWith(langKey.toLowerCase())
-        );
-
-        if (langVoices.length > 0) {
-          // Priority: Enhanced/Premium voices for most natural sound
-          if (voiceGender === 'male') {
-            selectedVoice = langVoices.find(v => 
-              v.name?.toLowerCase().includes('enhanced') ||
-              v.quality === 'Enhanced'
-            ) || langVoices.find(v => 
-              v.name?.toLowerCase().includes('aaron') ||
-              v.name?.toLowerCase().includes('gordon') ||
-              v.name?.toLowerCase().includes('nicky') ||
-              v.name?.toLowerCase().includes('evan') ||
-              v.name?.toLowerCase().includes('fred')
-            ) || langVoices.find(v => 
-              v.name?.toLowerCase().includes('male') || 
-              v.identifier?.toLowerCase().includes('male')
-            ) || langVoices[0];
-          } else {
-            selectedVoice = langVoices.find(v => 
-              v.name?.toLowerCase().includes('enhanced') ||
-              v.quality === 'Enhanced'
-            ) || langVoices.find(v => 
-              v.name?.toLowerCase().includes('samantha') ||
-              v.name?.toLowerCase().includes('ava') ||
-              v.name?.toLowerCase().includes('zoe') ||
-              v.name?.toLowerCase().includes('allison') ||
-              v.name?.toLowerCase().includes('susan')
-            ) || langVoices.find(v => 
-              v.name?.toLowerCase().includes('female') || 
-              v.identifier?.toLowerCase().includes('female')
-            ) || langVoices[0];
-          }
-        }
-      }
-
-      // Speak with athletic, energetic parameters
-      await Speech.speak(fullGreeting, {
-        language: langKey,
-        voice: selectedVoice?.identifier,
-        pitch: voiceGender === 'female' ? 1.15 : 1.0,  // Natural pitch
-        rate: 1.1,  // Slightly faster for upbeat energy
-      });
+      // If no custom recording, do nothing (no TTS fallback)
 
     } catch (error) {
       console.log('Voice greeting error:', error);
