@@ -1153,42 +1153,121 @@ export default function ProfileScreen() {
       <Modal 
         visible={voicePickerVisible} 
         transparent 
-        animationType="slide" 
+        animationType="fade" 
         onRequestClose={() => setVoicePickerVisible(false)}
       >
-        <TouchableOpacity 
-          style={modalStyles.overlay} 
-          activeOpacity={1} 
-          onPress={() => setVoicePickerVisible(false)}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-            style={[voicePickerStyles.container, { backgroundColor: colors.background.card }]}
-          >
+        <View style={voicePickerStyles.modalOverlay}>
+          <View style={[voicePickerStyles.modalContainer, { backgroundColor: colors.background.card }]}>
+            {/* Header */}
             <View style={[voicePickerStyles.header, { borderBottomColor: colors.border.primary }]}>
               <TouchableOpacity onPress={() => setVoicePickerVisible(false)}>
-                <Text style={[modalStyles.cancelText, { color: colors.text.secondary }]}>Cancel</Text>
+                <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
-              <Text style={[modalStyles.title, { color: colors.text.primary }]}>Choose Voice</Text>
-              <TouchableOpacity onPress={() => {
-                setSelectedVoiceId('');
-                AsyncStorage.setItem('voiceGreetingVoiceId', '');
-                setVoicePickerVisible(false);
-              }}>
-                <Text style={[modalStyles.doneText, { color: accentColors.primary }]}>Auto</Text>
+              <Text style={[voicePickerStyles.modalTitle, { color: colors.text.primary }]}>Voice Settings</Text>
+              <TouchableOpacity onPress={() => setVoicePickerVisible(false)}>
+                <Text style={[modalStyles.doneText, { color: accentColors.primary }]}>Done</Text>
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={voicePickerStyles.voiceList}>
+            <ScrollView style={voicePickerStyles.voiceList} showsVerticalScrollIndicator={false}>
+              {/* Record Custom Voice Section */}
+              <View style={[voicePickerStyles.recordSection, { backgroundColor: colors.background.input, borderColor: colors.border.primary }]}>
+                <View style={voicePickerStyles.recordHeader}>
+                  <Ionicons name="mic" size={24} color={accentColors.primary} />
+                  <View style={voicePickerStyles.recordHeaderText}>
+                    <Text style={[voicePickerStyles.recordTitle, { color: colors.text.primary }]}>
+                      🎙️ Record Your Voice
+                    </Text>
+                    <Text style={[voicePickerStyles.recordSubtitle, { color: colors.text.muted }]}>
+                      Record a 5-second custom greeting
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Recording Controls */}
+                {!hasCustomRecording ? (
+                  <TouchableOpacity 
+                    style={[
+                      voicePickerStyles.recordButton, 
+                      { backgroundColor: isRecording ? '#EF4444' : accentColors.primary }
+                    ]}
+                    onPress={isRecording ? stopRecording : startRecording}
+                  >
+                    <Ionicons 
+                      name={isRecording ? "stop" : "mic"} 
+                      size={24} 
+                      color="#fff" 
+                    />
+                    <Text style={voicePickerStyles.recordButtonText}>
+                      {isRecording ? `Recording... ${5 - recordingTime}s` : 'Start Recording'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={voicePickerStyles.customRecordingControls}>
+                    <View style={voicePickerStyles.customRecordingToggle}>
+                      <Text style={[voicePickerStyles.customRecordingLabel, { color: colors.text.primary }]}>
+                        Use My Recording
+                      </Text>
+                      <CustomToggle 
+                        value={useCustomRecording} 
+                        onValueChange={toggleUseCustomRecording}
+                        activeColor={accentColors.primary}
+                      />
+                    </View>
+                    <View style={voicePickerStyles.customRecordingActions}>
+                      <TouchableOpacity 
+                        style={[voicePickerStyles.playButton, { backgroundColor: accentColors.primary + '20' }]}
+                        onPress={playCustomRecording}
+                      >
+                        <Ionicons name="play" size={18} color={accentColors.primary} />
+                        <Text style={[voicePickerStyles.playButtonText, { color: accentColors.primary }]}>Play</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[voicePickerStyles.reRecordButton, { backgroundColor: colors.background.input }]}
+                        onPress={() => setHasCustomRecording(false)}
+                      >
+                        <Ionicons name="refresh" size={18} color={colors.text.secondary} />
+                        <Text style={[voicePickerStyles.reRecordText, { color: colors.text.secondary }]}>Re-record</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[voicePickerStyles.deleteButton, { backgroundColor: '#FEE2E2' }]}
+                        onPress={deleteCustomRecording}
+                      >
+                        <Ionicons name="trash" size={18} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                {isRecording && (
+                  <View style={voicePickerStyles.recordingIndicator}>
+                    <View style={[voicePickerStyles.recordingDot, { backgroundColor: '#EF4444' }]} />
+                    <Text style={[voicePickerStyles.recordingText, { color: '#EF4444' }]}>
+                      Recording... Speak your greeting now!
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Divider */}
+              <View style={voicePickerStyles.dividerContainer}>
+                <View style={[voicePickerStyles.dividerLine, { backgroundColor: colors.border.primary }]} />
+                <Text style={[voicePickerStyles.dividerText, { color: colors.text.muted }]}>OR USE AI VOICE</Text>
+                <View style={[voicePickerStyles.dividerLine, { backgroundColor: colors.border.primary }]} />
+              </View>
+
               {/* Auto option */}
               <TouchableOpacity 
                 style={[
                   voicePickerStyles.voiceOption, 
-                  { borderBottomColor: colors.border.primary },
-                  !selectedVoiceId && { backgroundColor: accentColors.primary + '20' }
+                  { borderColor: colors.border.primary, backgroundColor: colors.background.input },
+                  !selectedVoiceId && !useCustomRecording && { backgroundColor: accentColors.primary + '20', borderColor: accentColors.primary }
                 ]}
-                onPress={() => handleVoiceSelect('')}
+                onPress={() => {
+                  handleVoiceSelect('');
+                  setUseCustomRecording(false);
+                  AsyncStorage.setItem('useCustomVoiceRecording', 'false');
+                }}
               >
                 <View style={voicePickerStyles.voiceInfo}>
                   <Text style={[voicePickerStyles.voiceName, { color: colors.text.primary }]}>
@@ -1198,37 +1277,42 @@ export default function ProfileScreen() {
                     Automatically selects the best voice for {voiceGender}
                   </Text>
                 </View>
-                {!selectedVoiceId && (
+                {!selectedVoiceId && !useCustomRecording && (
                   <Ionicons name="checkmark-circle" size={24} color={accentColors.primary} />
                 )}
               </TouchableOpacity>
 
-              {/* Filter voices by gender */}
+              {/* Available voices header */}
               {availableVoices.length > 0 && (
                 <Text style={[voicePickerStyles.sectionHeader, { color: colors.text.secondary }]}>
                   Available Voices ({availableVoices.length})
                 </Text>
               )}
               
+              {/* Voice list */}
               {availableVoices.map((voice, index) => (
                 <TouchableOpacity 
                   key={voice.identifier}
                   style={[
                     voicePickerStyles.voiceOption, 
-                    { borderBottomColor: colors.border.primary },
-                    selectedVoiceId === voice.identifier && { backgroundColor: accentColors.primary + '20' }
+                    { borderColor: colors.border.primary, backgroundColor: colors.background.input },
+                    selectedVoiceId === voice.identifier && !useCustomRecording && { backgroundColor: accentColors.primary + '20', borderColor: accentColors.primary }
                   ]}
-                  onPress={() => handleVoiceSelect(voice.identifier)}
+                  onPress={() => {
+                    handleVoiceSelect(voice.identifier);
+                    setUseCustomRecording(false);
+                    AsyncStorage.setItem('useCustomVoiceRecording', 'false');
+                  }}
                 >
                   <View style={voicePickerStyles.voiceInfo}>
                     <Text style={[voicePickerStyles.voiceName, { color: colors.text.primary }]}>
                       {voice.name || `Voice ${index + 1}`}
                     </Text>
                     <Text style={[voicePickerStyles.voiceDesc, { color: colors.text.muted }]}>
-                      {voice.language} {voice.quality === 'Enhanced' ? '• Enhanced' : ''}
+                      {voice.language} {voice.quality === 'Enhanced' ? '• Enhanced ⭐' : ''}
                     </Text>
                   </View>
-                  {selectedVoiceId === voice.identifier && (
+                  {selectedVoiceId === voice.identifier && !useCustomRecording && (
                     <Ionicons name="checkmark-circle" size={24} color={accentColors.primary} />
                   )}
                 </TouchableOpacity>
@@ -1244,8 +1328,8 @@ export default function ProfileScreen() {
               
               <View style={{ height: 40 }} />
             </ScrollView>
-          </TouchableOpacity>
-        </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
