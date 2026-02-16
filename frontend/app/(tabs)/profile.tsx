@@ -1578,6 +1578,103 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: 16,
   },
+  // Inline Recording Styles
+  recordSectionInline: {
+    marginTop: 8,
+  },
+  recordHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  recordHeaderText: {
+    flex: 1,
+  },
+  recordTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  recordSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  recordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  recordButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  customRecordingControls: {
+    gap: 12,
+  },
+  customRecordingActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  playButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  playButtonTextWhite: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reRecordButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  reRecordText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  deleteButtonSmall: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  recordingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  recordingText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  recordingHint: {
+    fontSize: 12,
+    marginTop: 12,
+    textAlign: 'center',
+  },
   voiceGenderLabel: {
     fontSize: 14,
     fontWeight: '600',
