@@ -205,6 +205,9 @@ export default function ProfileScreen() {
   // Voice Greeting state
   const [voiceGreetingEnabled, setVoiceGreetingEnabled] = useState(true);
   const [voiceGender, setVoiceGender] = useState<'male' | 'female'>('female');
+  const [availableVoices, setAvailableVoices] = useState<Speech.Voice[]>([]);
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('');
+  const [voicePickerVisible, setVoicePickerVisible] = useState(false);
 
   const [formData, setFormData] = useState({
     name: profile?.name || '',
