@@ -130,15 +130,8 @@ export default function DashboardScreen() {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', async (nextAppState) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        // App came to foreground - check if we should greet
-        const lastGreetTime = await AsyncStorage.getItem('lastGreetingTime');
-        const now = Date.now();
-        const thirtyMinutes = 30 * 60 * 1000;
-        
-        if (!lastGreetTime || (now - parseInt(lastGreetTime)) > thirtyMinutes) {
-          await AsyncStorage.setItem('lastGreetingTime', now.toString());
-          playVoiceGreeting();
-        }
+        // App came to foreground - play greeting every time
+        playVoiceGreeting();
       }
       appState.current = nextAppState;
     });
@@ -150,18 +143,8 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (profile && !hasGreeted) {
       setHasGreeted(true);
-      const initGreeting = async () => {
-        const lastGreetTime = await AsyncStorage.getItem('lastGreetingTime');
-        const now = Date.now();
-        const thirtyMinutes = 30 * 60 * 1000;
-        
-        if (!lastGreetTime || (now - parseInt(lastGreetTime)) > thirtyMinutes) {
-          await AsyncStorage.setItem('lastGreetingTime', now.toString());
-          // Small delay to let the UI render first
-          setTimeout(() => playVoiceGreeting(), 1500);
-        }
-      };
-      initGreeting();
+      // Small delay to let the UI render first
+      setTimeout(() => playVoiceGreeting(), 1500);
     }
   }, [profile, hasGreeted]);
 
