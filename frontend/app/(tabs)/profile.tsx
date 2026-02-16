@@ -896,6 +896,25 @@ export default function ProfileScreen() {
                     <Text style={[styles.voiceLanguageNote, { color: colors.text.muted }]}>
                       💡 Voice will speak in your selected app language
                     </Text>
+
+                    {/* Choose Voice Button */}
+                    <TouchableOpacity
+                      style={[styles.chooseVoiceBtn, { backgroundColor: colors.background.input, borderColor: colors.border.primary }]}
+                      onPress={() => setVoicePickerVisible(true)}
+                    >
+                      <View style={styles.chooseVoiceContent}>
+                        <Ionicons name="mic" size={20} color={accentColors.primary} />
+                        <View style={styles.chooseVoiceTextContainer}>
+                          <Text style={[styles.chooseVoiceLabel, { color: colors.text.secondary }]}>Voice Selection</Text>
+                          <Text style={[styles.chooseVoiceValue, { color: colors.text.primary }]}>
+                            {selectedVoiceId 
+                              ? availableVoices.find(v => v.identifier === selectedVoiceId)?.name || 'Custom Voice'
+                              : 'Auto (Best Match)'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                    </TouchableOpacity>
                     
                     {/* Test Voice Button */}
                     <TouchableOpacity
