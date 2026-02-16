@@ -283,9 +283,10 @@ export default function ProfileScreen() {
   };
 
   // Test voice greeting
-  const testVoiceGreeting = async (genderToTest?: 'male' | 'female') => {
+  const testVoiceGreeting = async (genderToTest?: 'male' | 'female', voiceIdToTest?: string) => {
     try {
       const gender = genderToTest || voiceGender;
+      const voiceId = voiceIdToTest || selectedVoiceId;
       const currentLang = i18next.language || 'en';
       const langKey = currentLang.split('-')[0];
       
@@ -316,66 +317,99 @@ export default function ProfileScreen() {
         zh: { morning: '早上好', afternoon: '下午好', evening: '晚上好' },
       };
 
+      // Athletic, upbeat motivational quotes
+      const motivationalQuotes = [
+        "Let's crush it today!",
+        "Time to make gains!",
+        "You've got this, champion!",
+        "Let's get that workout in!",
+        "Today's the day to level up!",
+        "No excuses, just results!",
+        "Push harder than yesterday!",
+        "Your body can do it, convince your mind!",
+        "Stronger every single day!",
+        "Let's go beast mode!",
+        "Rise and grind!",
+        "Every rep counts!",
+        "Make yourself proud today!",
+        "Greatness awaits you!"
+      ];
+
       const langGreetings = greetings[langKey] || greetings['en'];
       const greeting = langGreetings[greetingKey];
-      const fullGreeting = `${greeting}, ${userName}!`;
+      const motivationalQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+      const fullGreeting = `${greeting}, ${userName}! ${motivationalQuote}`;
 
       // Stop any current speech
       await Speech.stop();
 
-      // Get available voices and select based on gender preference
+      // Get available voices
       const voices = await Speech.getAvailableVoicesAsync();
       let selectedVoice = null;
 
-      const langVoices = voices.filter(v => 
-        v.language.toLowerCase().startsWith(langKey.toLowerCase())
-      );
+      // If a specific voice is selected, use it
+      if (voiceId) {
+        selectedVoice = voices.find(v => v.identifier === voiceId);
+      }
 
-      if (langVoices.length > 0) {
-        // Try to find a premium/enhanced voice for more natural sound
-        // Priority: Enhanced/Premium voices > Younger sounding voices > Default
-        if (gender === 'male') {
-          selectedVoice = langVoices.find(v => 
-            v.name?.toLowerCase().includes('enhanced') ||
-            v.name?.toLowerCase().includes('premium') ||
-            v.quality === 'Enhanced'
-          ) || langVoices.find(v => 
-            v.name?.toLowerCase().includes('male') || 
-            v.identifier?.toLowerCase().includes('male') ||
-            v.name?.toLowerCase().includes('aaron') ||
-            v.name?.toLowerCase().includes('jamie') ||
-            v.name?.toLowerCase().includes('evan') ||
-            v.name?.toLowerCase().includes('daniel') ||
-            v.name?.toLowerCase().includes('tom')
-          ) || langVoices[0];
-        } else {
-          selectedVoice = langVoices.find(v => 
-            v.name?.toLowerCase().includes('enhanced') ||
-            v.name?.toLowerCase().includes('premium') ||
-            v.quality === 'Enhanced'
-          ) || langVoices.find(v => 
-            v.name?.toLowerCase().includes('female') || 
-            v.identifier?.toLowerCase().includes('female') ||
-            v.name?.toLowerCase().includes('zoe') ||
-            v.name?.toLowerCase().includes('ava') ||
-            v.name?.toLowerCase().includes('allison') ||
-            v.name?.toLowerCase().includes('samantha') ||
-            v.name?.toLowerCase().includes('siri')
-          ) || langVoices[0];
+      // If no specific voice, find best match based on gender
+      if (!selectedVoice) {
+        const langVoices = voices.filter(v => 
+          v.language.toLowerCase().startsWith(langKey.toLowerCase())
+        );
+
+        if (langVoices.length > 0) {
+          if (gender === 'male') {
+            selectedVoice = langVoices.find(v => 
+              v.name?.toLowerCase().includes('enhanced') ||
+              v.quality === 'Enhanced'
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('aaron') ||
+              v.name?.toLowerCase().includes('gordon') ||
+              v.name?.toLowerCase().includes('nicky') ||
+              v.name?.toLowerCase().includes('evan') ||
+              v.name?.toLowerCase().includes('fred')
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('male') || 
+              v.identifier?.toLowerCase().includes('male')
+            ) || langVoices[0];
+          } else {
+            selectedVoice = langVoices.find(v => 
+              v.name?.toLowerCase().includes('enhanced') ||
+              v.quality === 'Enhanced'
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('samantha') ||
+              v.name?.toLowerCase().includes('ava') ||
+              v.name?.toLowerCase().includes('zoe') ||
+              v.name?.toLowerCase().includes('allison') ||
+              v.name?.toLowerCase().includes('susan')
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('female') || 
+              v.identifier?.toLowerCase().includes('female')
+            ) || langVoices[0];
+          }
         }
       }
 
-      // Speak the greeting with enthusiastic, natural-sounding parameters
-      // Higher pitch for youthful sound, slightly faster rate for energy
+      // Speak with athletic, energetic parameters
       await Speech.speak(fullGreeting, {
         language: langKey,
         voice: selectedVoice?.identifier,
-        pitch: gender === 'female' ? 1.2 : 1.05,  // Slightly higher pitch for younger sound
-        rate: 1.05,  // Slightly faster for enthusiasm and energy
+        pitch: gender === 'female' ? 1.15 : 1.0,  // Natural pitch
+        rate: 1.1,  // Slightly faster for upbeat energy
       });
     } catch (error) {
       console.log('Test voice error:', error);
     }
+  };
+
+  // Handle voice selection
+  const handleVoiceSelect = async (voiceId: string) => {
+    setSelectedVoiceId(voiceId);
+    await AsyncStorage.setItem('voiceGreetingVoiceId', voiceId);
+    setVoicePickerVisible(false);
+    // Test the newly selected voice
+    testVoiceGreeting(voiceGender, voiceId);
   };
 
   useEffect(() => {
