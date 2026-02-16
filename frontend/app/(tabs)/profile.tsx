@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../../services/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 import i18next from 'i18next';
 
 // Custom Toggle Component
