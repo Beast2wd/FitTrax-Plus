@@ -238,6 +238,7 @@ export default function ProfileScreen() {
       try {
         const enabled = await AsyncStorage.getItem('voiceGreetingEnabled');
         const gender = await AsyncStorage.getItem('voiceGreetingGender');
+        const voiceId = await AsyncStorage.getItem('voiceGreetingVoiceId');
         
         if (enabled !== null) {
           setVoiceGreetingEnabled(enabled !== 'false');
@@ -245,6 +246,21 @@ export default function ProfileScreen() {
         if (gender) {
           setVoiceGender(gender as 'male' | 'female');
         }
+        if (voiceId) {
+          setSelectedVoiceId(voiceId);
+        }
+
+        // Load available voices
+        const voices = await Speech.getAvailableVoicesAsync();
+        const currentLang = i18next.language || 'en';
+        const langKey = currentLang.split('-')[0];
+        
+        // Filter voices by current language
+        const langVoices = voices.filter(v => 
+          v.language.toLowerCase().startsWith(langKey.toLowerCase())
+        );
+        
+        setAvailableVoices(langVoices);
       } catch (error) {
         console.log('Error loading voice settings:', error);
       }
