@@ -209,6 +209,14 @@ export default function ProfileScreen() {
   const [availableVoices, setAvailableVoices] = useState<Speech.Voice[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>('');
   const [voicePickerVisible, setVoicePickerVisible] = useState(false);
+  
+  // Voice Recording state
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [hasCustomRecording, setHasCustomRecording] = useState(false);
+  const [useCustomRecording, setUseCustomRecording] = useState(false);
+  const recordingTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const [formData, setFormData] = useState({
     name: profile?.name || '',
