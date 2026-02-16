@@ -565,14 +565,14 @@ export default function DashboardScreen() {
           <View style={styles.headerLeft}>
             <FitTraxLogo size="small" showText={false} />
           </View>
-          <View style={styles.headerCenter}>
+          <TouchableOpacity style={styles.headerCenter} onPress={playVoiceGreeting} activeOpacity={0.7}>
             <Text style={[styles.greeting, { color: colors.text.primary }]}>
               {getGreeting()}, {profile?.name?.split(' ')[0]}
             </Text>
             <Text style={[styles.motivation, { color: accent.primary }]}>
               {getMotivationalMessage()}
             </Text>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.headerRight, { backgroundColor: colors.background.card }]}
             onPress={() => router.push('/profile')}
