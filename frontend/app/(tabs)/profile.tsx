@@ -1336,10 +1336,22 @@ export default function ProfileScreen() {
 }
 
 const voicePickerStyles = StyleSheet.create({
-  container: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '70%',
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxHeight: '85%',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
   },
   header: {
     flexDirection: 'row',
@@ -1350,13 +1362,129 @@ const voicePickerStyles = StyleSheet.create({
   },
   voiceList: {
     flex: 1,
+    padding: 16,
+  },
+  recordSection: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  recordHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  recordHeaderText: {
+    flex: 1,
+  },
+  recordTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  recordSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  recordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  recordButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  customRecordingControls: {
+    gap: 12,
+  },
+  customRecordingToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  customRecordingLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  customRecordingActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  playButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  playButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reRecordButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  reRecordText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  deleteButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  recordingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  recordingText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   sectionHeader: {
     fontSize: 13,
     fontWeight: '600',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    marginTop: 8,
+    marginBottom: 12,
     textTransform: 'uppercase',
   },
   voiceOption: {
@@ -1365,7 +1493,9 @@ const voicePickerStyles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
   },
   voiceInfo: {
     flex: 1,
