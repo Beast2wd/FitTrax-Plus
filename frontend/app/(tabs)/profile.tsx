@@ -1637,6 +1637,33 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
   },
+  chooseVoiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  chooseVoiceContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  chooseVoiceTextContainer: {
+    flex: 1,
+  },
+  chooseVoiceLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  chooseVoiceValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 2,
+  },
   testVoiceBtn: {
     flexDirection: 'row',
     alignItems: 'center',
