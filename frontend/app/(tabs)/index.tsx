@@ -107,15 +107,15 @@ export default function DashboardScreen() {
       const voiceEnabled = await AsyncStorage.getItem('voiceGreetingEnabled');
       if (voiceEnabled === 'false') return;
 
-      // Get voice preference (male/female)
+      // Get voice preference (male/female) and specific voice
       const voiceGender = await AsyncStorage.getItem('voiceGreetingGender') || 'female';
+      const selectedVoiceId = await AsyncStorage.getItem('voiceGreetingVoiceId') || '';
       
       // Get current language
       const currentLang = i18next.language || 'en';
       
       // Determine time of day greeting
       const hour = new Date().getHours();
-      let greeting = '';
       let greetingKey = '';
       
       if (hour >= 5 && hour < 12) {
@@ -142,63 +142,91 @@ export default function DashboardScreen() {
         zh: { morning: '早上好', afternoon: '下午好', evening: '晚上好' },
       };
 
-      const langKey = currentLang.split('-')[0]; // Handle 'en-US' -> 'en'
+      const langKey = currentLang.split('-')[0];
       const langGreetings = greetings[langKey] || greetings['en'];
-      greeting = langGreetings[greetingKey];
+      const greeting = langGreetings[greetingKey];
 
-      // Add name if available
-      const fullGreeting = userName ? `${greeting}, ${userName}!` : `${greeting}!`;
+      // Athletic, upbeat motivational quotes
+      const motivationalQuotes = [
+        "Let's crush it today!",
+        "Time to make gains!",
+        "You've got this, champion!",
+        "Let's get that workout in!",
+        "Today's the day to level up!",
+        "No excuses, just results!",
+        "Push harder than yesterday!",
+        "Champions train, losers complain!",
+        "Your body can do it, convince your mind!",
+        "Stronger every single day!",
+        "Let's go beast mode!",
+        "Rise and grind!",
+        "Every rep counts!",
+        "Make yourself proud today!",
+        "Greatness awaits you!"
+      ];
 
-      // Get available voices and select based on gender preference
+      // Select a random motivational quote
+      const motivationalQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+
+      // Build the full greeting with name and motivation
+      let fullGreeting = userName ? `${greeting}, ${userName}!` : `${greeting}!`;
+      fullGreeting += ` ${motivationalQuote}`;
+
+      // Get available voices
       const voices = await Speech.getAvailableVoicesAsync();
       let selectedVoice = null;
 
-      // Filter voices by language
-      const langVoices = voices.filter(v => 
-        v.language.toLowerCase().startsWith(langKey.toLowerCase())
-      );
+      // If user has selected a specific voice, use it
+      if (selectedVoiceId) {
+        selectedVoice = voices.find(v => v.identifier === selectedVoiceId);
+      }
 
-      if (langVoices.length > 0) {
-        // Try to find a premium/enhanced voice for more natural sound
-        // Priority: Enhanced/Premium voices > Younger sounding voices > Default
-        if (voiceGender === 'male') {
-          selectedVoice = langVoices.find(v => 
-            v.name?.toLowerCase().includes('enhanced') ||
-            v.name?.toLowerCase().includes('premium') ||
-            v.quality === 'Enhanced'
-          ) || langVoices.find(v => 
-            v.name?.toLowerCase().includes('male') || 
-            v.identifier?.toLowerCase().includes('male') ||
-            v.name?.toLowerCase().includes('aaron') ||
-            v.name?.toLowerCase().includes('jamie') ||
-            v.name?.toLowerCase().includes('evan') ||
-            v.name?.toLowerCase().includes('daniel') ||
-            v.name?.toLowerCase().includes('tom')
-          ) || langVoices[0];
-        } else {
-          selectedVoice = langVoices.find(v => 
-            v.name?.toLowerCase().includes('enhanced') ||
-            v.name?.toLowerCase().includes('premium') ||
-            v.quality === 'Enhanced'
-          ) || langVoices.find(v => 
-            v.name?.toLowerCase().includes('female') || 
-            v.identifier?.toLowerCase().includes('female') ||
-            v.name?.toLowerCase().includes('zoe') ||
-            v.name?.toLowerCase().includes('ava') ||
-            v.name?.toLowerCase().includes('allison') ||
-            v.name?.toLowerCase().includes('samantha') ||
-            v.name?.toLowerCase().includes('siri')
-          ) || langVoices[0];
+      // If no specific voice selected, find best match
+      if (!selectedVoice) {
+        const langVoices = voices.filter(v => 
+          v.language.toLowerCase().startsWith(langKey.toLowerCase())
+        );
+
+        if (langVoices.length > 0) {
+          // Priority: Enhanced/Premium voices for most natural sound
+          if (voiceGender === 'male') {
+            selectedVoice = langVoices.find(v => 
+              v.name?.toLowerCase().includes('enhanced') ||
+              v.quality === 'Enhanced'
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('aaron') ||
+              v.name?.toLowerCase().includes('gordon') ||
+              v.name?.toLowerCase().includes('nicky') ||
+              v.name?.toLowerCase().includes('evan') ||
+              v.name?.toLowerCase().includes('fred')
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('male') || 
+              v.identifier?.toLowerCase().includes('male')
+            ) || langVoices[0];
+          } else {
+            selectedVoice = langVoices.find(v => 
+              v.name?.toLowerCase().includes('enhanced') ||
+              v.quality === 'Enhanced'
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('samantha') ||
+              v.name?.toLowerCase().includes('ava') ||
+              v.name?.toLowerCase().includes('zoe') ||
+              v.name?.toLowerCase().includes('allison') ||
+              v.name?.toLowerCase().includes('susan')
+            ) || langVoices.find(v => 
+              v.name?.toLowerCase().includes('female') || 
+              v.identifier?.toLowerCase().includes('female')
+            ) || langVoices[0];
+          }
         }
       }
 
-      // Speak the greeting with enthusiastic, natural-sounding parameters
-      // Higher pitch for youthful sound, slightly faster rate for energy
+      // Speak with athletic, energetic parameters
       await Speech.speak(fullGreeting, {
         language: langKey,
         voice: selectedVoice?.identifier,
-        pitch: voiceGender === 'female' ? 1.2 : 1.05,  // Slightly higher pitch for younger sound
-        rate: 1.05,  // Slightly faster for enthusiasm and energy
+        pitch: voiceGender === 'female' ? 1.15 : 1.0,  // Natural pitch
+        rate: 1.1,  // Slightly faster for upbeat energy
       });
 
     } catch (error) {
