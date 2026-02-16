@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 import i18next from 'i18next';
 import { AccentColors } from '../../constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
