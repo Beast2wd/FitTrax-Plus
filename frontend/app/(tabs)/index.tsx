@@ -108,6 +108,21 @@ export default function DashboardScreen() {
       const voiceEnabled = await AsyncStorage.getItem('voiceGreetingEnabled');
       if (voiceEnabled === 'false') return;
 
+      // Check if user has a custom recording and wants to use it
+      const useCustomRecording = await AsyncStorage.getItem('useCustomVoiceRecording');
+      const customRecordingUri = await AsyncStorage.getItem('customVoiceRecordingUri');
+      
+      if (useCustomRecording === 'true' && customRecordingUri) {
+        // Play the custom recorded greeting
+        try {
+          const { sound } = await Audio.Sound.createAsync({ uri: customRecordingUri });
+          await sound.playAsync();
+          return;
+        } catch (audioError) {
+          console.log('Error playing custom recording, falling back to TTS:', audioError);
+        }
+      }
+
       // Get voice preference (male/female) and specific voice
       const voiceGender = await AsyncStorage.getItem('voiceGreetingGender') || 'female';
       const selectedVoiceId = await AsyncStorage.getItem('voiceGreetingVoiceId') || '';
