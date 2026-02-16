@@ -270,12 +270,128 @@ export default function ProfileScreen() {
         );
         
         setAvailableVoices(langVoices);
+
+        // Check if custom recording exists
+        const customRecUri = await AsyncStorage.getItem('customVoiceRecordingUri');
+        const useCustom = await AsyncStorage.getItem('useCustomVoiceRecording');
+        if (customRecUri) {
+          setHasCustomRecording(true);
+          setUseCustomRecording(useCustom === 'true');
+        }
       } catch (error) {
         console.log('Error loading voice settings:', error);
       }
     };
     loadVoiceSettings();
   }, []);
+
+  // Recording functions
+  const startRecording = async () => {
+    try {
+      // Request permission
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Microphone access is needed to record your voice greeting.');
+        return;
+      }
+
+      // Set audio mode
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      // Start recording
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      
+      setRecording(recording);
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      // Start timer (max 5 seconds)
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          if (prev >= 5) {
+            stopRecording();
+            return 5;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+
+    } catch (error) {
+      console.log('Error starting recording:', error);
+      Alert.alert('Recording Error', 'Failed to start recording. Please try again.');
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+
+      if (recording) {
+        setIsRecording(false);
+        await recording.stopAndUnloadAsync();
+        const uri = recording.getURI();
+        
+        if (uri) {
+          // Save the recording URI
+          await AsyncStorage.setItem('customVoiceRecordingUri', uri);
+          await AsyncStorage.setItem('useCustomVoiceRecording', 'true');
+          setHasCustomRecording(true);
+          setUseCustomRecording(true);
+          Alert.alert('Success!', 'Your custom voice greeting has been saved!');
+        }
+        
+        setRecording(null);
+        setRecordingTime(0);
+      }
+    } catch (error) {
+      console.log('Error stopping recording:', error);
+    }
+  };
+
+  const playCustomRecording = async () => {
+    try {
+      const uri = await AsyncStorage.getItem('customVoiceRecordingUri');
+      if (uri) {
+        const { sound } = await Audio.Sound.createAsync({ uri });
+        await sound.playAsync();
+      }
+    } catch (error) {
+      console.log('Error playing recording:', error);
+    }
+  };
+
+  const deleteCustomRecording = async () => {
+    Alert.alert(
+      'Delete Recording',
+      'Are you sure you want to delete your custom voice greeting?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.removeItem('customVoiceRecordingUri');
+            await AsyncStorage.setItem('useCustomVoiceRecording', 'false');
+            setHasCustomRecording(false);
+            setUseCustomRecording(false);
+          }
+        }
+      ]
+    );
+  };
+
+  const toggleUseCustomRecording = async (value: boolean) => {
+    setUseCustomRecording(value);
+    await AsyncStorage.setItem('useCustomVoiceRecording', value.toString());
+  };
 
   // Save voice greeting enabled
   const handleVoiceGreetingToggle = async (value: boolean) => {
