@@ -958,9 +958,9 @@ export default function ProfileScreen() {
                 <View style={styles.voiceSettingRow}>
                   <View style={styles.voiceSettingInfo}>
                     <Ionicons name="volume-high" size={24} color={accentColors.primary} />
-                    <View style={{ marginLeft: 12 }}>
+                    <View style={{ marginLeft: 12, flex: 1, marginRight: 12 }}>
                       <Text style={[styles.voiceSettingLabel, { color: colors.text.primary }]}>Enable Voice Greeting</Text>
-                      <Text style={[styles.voiceSettingHint, { color: colors.text.muted }]}>Play your recorded greeting on app open</Text>
+                      <Text style={[styles.voiceSettingHint, { color: colors.text.muted }]}>Play greeting on app open</Text>
                     </View>
                   </View>
                   <CustomToggle
