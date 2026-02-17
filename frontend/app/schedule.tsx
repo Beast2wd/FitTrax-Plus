@@ -1050,7 +1050,7 @@ export default function ScheduleScreen() {
                       {/* Existing Plans */}
                       {allPlans.map((plan) => (
                         <TouchableOpacity
-                          key={plan.plan_id}
+                          key={plan.unique_id}
                           style={[
                             localStyles.optionItem,
                             selectedPlan === plan.plan_id && localStyles.optionItemSelected
