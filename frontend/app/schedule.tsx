@@ -165,11 +165,16 @@ export default function ScheduleScreen() {
       ]);
       
       const allAvailablePlans = [
-        ...(plansData.plans || []).map((p: any) => ({ ...p, type: 'template' })),
-        ...(userPlansData.user_plans || []).map((p: any) => ({ 
+        ...(plansData.plans || []).map((p: any, index: number) => ({ 
+          ...p, 
+          type: 'template',
+          unique_id: `template_${p.plan_id || index}`
+        })),
+        ...(userPlansData.user_plans || []).map((p: any, index: number) => ({ 
           plan_id: p.plan_id,
           name: p.plan_details?.name || 'Custom Plan',
-          type: 'user'
+          type: 'user',
+          unique_id: `user_${p.plan_id || index}`
         })),
       ];
       setAllPlans(allAvailablePlans);
