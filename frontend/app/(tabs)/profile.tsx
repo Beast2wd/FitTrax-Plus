@@ -1043,7 +1043,7 @@ export default function ProfileScreen() {
 
                   {!hasCustomRecording && !isRecording && (
                     <Text style={[styles.recordingHint, { color: colors.text.muted }]}>
-                      💡 Record yourself saying "Good morning!" or any personal greeting
+                      💡 Make a recording saying "Good morning, you've got this!" or any personal greeting
                     </Text>
                   )}
                 </View>
