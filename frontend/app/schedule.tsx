@@ -609,13 +609,13 @@ export default function ScheduleScreen() {
   const markedDates = (() => {
     const marks: any = {};
     
-    scheduledWorkouts.forEach(workout => {
+    scheduledWorkouts.forEach((workout, index) => {
       const date = workout.scheduled_date;
       if (!date) return; // Skip if no date
       if (!marks[date]) {
         marks[date] = { dots: [] };
       }
-      const workoutKey = workout.scheduled_id || workout.workout_id || `workout_${Math.random()}`;
+      const workoutKey = workout.scheduled_id || workout.workout_id || `workout_scheduled_${index}`;
       // Use workout's color, or green if completed, or default to accent.primary
       const dotColor = workout.completed 
         ? '#22C55E'  // Green for completed
@@ -626,7 +626,7 @@ export default function ScheduleScreen() {
       });
     });
 
-    completedWorkouts.forEach(workout => {
+    completedWorkouts.forEach((workout, index) => {
       if (!workout.timestamp) return; // Skip if no timestamp
       const date = format(new Date(workout.timestamp), 'yyyy-MM-dd');
       if (!marks[date]) {
@@ -636,7 +636,7 @@ export default function ScheduleScreen() {
       if (!alreadyMarked) {
         marks[date].dots.push({
           color: '#22C55E',
-          key: `completed_${workout.workout_id || Math.random()}`
+          key: `completed_${workout.workout_id || `completed_${index}`}`
         });
       }
     });
