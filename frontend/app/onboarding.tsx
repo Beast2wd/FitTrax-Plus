@@ -34,7 +34,7 @@ export default function OnboardingScreen() {
           Welcome to FitTrax+!
         </Text>
         <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
-          Let's set up your profile to personalize your fitness journey
+          Train, Track, Transform
         </Text>
 
         <View style={styles.features}>
