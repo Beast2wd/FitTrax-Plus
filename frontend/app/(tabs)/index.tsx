@@ -111,8 +111,17 @@ export default function DashboardScreen() {
       const customRecordingUri = await AsyncStorage.getItem('customVoiceRecordingUri');
       
       if (customRecordingUri) {
-        // Play the custom recorded greeting
+        // Play the custom recorded greeting through speaker even on silent mode
         try {
+          // Set audio mode to play through speaker even when silent
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
+            shouldDuckAndroid: true,
+            playThroughEarpieceAndroid: false,
+          });
+          
           const { sound } = await Audio.Sound.createAsync({ uri: customRecordingUri });
           await sound.playAsync();
         } catch (audioError) {
