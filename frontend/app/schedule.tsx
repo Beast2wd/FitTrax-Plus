@@ -747,9 +747,9 @@ export default function ScheduleScreen() {
           {upcomingWorkouts.length > 0 && (
             <View style={localStyles.section}>
               <Text style={localStyles.sectionTitle}>Upcoming</Text>
-              {upcomingWorkouts.map((workout) => {
+              {upcomingWorkouts.map((workout, index) => {
                 const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
-                const workoutKey = workout.scheduled_id || workout.workout_id || `upcoming_${Math.random()}`;
+                const workoutKey = workout.scheduled_id || workout.workout_id || `upcoming_${index}_${workout.scheduled_date}`;
                 const workoutColor = workout.color_hex || (workout.completed ? '#22C55E' : '#3B82F6');
                 
                 // Skip manual_log entries in upcoming (they're already completed)
