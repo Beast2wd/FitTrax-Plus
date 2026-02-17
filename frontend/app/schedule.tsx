@@ -852,9 +852,9 @@ export default function ScheduleScreen() {
             ) : (
               <>
                 {/* Scheduled Workouts */}
-                {workoutsForSelectedDate.map((workout) => {
+                {workoutsForSelectedDate.map((workout, index) => {
                   const planDetails = allPlans.find(p => p.plan_id === workout.workout_plan_id);
-                  const workoutKey = workout.scheduled_id || workout.workout_id || `workout_${Math.random()}`;
+                  const workoutKey = workout.scheduled_id || workout.workout_id || `workout_date_${index}_${selectedDate}`;
                   
                   // Handle manual workout log entries (from "Workout Complete" button)
                   if (workout.workout_type === 'manual_log') {
