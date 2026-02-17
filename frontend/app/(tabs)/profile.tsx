@@ -360,6 +360,15 @@ export default function ProfileScreen() {
     try {
       const uri = await AsyncStorage.getItem('customVoiceRecordingUri');
       if (uri) {
+        // Set audio mode to play through speaker even when silent
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+        
         const { sound } = await Audio.Sound.createAsync({ uri });
         await sound.playAsync();
       }
