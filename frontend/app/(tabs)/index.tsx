@@ -1413,6 +1413,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 2,
   },
+  premiumBadgeCard: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#8B5CF6',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
   actionIcon: {
     width: 48,
     height: 48,
