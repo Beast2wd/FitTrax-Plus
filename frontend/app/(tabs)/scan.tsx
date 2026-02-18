@@ -1697,6 +1697,51 @@ export default function ScanScreen() {
   );
 
   return (
+  // If not premium, show upgrade prompt
+  if (!isPremium) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        <View style={styles.premiumGateContainer}>
+          <View style={styles.premiumGateContent}>
+            <View style={styles.premiumIconCircle}>
+              <Ionicons name="diamond" size={48} color="#8B5CF6" />
+            </View>
+            <Text style={[styles.premiumGateTitle, { color: colors.text.primary }]}>
+              FitTrax+ Premium Feature
+            </Text>
+            <Text style={[styles.premiumGateSubtitle, { color: colors.text.secondary }]}>
+              Meals, Meal Planning, AI Recipes, Groceries, and Nutrition Coach are premium features.
+            </Text>
+            <Text style={[styles.premiumGateFeatures, { color: colors.text.muted }]}>
+              Upgrade to unlock:
+            </Text>
+            <View style={styles.premiumFeatureList}>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ AI Food Scanner & Analysis</Text>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Custom Meal Planning</Text>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ AI Recipe Generator</Text>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Smart Grocery Lists</Text>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ AI Nutrition Coach</Text>
+            </View>
+            <TouchableOpacity 
+              style={[styles.premiumUpgradeBtn, { backgroundColor: '#8B5CF6' }]}
+              onPress={() => router.push('/membership')}
+            >
+              <Ionicons name="diamond" size={20} color="#fff" />
+              <Text style={styles.premiumUpgradeBtnText}>Upgrade to Premium</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.premiumLearnMore}
+              onPress={() => router.push('/membership')}
+            >
+              <Text style={[styles.premiumLearnMoreText, { color: accent.primary }]}>Learn more about Premium</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       {/* Header */}
       <View style={styles.header}>
