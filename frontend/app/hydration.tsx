@@ -58,39 +58,39 @@ export default function HydrationScreen() {
   // If not premium, show upgrade prompt
   if (!isPremium) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
-        <View style={styles.premiumGateContainer}>
-          <View style={styles.premiumGateContent}>
-            <View style={styles.premiumIconCircle}>
+      <SafeAreaView style={[localStyles.container, { backgroundColor: colors.background.primary }]}>
+        <View style={localStyles.premiumGateContainer}>
+          <View style={localStyles.premiumGateContent}>
+            <View style={localStyles.premiumIconCircle}>
               <Ionicons name="diamond" size={48} color="#8B5CF6" />
             </View>
-            <Text style={[styles.premiumGateTitle, { color: colors.text.primary }]}>
+            <Text style={[localStyles.premiumGateTitle, { color: colors.text.primary }]}>
               FitTrax+ Premium Feature
             </Text>
-            <Text style={[styles.premiumGateSubtitle, { color: colors.text.secondary }]}>
+            <Text style={[localStyles.premiumGateSubtitle, { color: colors.text.secondary }]}>
               Hydration Tracking is a premium feature. Track your daily water intake and stay healthy!
             </Text>
-            <Text style={[styles.premiumGateFeatures, { color: colors.text.muted }]}>
+            <Text style={[localStyles.premiumGateFeatures, { color: colors.text.muted }]}>
               Upgrade to unlock:
             </Text>
-            <View style={styles.premiumFeatureList}>
-              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Daily Water Intake Tracking</Text>
-              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Customizable Hydration Goals</Text>
-              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Weekly & Monthly Analytics</Text>
-              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Hydration Reminders</Text>
+            <View style={localStyles.premiumFeatureList}>
+              <Text style={[localStyles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Daily Water Intake Tracking</Text>
+              <Text style={[localStyles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Customizable Hydration Goals</Text>
+              <Text style={[localStyles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Weekly & Monthly Analytics</Text>
+              <Text style={[localStyles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Hydration Reminders</Text>
             </View>
             <TouchableOpacity 
-              style={[styles.premiumUpgradeBtn, { backgroundColor: '#8B5CF6' }]}
+              style={[localStyles.premiumUpgradeBtn, { backgroundColor: '#8B5CF6' }]}
               onPress={() => router.push('/membership')}
             >
               <Ionicons name="diamond" size={20} color="#fff" />
-              <Text style={styles.premiumUpgradeBtnText}>Upgrade to Premium</Text>
+              <Text style={localStyles.premiumUpgradeBtnText}>Upgrade to Premium</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.premiumLearnMore}
+              style={localStyles.premiumLearnMore}
               onPress={() => router.push('/membership')}
             >
-              <Text style={[styles.premiumLearnMoreText, { color: accent.primary }]}>Learn more about Premium</Text>
+              <Text style={[localStyles.premiumLearnMoreText, { color: accent.primary }]}>Learn more about Premium</Text>
             </TouchableOpacity>
           </View>
         </View>
