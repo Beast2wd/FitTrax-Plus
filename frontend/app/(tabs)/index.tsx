@@ -1373,13 +1373,13 @@ const styles = StyleSheet.create({
     width: (width - 48 - 12) / 2,
     height: 100,
     borderRadius: 16,
-    overflow: 'hidden',
     position: 'relative',
   },
   actionCardImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
+    borderRadius: 16,
   },
   actionCardOverlay: {
     position: 'absolute',
