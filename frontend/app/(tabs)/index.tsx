@@ -830,14 +830,14 @@ export default function DashboardScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('dashboard.quickActions')}</Text>
         <View style={styles.actionsGrid}>
           {[
-            { image: QUICK_ACTION_IMAGES.aiCoach, label: 'AI Workout Coach', route: '/ai-workout-chat', premium: false },
+            { image: QUICK_ACTION_IMAGES.aiCoach, label: 'AI Workout Coach', route: '/ai-workout-chat', premium: true },
             { image: QUICK_ACTION_IMAGES.scanFood, label: t('dashboard.scanFood'), route: '/scan', premium: true },
             { image: QUICK_ACTION_IMAGES.schedule, label: t('dashboard.schedule'), route: '/schedule', premium: false },
-            { image: QUICK_ACTION_IMAGES.workoutLog, label: 'Workout Log', route: '/manual-workout-log', premium: false },
+            { image: QUICK_ACTION_IMAGES.workoutLog, label: 'Workout Log', route: '/manual-workout-log', premium: true },
             { image: QUICK_ACTION_IMAGES.run, label: t('dashboard.run'), route: '/running', premium: false },
             { image: QUICK_ACTION_IMAGES.steps, label: 'Step Tracker', route: '/step-tracker', premium: false },
             { image: QUICK_ACTION_IMAGES.bodyScan, label: t('dashboard.bodyScan'), route: '/body-scan', premium: true },
-            { image: QUICK_ACTION_IMAGES.peptides, label: t('dashboard.peptides'), route: '/peptides', premium: false },
+            { image: QUICK_ACTION_IMAGES.peptides, label: t('dashboard.peptides'), route: '/peptides', premium: true },
             { image: QUICK_ACTION_IMAGES.rewards, label: t('dashboard.rewards'), route: '/badges', premium: true },
             { image: QUICK_ACTION_IMAGES.analytics, label: t('dashboard.analytics'), route: '/analytics', premium: true },
           ].map((action, index) => (
