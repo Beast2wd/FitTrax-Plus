@@ -1076,4 +1076,73 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     color: theme.colors.text.secondary,
   },
+  // Premium Gate Styles
+  premiumGateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  premiumGateContent: {
+    alignItems: 'center',
+    maxWidth: 340,
+  },
+  premiumIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  premiumGateTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  premiumGateSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  premiumGateFeatures: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  premiumFeatureList: {
+    alignSelf: 'stretch',
+    marginBottom: 24,
+  },
+  premiumFeatureItem: {
+    fontSize: 15,
+    marginBottom: 8,
+    paddingLeft: 8,
+  },
+  premiumUpgradeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    gap: 10,
+    width: '100%',
+  },
+  premiumUpgradeBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  premiumLearnMore: {
+    marginTop: 16,
+    padding: 8,
+  },
+  premiumLearnMoreText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
