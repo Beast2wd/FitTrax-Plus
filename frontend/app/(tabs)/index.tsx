@@ -701,8 +701,8 @@ export default function DashboardScreen() {
               <Text style={styles.statLabelImage}>Training</Text>
             </View>
             {!isPremium && (
-              <View style={styles.premiumBadgeCard}>
-                <MaterialCommunityIcons name="diamond" size={14} color="#A855F7" />
+              <View style={styles.premiumBadgeAction}>
+                <Ionicons name="diamond" size={10} color="#fff" />
               </View>
             )}
           </TouchableOpacity>
@@ -732,8 +732,8 @@ export default function DashboardScreen() {
               <Text style={styles.statLabelImage}>Hydration</Text>
             </View>
             {!isPremium && (
-              <View style={styles.premiumBadgeCard}>
-                <MaterialCommunityIcons name="diamond" size={14} color="#A855F7" />
+              <View style={styles.premiumBadgeAction}>
+                <Ionicons name="diamond" size={10} color="#fff" />
               </View>
             )}
           </TouchableOpacity>
