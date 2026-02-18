@@ -2654,7 +2654,7 @@ FREE_FEATURES = [
 ]
 
 # Stripe Payment Link for checkout
-STRIPE_PAYMENT_LINK = "https://buy.stripe.com/7sY5kD60pcxM65YaqX9Ve00"
+STRIPE_PAYMENT_LINK = "https://buy.stripe.com/3cI00jagF69o65Y0Qn9Ve01"
 
 @api_router.post("/membership/create-customer")
 async def create_membership_customer(request: MembershipCustomerCreate):
