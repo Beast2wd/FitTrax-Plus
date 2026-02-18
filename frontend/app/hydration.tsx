@@ -51,6 +51,9 @@ export default function HydrationScreen() {
   const colors = theme.colors;
   const accent = theme.accentColors;
   const isPremium = membershipStatus?.is_premium || false;
+  
+  // Create styles early so they can be used in premium gate
+  const localStyles = createStyles(theme);
 
   // If not premium, show upgrade prompt
   if (!isPremium) {
