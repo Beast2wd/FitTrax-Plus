@@ -39,7 +39,7 @@ interface DailyWater {
 }
 
 export default function HydrationScreen() {
-  const { userId } = useUserStore();
+  const { userId, membershipStatus } = useUserStore();
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const [waterData, setWaterData] = useState<WaterEntry[]>([]);
@@ -50,6 +50,50 @@ export default function HydrationScreen() {
 
   const colors = theme.colors;
   const accent = theme.accentColors;
+  const isPremium = membershipStatus?.is_premium || false;
+
+  // If not premium, show upgrade prompt
+  if (!isPremium) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        <View style={styles.premiumGateContainer}>
+          <View style={styles.premiumGateContent}>
+            <View style={styles.premiumIconCircle}>
+              <Ionicons name="diamond" size={48} color="#8B5CF6" />
+            </View>
+            <Text style={[styles.premiumGateTitle, { color: colors.text.primary }]}>
+              FitTrax+ Premium Feature
+            </Text>
+            <Text style={[styles.premiumGateSubtitle, { color: colors.text.secondary }]}>
+              Hydration Tracking is a premium feature. Track your daily water intake and stay healthy!
+            </Text>
+            <Text style={[styles.premiumGateFeatures, { color: colors.text.muted }]}>
+              Upgrade to unlock:
+            </Text>
+            <View style={styles.premiumFeatureList}>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Daily Water Intake Tracking</Text>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Customizable Hydration Goals</Text>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Weekly & Monthly Analytics</Text>
+              <Text style={[styles.premiumFeatureItem, { color: colors.text.secondary }]}>✓ Hydration Reminders</Text>
+            </View>
+            <TouchableOpacity 
+              style={[styles.premiumUpgradeBtn, { backgroundColor: '#8B5CF6' }]}
+              onPress={() => router.push('/membership')}
+            >
+              <Ionicons name="diamond" size={20} color="#fff" />
+              <Text style={styles.premiumUpgradeBtnText}>Upgrade to Premium</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.premiumLearnMore}
+              onPress={() => router.push('/membership')}
+            >
+              <Text style={[styles.premiumLearnMoreText, { color: accent.primary }]}>Learn more about Premium</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   useEffect(() => {
     if (userId) {
