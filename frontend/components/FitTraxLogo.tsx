@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   iconWrapper: {
     justifyContent: 'center',
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginLeft: 12,
+    alignItems: 'flex-start',
   },
   title: {
     fontWeight: '800',
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontWeight: '600',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     marginTop: 2,
     opacity: 0.7,
   },
