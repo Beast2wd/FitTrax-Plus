@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://fitness-diary-19.preview.emergentagent.com/api"
+BASE_URL = "https://workout-tracker-535.preview.emergentagent.com/api"
 TIMEOUT = 30
 
 class EnhancedSecurityTester:

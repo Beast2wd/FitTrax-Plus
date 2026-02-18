@@ -9431,7 +9431,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=CORSConfig.ALLOWED_ORIGINS + [
-        "https://fitness-diary-19.preview.emergentagent.com",  # Preview URL
+        "https://workout-tracker-535.preview.emergentagent.com",  # Preview URL
     ],
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],

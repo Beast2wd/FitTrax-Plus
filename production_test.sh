@@ -2,7 +2,7 @@
 # FitTrax API Production Readiness Test - Using curl
 # Tests all critical endpoints for production deployment
 
-BASE_URL="https://fitness-diary-19.preview.emergentagent.com/api"
+BASE_URL="https://workout-tracker-535.preview.emergentagent.com/api"
 TEST_EMAIL="prod_test_$(date +%s)@fittrax.com"
 TEST_PASSWORD="SecurePass123!"
 

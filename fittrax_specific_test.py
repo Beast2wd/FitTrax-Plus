@@ -578,7 +578,7 @@ class FitTraxSpecificTester:
 def main():
     """Main function to run tests"""
     # Use the production URL from environment
-    base_url = "https://fitness-diary-19.preview.emergentagent.com"
+    base_url = "https://workout-tracker-535.preview.emergentagent.com"
     test_user_id = "user_1767657116540"
     
     tester = FitTraxSpecificTester(base_url, test_user_id)

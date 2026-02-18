@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://fitness-diary-19.preview.emergentagent.com/api"
+BASE_URL = "https://workout-tracker-535.preview.emergentagent.com/api"
 TEST_USER_ID = "user_1769564539081"
 
 def test_endpoint(method, endpoint, data=None):

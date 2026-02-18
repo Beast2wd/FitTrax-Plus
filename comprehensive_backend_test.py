@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://fitness-diary-19.preview.emergentagent.com')
+BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://workout-tracker-535.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 # Test user ID

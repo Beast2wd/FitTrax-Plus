@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://fitness-diary-19.preview.emergentagent.com/api"
+BASE_URL = "https://workout-tracker-535.preview.emergentagent.com/api"
 TEST_USER_ID = "test_comprehensive_user"
 TEST_DATE = "2026-02-13"
 
