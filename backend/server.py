@@ -3205,7 +3205,7 @@ async def get_payment_link():
     return {
         "payment_link": STRIPE_PAYMENT_LINK,
         "plan": "FitTrax+ Premium",
-        "price": "$75/year",
+        "price": "$50/year",
         "trial_days": 3
     }
 
