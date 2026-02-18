@@ -342,7 +342,7 @@ export default function HydrationScreen() {
     );
   };
 
-  const styles = createStyles(theme);
+  const styles = localStyles;
 
   return (
     <SafeAreaView style={styles.container}>
