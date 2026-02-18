@@ -680,19 +680,50 @@ export default function DashboardScreen() {
           {/* Training Card */}
           <TouchableOpacity 
             style={[styles.statCardWithImage, { backgroundColor: colors.background.card }]}
-            onPress={() => router.push('/weight-training')}
+            onPress={() => {
+              if (!isPremium) {
+                Alert.alert(
+                  'Premium Feature',
+                  'Training is a premium feature. Upgrade to FitTrax+ Premium to unlock this feature.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Upgrade', onPress: () => router.push('/membership') }
+                  ]
+                );
+                return;
+              }
+              router.push('/weight-training');
+            }}
           >
             <Image source={{ uri: STAT_CARD_IMAGES.training }} style={styles.statCardImage} resizeMode="cover" />
             <View style={styles.statCardOverlay}>
               <Text style={styles.statValueImage}>{today.workouts_count || 0}</Text>
               <Text style={styles.statLabelImage}>Training</Text>
             </View>
+            {!isPremium && (
+              <View style={styles.premiumBadgeCard}>
+                <MaterialCommunityIcons name="diamond" size={14} color="#A855F7" />
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Hydration Card */}
           <TouchableOpacity 
             style={[styles.statCardWithImage, { backgroundColor: colors.background.card }]}
-            onPress={() => router.push('/hydration')}
+            onPress={() => {
+              if (!isPremium) {
+                Alert.alert(
+                  'Premium Feature',
+                  'Hydration is a premium feature. Upgrade to FitTrax+ Premium to unlock this feature.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Upgrade', onPress: () => router.push('/membership') }
+                  ]
+                );
+                return;
+              }
+              router.push('/hydration');
+            }}
             activeOpacity={0.7}
           >
             <Image source={{ uri: STAT_CARD_IMAGES.hydration }} style={styles.statCardImage} resizeMode="cover" />
@@ -700,6 +731,11 @@ export default function DashboardScreen() {
               <Text style={styles.statValueImage}>{Math.round(today.water_intake || 0)}</Text>
               <Text style={styles.statLabelImage}>Hydration</Text>
             </View>
+            {!isPremium && (
+              <View style={styles.premiumBadgeCard}>
+                <MaterialCommunityIcons name="diamond" size={14} color="#A855F7" />
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Heart Rate Card */}
