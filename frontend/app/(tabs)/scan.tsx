@@ -1697,7 +1697,6 @@ export default function ScanScreen() {
     </ScrollView>
   );
 
-  return (
   // If not premium, show upgrade prompt
   if (!isPremium) {
     return (
