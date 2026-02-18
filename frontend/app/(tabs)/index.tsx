@@ -868,7 +868,7 @@ export default function DashboardScreen() {
           {[
             { image: QUICK_ACTION_IMAGES.aiCoach, label: 'AI Workout Coach', route: '/ai-workout-chat', premium: true },
             { image: QUICK_ACTION_IMAGES.scanFood, label: t('dashboard.scanFood'), route: '/scan', premium: true },
-            { image: QUICK_ACTION_IMAGES.schedule, label: t('dashboard.schedule'), route: '/schedule', premium: false },
+            { image: QUICK_ACTION_IMAGES.schedule, label: t('dashboard.schedule'), route: '/schedule', premium: true },
             { image: QUICK_ACTION_IMAGES.workoutLog, label: 'Workout Log', route: '/manual-workout-log', premium: true },
             { image: QUICK_ACTION_IMAGES.run, label: t('dashboard.run'), route: '/running', premium: false },
             { image: QUICK_ACTION_IMAGES.steps, label: 'Step Tracker', route: '/step-tracker', premium: false },
@@ -896,12 +896,12 @@ export default function DashboardScreen() {
               }}
             >
               <Image source={{ uri: action.image }} style={styles.actionCardImage} resizeMode="cover" />
+              {action.premium && !isPremium && (
+                <View style={styles.premiumBadgeAction}>
+                  <Ionicons name="diamond" size={10} color="#fff" />
+                </View>
+              )}
               <View style={styles.actionCardOverlay}>
-                {action.premium && !isPremium && (
-                  <View style={styles.premiumBadgeAction}>
-                    <Ionicons name="diamond" size={10} color="#fff" />
-                  </View>
-                )}
                 <Text style={styles.actionLabelImage} numberOfLines={2}>
                   {action.label}
                 </Text>
