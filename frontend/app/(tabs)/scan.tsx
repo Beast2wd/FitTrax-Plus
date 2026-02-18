@@ -24,6 +24,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { foodAPI } from '../../services/api';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
