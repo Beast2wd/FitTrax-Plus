@@ -1,14 +1,18 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../stores/themeStore';
+import { useUserStore } from '../../stores/userStore';
 import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
   const { theme } = useThemeStore();
+  const { membershipStatus } = useUserStore();
   const { t } = useTranslation();
   const colors = theme.colors;
   const accent = theme.accentColors;
+  const isPremium = membershipStatus?.is_premium || false;
 
   return (
     <Tabs
@@ -53,7 +57,14 @@ export default function TabLayout() {
         options={{
           title: t('tabs.scan'),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="scan" size={size} color={color} />
+            <View>
+              <Ionicons name="scan" size={size} color={color} />
+              {!isPremium && (
+                <View style={styles.premiumBadge}>
+                  <Ionicons name="diamond" size={8} color="#fff" />
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -69,3 +80,17 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  premiumBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#8B5CF6',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
