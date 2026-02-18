@@ -76,7 +76,7 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) =>
 
       {/* Tagline */}
       <Animated.View style={{ opacity: taglineOpacity }}>
-        <Text style={styles.tagline}>TRACK • TRANSFORM • THRIVE</Text>
+        <Text style={styles.tagline}>TRAIN • TRACK • TRANSFORM</Text>
       </Animated.View>
     </View>
   );

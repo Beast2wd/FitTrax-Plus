@@ -106,7 +106,7 @@ export const FitTraxLogo: React.FC<FitTraxLogoProps> = ({
             styles.subtitle, 
             { fontSize: subtitleSize, color: theme.colors.text.muted }
           ]}>
-            TRACK • TRANSFORM • THRIVE
+            TRAIN • TRACK • TRANSFORM
           </Text>
         </View>
       )}
