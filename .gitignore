@@ -78,27 +78,6 @@ agenthub/agents/youtube/db
 
 # Mobile development
 android-sdk/
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
+
+# Note: .env files are NOT ignored to allow Emergent deployment
+# Environment variables will be managed by Emergent's deployment system
