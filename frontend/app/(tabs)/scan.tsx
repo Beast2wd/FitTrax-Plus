@@ -98,10 +98,11 @@ interface DailyNutrition {
 }
 
 export default function ScanScreen() {
-  const { userId, triggerMealRefresh, profile } = useUserStore();
+  const { userId, triggerMealRefresh, profile, membershipStatus } = useUserStore();
   const { theme } = useThemeStore();
   const colors = theme.colors;
   const accent = theme.accentColors;
+  const isPremium = membershipStatus?.is_premium || false;
 
   const [activeTab, setActiveTab] = useState('planner');
   
