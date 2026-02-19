@@ -16,14 +16,31 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fittraxplus.app",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSHealthShareUsageDescription": "FitTrax+ needs access to your health data to track your fitness progress, including steps, workouts, heart rate, and sleep.",
-        "NSHealthUpdateUsageDescription": "FitTrax+ needs permission to save your workout data to Apple Health.",
-        "UIBackgroundModes": ["fetch"]
+        "NSHealthShareUsageDescription": "FitTrax+ syncs your health data to track fitness progress including steps, workouts, and heart rate.",
+        "NSHealthUpdateUsageDescription": "FitTrax+ saves your workout data to Apple Health for comprehensive tracking.",
+        "NSCameraUsageDescription": "Scan food items and barcodes for quick nutrition logging.",
+        "NSPhotoLibraryUsageDescription": "Save progress photos and share your fitness achievements.",
+        "NSMicrophoneUsageDescription": "Record personalized voice greetings for your dashboard.",
+        "NSUserTrackingUsageDescription": "This helps us improve FitTrax+ and show relevant fitness content.",
+        "UIBackgroundModes": ["fetch", "audio"],
+        "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
         "com.apple.developer.healthkit.access": ["health-records"]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
       }
     },
     "android": {
