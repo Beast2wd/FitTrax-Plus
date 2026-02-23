@@ -1,11 +1,7 @@
 // metro.config.js
 
-// Polyfill for Array.prototype.toReversed (required for older Node.js versions)
-if (!Array.prototype.toReversed) {
-  Array.prototype.toReversed = function() {
-    return this.slice().reverse();
-  };
-}
+// Load polyfills FIRST before anything else
+require('./polyfills');
 
 const { getDefaultConfig } = require("expo/metro-config");
 const path = require('path');
