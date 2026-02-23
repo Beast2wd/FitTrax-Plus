@@ -18,10 +18,12 @@
       }
     },
     "production": {
+      "node": "22.12.0",
       "ios": {
         "autoIncrement": "buildNumber",
         "resourceClass": "m-medium",
-        "credentialsSource": "remote"
+        "credentialsSource": "remote",
+        "image": "latest"
       },
       "android": {
         "autoIncrement": "versionCode",
