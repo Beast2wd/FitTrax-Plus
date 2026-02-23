@@ -18,15 +18,14 @@
       }
     },
     "production": {
-      "node": "20.18.0",
+      "node": "22.0.0",
       "env": {
         "EXPO_NO_CAPABILITY_SYNC": "1"
       },
       "ios": {
         "autoIncrement": "buildNumber",
         "resourceClass": "m-medium",
-        "credentialsSource": "remote",
-        "image": "macos-sonoma-14.5-xcode-15.4"
+        "credentialsSource": "remote"
       },
       "android": {
         "autoIncrement": "versionCode",
