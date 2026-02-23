@@ -1,4 +1,12 @@
 // metro.config.js
+
+// Polyfill for Array.prototype.toReversed (required for older Node.js versions)
+if (!Array.prototype.toReversed) {
+  Array.prototype.toReversed = function() {
+    return this.slice().reverse();
+  };
+}
+
 const { getDefaultConfig } = require("expo/metro-config");
 const path = require('path');
 const { FileStore } = require('metro-cache');
