@@ -21,7 +21,7 @@
       "ios": {
         "autoIncrement": "buildNumber",
         "resourceClass": "m-medium",
-        "credentialsSource": "remote"
+        "credentialsSource": "auto"
       },
       "android": {
         "autoIncrement": "versionCode",
