@@ -18,6 +18,7 @@
       }
     },
     "production": {
+      "node": "20.18.0",
       "env": {
         "EXPO_NO_CAPABILITY_SYNC": "1"
       },
