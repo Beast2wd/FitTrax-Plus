@@ -1,0 +1,24 @@
+// Polyfill for Array.prototype.toReversed (required for older Node.js versions)
+if (!Array.prototype.toReversed) {
+  Array.prototype.toReversed = function() {
+    return this.slice().reverse();
+  };
+}
+
+// Polyfill for Array.prototype.toSorted (just in case)
+if (!Array.prototype.toSorted) {
+  Array.prototype.toSorted = function(compareFn) {
+    return this.slice().sort(compareFn);
+  };
+}
+
+// Polyfill for Array.prototype.toSpliced (just in case)
+if (!Array.prototype.toSpliced) {
+  Array.prototype.toSpliced = function(start, deleteCount, ...items) {
+    const copy = this.slice();
+    copy.splice(start, deleteCount, ...items);
+    return copy;
+  };
+}
+
+console.log('Array polyfills loaded');
