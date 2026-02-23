@@ -26,7 +26,7 @@
         "autoIncrement": "buildNumber",
         "resourceClass": "m-medium",
         "credentialsSource": "remote",
-        "image": "macos-sequoia-15.6-xcode-16.4"
+        "image": "latest"
       },
       "android": {
         "autoIncrement": "versionCode",
