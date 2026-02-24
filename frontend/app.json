@@ -12,7 +12,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#0D0D0D"
     },
-    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fittraxplus.app",
@@ -23,31 +22,12 @@
         "NSCameraUsageDescription": "Scan food items and barcodes for quick nutrition logging.",
         "NSPhotoLibraryUsageDescription": "Save progress photos and share your fitness achievements.",
         "NSMicrophoneUsageDescription": "Record personalized voice greetings for your dashboard.",
-        "NSUserTrackingUsageDescription": "This helps us improve FitTrax+ and show relevant fitness content.",
-        "UIBackgroundModes": [
-          "fetch",
-          "audio"
-        ],
+        "UIBackgroundModes": ["fetch", "audio"],
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
-        "com.apple.developer.healthkit.access": [
-          "health-records"
-        ]
-      },
-      "config": {
-        "usesNonExemptEncryption": false
-      },
-      "privacyManifests": {
-        "NSPrivacyAccessedAPITypes": [
-          {
-            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "CA92.1"
-            ]
-          }
-        ]
+        "com.apple.developer.healthkit.access": ["health-records"]
       }
     },
     "android": {
@@ -56,24 +36,9 @@
         "backgroundColor": "#0D0D0D"
       },
       "package": "com.fittrax.app",
-      "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.health.READ_STEPS",
-        "android.permission.health.READ_DISTANCE",
-        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
-        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
-        "android.permission.health.READ_HEART_RATE",
-        "android.permission.health.READ_SLEEP",
-        "android.permission.health.READ_EXERCISE",
-        "android.permission.health.WRITE_STEPS",
-        "android.permission.health.WRITE_DISTANCE",
-        "android.permission.health.WRITE_EXERCISE",
-        "android.permission.health.WRITE_ACTIVE_CALORIES_BURNED",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -82,34 +47,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#0D0D0D"
-        }
-      ],
-      [
-        "expo-av",
-        {
-          "microphonePermission": "FitTrax+ needs microphone access to record personalized voice greetings."
-        }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "FitTrax+ needs camera access to scan food items for nutrition tracking."
-        }
-      ],
-      [
-        "react-native-health-connect",
-        {
-          "requestPermissionsRationale": "FitTrax+ uses Health Connect to sync your fitness data including steps, workouts, heart rate, and sleep for a comprehensive view of your health."
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
