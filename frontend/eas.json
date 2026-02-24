@@ -18,14 +18,11 @@
       }
     },
     "production": {
-      "node": "22.0.0",
-      "env": {
-        "EXPO_NO_CAPABILITY_SYNC": "1"
-      },
       "ios": {
         "autoIncrement": "buildNumber",
         "resourceClass": "m-medium",
-        "credentialsSource": "remote"
+        "credentialsSource": "remote",
+        "image": "macos-ventura-13.6-xcode-15.2"
       },
       "android": {
         "autoIncrement": "versionCode",
