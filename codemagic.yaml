@@ -1,0 +1,62 @@
+workflows:
+  ios-workflow:
+    name: iOS Build
+    max_build_duration: 120
+    working_directory: frontend
+    environment:
+      xcode: latest
+      node: 18.18.0
+      vars:
+        BUNDLE_ID: "com.fittraxplus.app"
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.fittraxplus.app
+    scripts:
+      - name: Install dependencies
+        script: |
+          yarn install
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+      - name: Set up provisioning profiles
+        script: |
+          xcode-project use-profiles
+      - name: Build iOS
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/fittraxplus.xcworkspace" \
+            --scheme "fittraxplus"
+    artifacts:
+      - frontend/build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  expo-ios-workflow:
+    name: Expo iOS Build
+    max_build_duration: 120
+    working_directory: frontend
+    environment:
+      xcode: latest
+      node: 18.18.0
+      vars:
+        EXPO_TOKEN: ${EXPO_TOKEN}
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install -g eas-cli
+          yarn install
+      - name: Run Expo Prebuild
+        script: |
+          npx expo prebuild --platform ios --clean
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+      - name: Build iOS
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/fittraxplus.xcworkspace" \
+            --scheme "fittraxplus"
+    artifacts:
+      - frontend/build/ios/ipa/*.ipa
