@@ -12,20 +12,15 @@
       }
     },
     "preview": {
-      "distribution": "internal",
-      "ios": {
-        "simulator": false
-      }
+      "distribution": "internal"
     },
     "production": {
       "ios": {
-        "autoIncrement": "buildNumber",
         "resourceClass": "m-medium",
         "credentialsSource": "remote",
-        "image": "macos-ventura-13.6-xcode-15.2"
+        "image": "macos-sonoma-14.4-xcode-15.3"
       },
       "android": {
-        "autoIncrement": "versionCode",
         "buildType": "apk"
       }
     }
