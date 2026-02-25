@@ -1,51 +1,20 @@
 workflows:
-  ios-workflow:
-    name: iOS Build
-    max_build_duration: 120
-    working_directory: frontend
-    environment:
-      xcode: latest
-      node: 18.18.0
-      vars:
-        BUNDLE_ID: "com.fittraxplus.app"
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.fittraxplus.app
-    scripts:
-      - name: Install dependencies
-        script: |
-          yarn install
-      - name: Install CocoaPods
-        script: |
-          cd ios && pod install
-      - name: Set up provisioning profiles
-        script: |
-          xcode-project use-profiles
-      - name: Build iOS
-        script: |
-          xcode-project build-ipa \
-            --workspace "ios/fittraxplus.xcworkspace" \
-            --scheme "fittraxplus"
-    artifacts:
-      - frontend/build/ios/ipa/*.ipa
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-
-  expo-ios-workflow:
+  expo-ios-build:
     name: Expo iOS Build
     max_build_duration: 120
     working_directory: frontend
+    instance_type: mac_mini_m1
     environment:
-      xcode: latest
+      xcode: 15.2
       node: 18.18.0
+      cocoapods: default
+      groups:
+        - apple_credentials
       vars:
-        EXPO_TOKEN: ${EXPO_TOKEN}
+        BUNDLE_ID: "com.fittraxplus.app"
     scripts:
       - name: Install dependencies
         script: |
-          npm install -g eas-cli
           yarn install
       - name: Run Expo Prebuild
         script: |
@@ -53,10 +22,23 @@ workflows:
       - name: Install CocoaPods
         script: |
           cd ios && pod install
-      - name: Build iOS
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Build iOS app
         script: |
           xcode-project build-ipa \
             --workspace "ios/fittraxplus.xcworkspace" \
-            --scheme "fittraxplus"
+            --scheme "fittraxplus" \
+            --archive-flags="-destination 'generic/platform=iOS'"
     artifacts:
-      - frontend/build/ios/ipa/*.ipa
+      - frontend/ios/build/Build/Products/*/*.ipa
+      - frontend/ios/build/Build/Products/*/*.app
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - aj.castillo3d@outlook.com
+        notify:
+          success: true
+          failure: true
